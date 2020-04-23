@@ -92,16 +92,17 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 // Create thread "/{section}/new" handler. It handles the creation of content 
 // in a section through POSTing a form. It returns the permalink of the newly created
 // thread on success, or an error in case of the following:
-// - missing ft_file input --------------> MISSING_ft_file_INPUT
-// - file greater than 64mb -------------> FILE_TOO_BIG
-// - corrupted file ---------------------> INVALID_FILE
-// - file type other than image and gif -> INVALID_FILE_TYPE
-// - file creation/write failure --------> CANT_WRITE_FILE
-// - missing content (empty input) ------> NO_CONTENT
-// - missing title (empty input) --------> NO_TITLE
-// - user has already posted today ------> USER_UNABLE_TO_POST
-// - user unathenticated ----------------> USER_UNREGISTERED
-// - network failures -------------------> INTERNAL_FAILURE
+// - creating a thread in an invalid section -> 404 NOT_FOUND
+// - missing ft_file input -------------------> MISSING_ft_file_INPUT
+// - file greater than 64mb ------------------> FILE_TOO_BIG
+// - corrupted file --------------------------> INVALID_FILE
+// - file type other than image and gif ------> INVALID_FILE_TYPE
+// - file creation/write failure -------------> CANT_WRITE_FILE
+// - missing content (empty input) -----------> NO_CONTENT
+// - missing title (empty input) -------------> NO_TITLE
+// - user has already posted today -----------> USER_UNABLE_TO_POST
+// - user unathenticated ---------------------> USER_UNREGISTERED
+// - network failures ------------------------> INTERNAL_FAILURE
 func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -139,8 +140,12 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 		resErr, ok := status.FromError(err)
 		if ok {
 			// actual error from gRPC (user error)
-			// Check whether the user can create thread at this time.
 			switch resErr.Code() {
+			case codes.NotFound:
+				// section not found.
+				http.NotFound(w, r)
+				return
+			// Check whether the user can create thread at this time.
 			case codes.FailedPrecondition:
 				log.Println("This user has already posted a thread today")
 				http.Error(w, "USER_UNABLE_TO_POST", http.StatusPreconditionFailed)
