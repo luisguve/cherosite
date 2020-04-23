@@ -80,6 +80,11 @@ func (r *Router) SetupRoutes() {
 		r.onlyUsers(userContentsHandler(r.handleExploreRecycle))).Methods("GET")
 		.headers("X-Requested-With", "XMLHttpRequest")
 	//
+	// GET REQUEST TO READ ALL NOTIFICATIONS FROM THIS USER
+	// matches GET "/readall"
+	root.HandleFunc("/readall", r.handleReadAll).Methods("GET")
+		.Headers("X-Requested-With", "XMLHttpRequest")
+	//
 	// SECTION LEVEL HANDLERS
 	//
 	section := root.PathPrefix("/{section}").Subrouter()
