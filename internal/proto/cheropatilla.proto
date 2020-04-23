@@ -349,6 +349,12 @@ message Subcomment {
 	FullContentData data = 1;
 }
 
+message ReadNotifsRequest {
+	string user_id = 1;
+}
+
+message ReadNotifsResponse {}
+
 service CrudCheropatilla {
 	// Get new feed of threads in a section or comments in a thread
 	rpc RecycleContent(ContentPattern) returns (stream ContentRuleResponse) {}
@@ -356,7 +362,7 @@ service CrudCheropatilla {
 	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRuleResponse) {}
 	// Post upvote on thread, comment or subcomment
 	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
-	// Post comment on a thread or a comment
+	// Post comment on a thread or in a comment
 	rpc Comment(CommentRequest) returns (stream NotifyUser) {}
 	// Update a thread, comment or subcomment
 	rpc UpdateContent(UpdateContentRequest) returns (stream NotifyUser) {}
@@ -376,4 +382,5 @@ service CrudCheropatilla {
 	rpc GetSubcomments(GetSubcommentsRequest) returns (stream Subcomment) {}
 	// Get users' basic data
 	rpc GetBasicUsersInfo(GetBasicUsersInfoRequest) returns (GetBasicUsersInfoResponse) {}
+	rpc MarkAllAsRead(ReadNotifsRequest) returns (ReadNotifsResponse) {}
 }
