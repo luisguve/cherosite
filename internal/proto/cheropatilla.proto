@@ -1,0 +1,379 @@
+syntax = "proto3";
+
+package cheropatillapb;
+
+import "google/protobuf/timestamp.proto";
+
+/* 	BasicContentData is the core data fields related to content (i.e: thread,
+	comment or subcomment) */
+message BasicContentData {
+	google.protobuf.Timestamp publish_date = 1;
+	string title = 2;
+	string content = 3;
+	string ft_file = 4;
+	string author_id = 5;
+}
+/*
+	FullContentData holds the entire data structure for contents,
+	including metadata about the content such as how many (and what) 
+	users have topvoted it.
+	This is the format the data will be stored in.
+*/
+message FullContentData {
+	BasicContentData basic_content_data = 1;
+	// permalink is the URL of this content
+	string permalink = 2;
+	// topvotes is the total number of positive votes this content has received.
+	uint32 topvotes = 3;
+	// voter_ids holds the ids of the users that topvoted this content.
+	repeated string voter_ids = 4;
+	// threads and 1st level comments can have replies, but subcomments can't
+	oneof extra_data {
+		ThreadExtraData thread_related = 5;
+		SubcommentExtraData subcomment_related = 6;
+	}
+	message ThreadExtraData {
+		uint32 replies = 1;
+		repeated string replier_ids = 2;
+	}
+	message SubcommentExtraData {}
+	google.protobuf.Timestamp updated = 7;
+	string section = 8;
+	string id = 9;
+}
+
+/*	
+	ContentInfo holds information about the content (i.e. metadata). The purpose of it 
+	is evaluating the	relevance of contents.
+*/
+message ContentInfo {
+	// interactions is the total number of topvotes + comments that the content has
+	// accummulated.
+	//
+	// For threads, it is the sum of the thread upvotes, first level comment upvotes,
+	// subcomment upvotes, comments and subcomments.
+	//
+	// For first level comments, it is the sum of the comment upvotes, subcomment upvotes
+	// and subcomments.
+	//
+	// For subcomments, it is the sum of subcomment upvotes.
+	uint32 interactions = 1;
+	// last_updated marks the timestamp indicating when the last interaction on this content 
+	// happened.
+	google.protobuf.Timestamp last_updated = 2;
+	// avg_update_time is the average time interval between interactions. It is calculated
+	// by dividing (if previously set) avg_update_time between interactions, and it is 
+	// set every time an interaction happens.
+	uint64 avg_update_time = 3;
+	// content_data_key holds the id of the content which this metadata refers to.
+	string content_data_key = 4;
+}
+
+/*
+	BasicUserData holds basic information about an user. This information is intended for
+	succinct data interchange between gRPC server and client on the user registration event.
+*/
+message BasicUserData {
+	string email = 1;
+	string name = 2;
+	string pic_url = 3;
+	string id = 4;
+	string username = 5;
+	string alias = 6;
+	string about = 7;
+}
+
+/*
+	FullUserData holds all the information of users. This is the format users will be 
+	stored in.
+*/
+message FullUserData {
+	BasicUserData basic_user_data = 1;
+	// ids of threads that this user created.
+	repeated ThreadInfo threads_created = 2;
+	// ids of threads that this user saved to read later.
+	repeated ThreadInfo threads_saved = 3;
+	// the last time this user created a thread.
+	google.protobuf.Timestamp last_time_created = 4;
+	// ids of users that are following this user.
+	repeated string followers_ids = 5;
+	// ids of users that this user is following.
+	repeated string following_ids = 6;
+	// unread notifications of this user.
+	repeated Notif unread_notifs = 7;
+	// read notifications of this user.
+	repeated Notif read_notifs = 8;
+	message ThreadInfo {
+		string id = 1;
+		string section = 2;
+	}
+}
+
+/*
+	Notif is the format in which users get their notifications.
+*/
+message Notif {
+	google.protobuf.Timestamp timestamp = 1;
+	// example message: "User1234 and 2 more have commented out your thread"
+	string message = 2;
+	// example subject: "On your thread: Improving your skills at writing..."
+	string subject = 3;
+	// example id: {section}#{content_id}#{subject}
+	string id = 4;
+	NotifDetails details = 5;
+	message NotifDetails {
+		NotifType type = 1;
+		string last_user_id_involved = 2;
+	}
+	enum NotifType {
+		UNKNOWN = 0;
+		TOPVOTE = 1;
+		TOPVOTE_COMMENT = 2;
+		TOPVOTE_SUBCOMMENT = 3;
+		COMMENT = 4;
+		SUBCOMMENT = 5;
+		MENTION = 6;
+		UPDATE_THREAD = 7;
+		UPDATE_COMMENT = 8;
+		UPDATE_SUBCOMMENT = 9;
+	}
+}
+
+/*
+	NotifyUser maps notifications to users.
+*/
+message NotifyUser {
+	string user_id = 1; // receiver
+	Notif notification = 2; // actual message
+}
+
+/*
+	ContentStatus defines the different categories that fits content at a particular time,
+	trying to describe the quality of the content.
+*/
+enum ContentStatus {
+	NEW = 0;
+	RELEVANT = 1;
+	TOP = 2;
+}
+
+/*
+	ContentRuleResponse holds a piece of content and its current status.
+*/
+message ContentRuleResponse {
+	ContentStatus status = 1;
+	FullContentData data = 2;
+}
+
+/*
+	ContentRuleRequest holds the content status for the content it is expecting to get.
+*/
+message ContentRuleRequest {
+	ContentStatus status = 1;
+}
+
+/*
+	ContentPattern holds an array of ContentRuleRequest (i.e. content status), composing up
+	a pattern of content that's expected to get back.
+*/
+message ContentPattern {
+	repeated ContentRuleRequest pattern = 1;
+	// discard_ids is an array of content ids that must not be returned back, since it's
+	// content the user has already seen.
+	repeated string discard_ids = 2;
+	// content_context represents the place in which the content must be retrieved from.
+	oneof content_context {
+		Context.Section section_ctx = 3;
+		Context.Thread thread_ctx = 4;
+		Context.Feed feed_ctx = 5;
+	}
+}
+
+/*
+	GeneralPattern holds an array of ContentRuleRequest (i.e. content status), composing 
+	up a pattern of content that's expected to get back. It is intended for recycling 
+	content from every section.
+*/
+message GeneralPattern {
+	repeated ContentRuleRequest pattern = 1;
+	// discard_ids is a map of section names mapped to content ids that must not be 
+	// returned back, since it's content the user has already seen.
+	map<string, repeated string> discard_ids = 2;
+}
+
+/*
+	The Context holds information about the place at which an event occurs or where 
+	content should be retrieved from.
+*/
+message Context {
+	// A Section is the highest level and just has the name of the section.
+	message Section {
+		string section_name = 1;
+	}
+	// A Thread is inside of a section and has a thread identifier unique to that section.
+	message Thread {
+		Section section_ctx = 1;
+		string thread_id = 2;
+	}
+	// A Comment is inside of a thread and has a comment identifier unique to that thread.
+	message Comment {
+		Thread thread_ctx = 1;
+		string comment_id = 2;
+	}
+	// A Subcomment is inside of a comment and has a subcomment identifier unique to that 
+	// comment.
+	message Subcomment {
+		Comment comment_ctx = 1;
+		string subcomment_id = 2;
+	}
+	// Feed is a special case intended for filling a feed with content whose authors are
+	// the users of the given user identifiers.
+	message Feed {
+		repeated string user_ids = 1;
+	}
+}
+
+/*
+	UpvoteRequest holds information about the upvote event.
+*/
+message UpvoteRequest {
+	string user_id = 1; // Who is submitting the upvote
+	// The upvote event occurs either in a thread, in a comment or in a subcomment.
+	oneof content_context {
+		Context.Thread thread_ctx = 2;
+		Context.Comment comment_ctx = 3;
+		Context.Subcomment subcomment_ctx = 4;
+	}
+}
+
+/*
+	CommentRequest holds information about the comment event.
+*/
+message CommentRequest {
+	// A comment has the same basic structure as regular content.
+	BasicContentData data = 1;
+	// The comment event occurs either in a thread or in a comment.
+	oneof content_context {
+		Context.Thread thread_ctx = 2;
+		Context.Comment comment_ctx = 3;
+	}
+}
+
+/*
+	UpdateContentRequest holds information about the comment event.
+*/
+message UpdateContentRequest {
+	// data holds the actual content updated, along with the user id of who's submitting the
+	// updated content. This user id must match the user id of the author of the content.
+	BasicContentData data = 1;
+	// The update content event occurs either in a thread, in a comment or in a subcomment.
+	oneof content_context {
+		Context.Thread thread_ctx = 2;
+		Context.Comment comment_ctx = 3;
+		Context.Subcomment subcomment_ctx = 4;
+	}
+}
+
+/*
+	DeleteContentRequest holds information about the delete content event.
+*/
+message DeleteContentRequest {
+	string user_id = 1; // Who is updating the content
+	// The delete content event occurs either in a thread, in a comment or in a subcomment.
+	oneof content_context {
+		Context.Thread thread_ctx = 2;
+		Context.Comment comment_ctx = 3;
+		Context.Subcomment subcomment_ctx = 4;
+	}
+}
+
+message DeleteContentResponse {}
+
+/*
+	CreateThreadRequest holds the content itself and the section at which the content
+	is being created.
+*/
+message CreateThreadRequest {
+	BasicContentData data = 1;
+	Context.Section section_ctx = 2;
+}
+
+message CreateThreadResponse {
+	string permalink = 1;
+}
+
+message GetFullUserDataRequest {
+	string user_id = 1;
+}
+
+message GetFullUserDataResponse {
+	FullUserData full_user_data = 1;
+}
+
+message RegisterUserRequest {
+	BasicUserData basic_user_data = 1;
+}
+
+message RegisterUserResponse {}
+
+message GetThreadsRequest {
+	repeated FullUserData.ThreadInfo threads = 1;
+}
+
+message GetThreadsResponse {
+	repeated FullContentData threads = 1;
+}
+
+message GetThreadRequest {
+	FullUserData.ThreadInfo thread = 1;
+}
+
+message GetThreadResponse {
+	FullContentData thread = 1;
+}
+
+message GetBasicUsersInfoRequest {
+	repeated string ids = 1;
+}
+
+message GetBasicUsersInfoResponse {
+	repeated BasicUserData users_data = 1;
+}
+
+message GetSubcommentsRequest {
+	Context.Comment comment_ctx = 1;
+	uint32 offset = 2;
+}
+
+message Subcomment {
+	FullContentData data = 1;
+}
+
+service CrudCheropatilla {
+	// Get new feed of threads in a section or comments in a thread
+	rpc RecycleContent(ContentPattern) returns (stream ContentRuleResponse) {}
+	// Get new feed of threads in general (from multiple sections)
+	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRuleResponse) {}
+	// Post upvote on thread, comment or subcomment
+	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
+	// Post comment on a thread or a comment
+	rpc Comment(CommentRequest) returns (stream NotifyUser) {}
+	// Update a thread, comment or subcomment
+	rpc UpdateContent(UpdateContentRequest) returns (stream NotifyUser) {}
+	// Delete a thread, comment or subcomment
+	rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
+	// Post a thread to create
+	rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse) {}
+	// Get full user data
+	rpc GetFullUserData(GetFullUserDataRequest) returns (GetFullUserDataResponse) {}
+	// Register new user
+	rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {}
+	// Get array of threads
+	rpc GetThreads(GetThreadsRequest) returns (GetThreadsResponse) {}
+	// Get single thread
+	rpc GetThread(GetThreadRequest) returns (GetThreadResponse) {}
+	// Get a comment's comments
+	rpc GetSubcomments(GetSubcommentsRequest) returns (stream Subcomment) {}
+	// Get users' basic data
+	rpc GetBasicUsersInfo(GetBasicUsersInfoRequest) returns (GetBasicUsersInfoResponse) {}
+}
