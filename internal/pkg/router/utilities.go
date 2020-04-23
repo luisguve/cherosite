@@ -8,6 +8,7 @@ import(
 	"io/ioutil"
 	"log"
 	"mime"
+	"error"
 	"net/http"
 	"context"
 
@@ -20,6 +21,16 @@ import(
 const(
 	maxUploadSize = 64 << 20 // 64 mb
 	uploadPath = "tmp"
+)
+
+var(
+	errMissingFile      = errors.New("MISSING_ft_file_INPUT")
+	errInternalFailure  = errors.New("INTERNAL_FAILURE")
+	errFileTooBig       = errors.New("FILE_TOO_BIG")
+	errInvalidFile      = errors.New("INVALID_FILE")
+	errInvalidFileType  = errors.New("INVALID_FILE_TYPE")
+	errCantReadFileType = errors.New("CANT_READ_FILE_TYPE")
+	errCantWriteFile    = errors.New("CANT_WRITE_FILE")
 )
 
 func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.FeedContent, 
@@ -125,10 +136,10 @@ func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (
 	file, fileHeader, err := req.FormFile(formName)
 	if err != nil {
 		if err == http.ErrMissingFile {
-			return "", fmt.Errorf("MISSING_ft_file_INPUT"), http.StatusBadRequest
+			return "", errMissingFile, http.StatusBadRequest
 		}
 		log.Printf("Could not read file because... %v\n", err)
-		return "", fmt.Errorf("INTERNAL_FAILURE"), http.StatusInternalServerError
+		return "", errInternalFailure, http.StatusInternalServerError
 	}
 	defer file.Close()
 	// Get and print out file size
@@ -136,12 +147,12 @@ func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (
 	log.Printf("File size (bytes): %v\n", fileSize)
 	// Validate file size
 	if fileSize > maxUploadSize {
-		return "", fmt.Errorf("FILE_TOO_BIG"), http.StatusBadRequest
+		return "", errFileTooBig, http.StatusBadRequest
 	}
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Printf("Could not read all file: %s\n", err)
-		return "", fmt.Errorf("INVALID_FILE"), http.StatusBadRequest
+		return "", errInvalidFile, http.StatusBadRequest
 	}
 
 	// Check file type, DetectContentType only needs the first 512 bytes
@@ -152,13 +163,13 @@ func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (
 	case "application/pdf":
 		break
 	default:
-		return "" fmt.Errorf("INVALID_FILE_TYPE"), http.StatusBadRequest
+		return "" errInvalidFileType, http.StatusBadRequest
 	}
 	fileName := randToken(12)
 	fileEndings, err := mime.ExtensionsByType(detectedFileType)
 	if err != nil {
 		log.Printf("Can't read filetype: %v\n", err)
-		return "", fmt.Errorf("CANT_READ_FILE_TYPE"), http.StatusInternalServerError
+		return "", errCantReadFileType, http.StatusInternalServerError
 	}
 	newPath := filepath.Join(uploadPath, fileName+fileEndings[0])
 
@@ -166,11 +177,11 @@ func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (
 	newFile, err := os.Create(newPath)
 	if err != nil {
 		log.Printf("Could not create file: %s\n", err)
-		return "", fmt.Errorf("CANT_WRITE_FILE"), http.StatusInternalServerError
+		return "", errCantWriteFile, http.StatusInternalServerError
 	}
 	defer newFile.Close() // idempotent, okay to call twice
 	if _, err = newFile.Write(fileBytes); err != nil || newFile.Close() != nil {
-		return "", fmt.Errorf("CANT_WRITE_FILE"), http.StatusInternalServerError
+		return "", errCantWriteFile, http.StatusInternalServerError
 	}
 	return newPath, nil, http.StatusOK
 }
