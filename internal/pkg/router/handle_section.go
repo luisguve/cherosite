@@ -48,18 +48,18 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 				return
 			case codes.Unavailable:
 				log.Printf("The section %s is temporarily unavailable\n", section)
-				renderError(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
 				return
 			default:
 				log.Printf("Unknown code: %v - %s\n", resErr.Code(), resErr.Message())
-				renderError(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
 		}
 		log.Printf("An error occurred while getting feed: %v\n", err)
 		if len(feed.ContentIds) == 0 {
 			log.Printf("Could not get any thread on section %s: %v\n", section, err)
-			renderError(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusPartialContent)
@@ -113,12 +113,12 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 	// Get the rest of the content parts
 	content := req.FormValue("content")
 	if content == "" {
-		renderError(w, "NO_CONTENT", http.StatusBadRequest)
+		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
 		return
 	}
 	title := req.FormValue("title")
 	if title == "" {
-		renderError(w, "NO_TITLE", http.StatusBadRequest)
+		http.Error(w, "NO_TITLE", http.StatusBadRequest)
 		return
 	}
 	createRequest := &pb.CreateContentRequest{
@@ -142,20 +142,20 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 			switch resErr.Code() {
 			case codes.FailedPrecondition:
 				log.Println("This user has already posted a thread today")
-				renderError(w, "USER_UNABLE_TO_POST", http.StatusPreconditionFailed)
+				http.Error(w, "USER_UNABLE_TO_POST", http.StatusPreconditionFailed)
 				return
 			case codes.Unauthenticated:
 				log.Println("This user is unregistered")
-				renderError(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
 			default:
 				log.Printf("Unknown code: %v - %s\n", resErr.Code(), resErr.Message())
-				renderError(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
 		} else {
 			log.Printf("Could not create thread: %v\n", err)
-			renderError(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 			return
 		}
 	}
