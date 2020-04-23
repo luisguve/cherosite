@@ -20,7 +20,8 @@ type Router struct {
 	hub        *livedata.Hub
 }
 
-func New(t *template.Template, cc *pb.CrudCheropatillaClient, s sessions.Store, hub *livedata.Hub) *Router {
+func New(t *template.Template, cc *pb.CrudCheropatillaClient, s sessions.Store, 
+	hub *livedata.Hub) *Router {
 	if t == nil {
 		log.Fatal("missing templates")
 	}
@@ -57,8 +58,8 @@ func (r *Router) SetupRoutes() {
 	//
 	// WEBSOCKET
 	//
-	root.HandleFunc("/livenotifs", r.handleLiveNotifs).Methods("GET").Headers("X-Requested-With", 
-		"XMLHttpRequest")
+	root.HandleFunc("/livenotifs", r.handleLiveNotifs).Methods("GET")
+	.Headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// GET DASHBOARD OR LOGIN PAGE
 	// matches GET "/"
@@ -66,7 +67,8 @@ func (r *Router) SetupRoutes() {
 	//
 	// GET RECYCLE USER FEED
 	// matches GET "/recycle"
-	root.HandleFunc("/recycle", r.onlyUsers(userContentsHandler(r.handleRecycleFeed))).Methods("GET")
+	root.HandleFunc("/recycle", r.onlyUsers(userContentsHandler(r.handleRecycleFeed)))
+	.Methods("GET")
 	//
 	// GET EXPLORE PAGE
 	// matches GET "/explore"
@@ -74,8 +76,9 @@ func (r *Router) SetupRoutes() {
 	//
 	// GET RECYCLE EXPLORE FEED
 	// matches GET "/explore/recycle"
-	root.HandleFunc("/explore/recycle", r.handleExploreRecycle).Methods("GET").headers(
-		"X-Requested-With", "XMLHttpRequest")
+	root.HandleFunc("/explore/recycle", 
+		r.onlyUsers(userContentsHandler(r.handleExploreRecycle))).Methods("GET")
+		.headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// SECTION LEVEL HANDLERS
 	//
@@ -87,7 +90,8 @@ func (r *Router) SetupRoutes() {
 	//
 	// POST A THREAD IN A SECTION
 	// matches POST "/{section}/new"
-	section.HandleFunc("/new", r.onlyUsers(userContentsHandler(r.handleNewThread))).Methods("POST")
+	section.HandleFunc("/new", r.onlyUsers(userContentsHandler(r.handleNewThread)))
+	.Methods("POST")
 	//
 	// GET RECYCLE SECTION FEED
 	// matches GET "/{section}/recycle"
@@ -111,12 +115,14 @@ func (r *Router) SetupRoutes() {
 	//
 	// GET SUBCOMMENTS OF A COMMENT IN JSON FORMAT
 	// matches GET "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}"
-	comments.HandleFunc("/", r.handleGetSubcomments).Methods("GET").Headers("X-Requested-With", 
-		"XMLHttpRequest").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "offset", "{offset:[0-9]+}")
+	comments.HandleFunc("/", r.handleGetSubcomments).Methods("GET")
+	.Headers("X-Requested-With", "XMLHttpRequest").Queries("c_id", "{c_id:[a-zA-Z0-9]+}",
+	 "offset", "{offset:[0-9]+}")
 	//
 	// POST A COMMENT IN A THREAD
 	// matches POST "/{section}/{thread}/comment/"
-	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostComment))).Methods("POST")
+	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostComment)))
+	.Methods("POST")
 	//
 	// POST A SUBCOMMENT
 	// matches POST "/{section}/{thread}/comment/?c_id={c_id}"
@@ -126,13 +132,17 @@ func (r *Router) SetupRoutes() {
 	//
 	// POST AN UPVOTE TO A THREAD
 	// matches POST "/{section}/{thread}/upvote/"
-	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteThread))).Methods("POST")
+	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteThread)))
+	.Methods("POST")
 	//
 	// POST AN UPVOTE TO A COMMENT
 	// matches POST "/{section}/{thread}/upvote/?c_id={c_id}"
-	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteComment))).Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
+	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteComment)))
+	.Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 	//
 	// POST AN UPVOTE TO A SUBCOMMENT
 	// matches POST "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}"
-	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteSubcomment))).Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
+	upvotes.HandleFunc("/", 
+		r.onlyUsers(userContentsHandler(r.handleUpvoteSubcomment))).Methods("POST")
+		.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 }
