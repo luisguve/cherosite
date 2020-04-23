@@ -105,14 +105,6 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
-	maxBytes := 32 << 20 // 32 megabytes
-	// Up to maxBytes bytes of the file parts are stored in memory. The rest of the
-	// bytes of the file parts of the request are stored in disk in a temp file.
-	if err := req.ParseMultipartForm(maxBytes); err != nil {
-		log.Printf("Could not parse multipart form-data: %v\n", err)
-		renderError(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-		return
-	}
 	// Get ft_file and save it to the disk with a unique, random name.
 	if filePath, err := getAndSaveFile(w, req, "ft_file"); err != nil {
 		return
