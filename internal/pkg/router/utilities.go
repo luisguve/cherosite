@@ -22,7 +22,8 @@ const(
 	uploadPath = "tmp"
 )
 
-func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.FeedContent, error) {
+func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.FeedContent, 
+	error) {
 	// Send request
 	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
@@ -52,7 +53,8 @@ func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.Fe
 	return feed, err
 }
 
-func (r *Router) recycleGeneral(contentPattern *pb.GeneralPattern) (templates.FeedGeneral, error) {
+func (r *Router) recycleGeneral(contentPattern *pb.GeneralPattern) (templates.FeedGeneral, 
+	error) {
 	// Send request
 	stream, err := r.crudClient.RecycleGeneral(context.Background(), contentPattern)
 	if err != nil {
@@ -97,7 +99,8 @@ func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
 
 // updateDiscardIdsSession replaces id of contents already set in the session 
 // with the provided ids and saves the cookie.
-func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWriter, ids []string, setDiscardIds func(*pagination.DiscardIds, []string)) {
+func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWriter, 
+	ids []string, setDiscardIds func(*pagination.DiscardIds, []string)) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	// Get id of contents to be discarded
@@ -114,33 +117,34 @@ func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWrite
 // verifies that it does not exceeds the file size limit, and saves it to the 
 // disk assigning to it a unique, random name.
 // On success, it should return the filepath under which it was stored. If there 
-// are any errors, it will call renderError by itself and return an empty string
-// and an according error.
-func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (string, error) {
+// are any errors, it will return an empty string, the error message and the 
+// http status code, which can be StatusBadRequest, StatusInternalServerError or
+// StatusOK.
+func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (string, 
+	error, int) {
 	file, fileHeader, err := req.FormFile(formName)
 	if err != nil {
+		if err == http.ErrMissingFile {
+			return "", fmt.Errorf("MISSING_ft_file_INPUT"), http.StatusBadRequest
+		}
 		log.Printf("Could not read file because... %v\n", err)
-		renderError(w, "MISSING_ft_file_INPUT", http.StatusBadRequest)
-		return "", err
+		return "", fmt.Errorf("INTERNAL_FAILURE"), http.StatusInternalServerError
 	}
 	defer file.Close()
 	// Get and print out file size
 	fileSize := fileHeader.Size
 	log.Printf("File size (bytes): %v\n", fileSize)
-	// validate file size
+	// Validate file size
 	if fileSize > maxUploadSize {
-		renderError(w, "FILE_TOO_BIG", http.StatusBadRequest)
-		return "", fmt.Errorf("File size %v is greater than max upload size %v\n",
-			fileSize, maxUploadSize)
+		return "", fmt.Errorf("FILE_TOO_BIG"), http.StatusBadRequest
 	}
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Printf("Could not read all file: %s\n", err)
-		renderError(w, "INVALID_FILE", http.StatusBadRequest)
-		return "", err
+		return "", fmt.Errorf("INVALID_FILE"), http.StatusBadRequest
 	}
 
-	// check file type, detectcontenttype only needs the first 512 bytes
+	// Check file type, DetectContentType only needs the first 512 bytes
 	detectedFileType := http.DetectContentType(fileBytes)
 	switch detectedFileType {
 	case "image/jpeg", "image/jpg":
@@ -148,31 +152,27 @@ func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (
 	case "application/pdf":
 		break
 	default:
-		log.Printf("detected file type: %s\n", detectedFileType)
-		renderError(w, "INVALID_FILE_TYPE", http.StatusBadRequest)
-		return "" fmt.Errorf("File type %v is not allowed\n", detectedFileType)
+		return "" fmt.Errorf("INVALID_FILE_TYPE"), http.StatusBadRequest
 	}
 	fileName := randToken(12)
 	fileEndings, err := mime.ExtensionsByType(detectedFileType)
 	if err != nil {
-		renderError(w, "CANT_READ_FILE_TYPE", http.StatusInternalServerError)
-		return "", err
+		log.Printf("Can't read filetype: %v\n", err)
+		return "", fmt.Errorf("CANT_READ_FILE_TYPE"), http.StatusInternalServerError
 	}
 	newPath := filepath.Join(uploadPath, fileName+fileEndings[0])
 
-	// write file
+	// Write file to disk
 	newFile, err := os.Create(newPath)
 	if err != nil {
 		log.Printf("Could not create file: %s\n", err)
-		renderError(w, "CANT_WRITE_FILE", http.StatusInternalServerError)
-		return "", err
+		return "", fmt.Errorf("CANT_WRITE_FILE"), http.StatusInternalServerError
 	}
 	defer newFile.Close() // idempotent, okay to call twice
-	if _, err := newFile.Write(fileBytes); err != nil || newFile.Close() != nil {
-		renderError(w, "CANT_WRITE_FILE", http.StatusInternalServerError)
-		return "", err
+	if _, err = newFile.Write(fileBytes); err != nil || newFile.Close() != nil {
+		return "", fmt.Errorf("CANT_WRITE_FILE"), http.StatusInternalServerError
 	}
-	return newPath, nil
+	return newPath, nil, http.StatusOK
 }
 
 // currentUser returns a string containing the current user id or an empty 
