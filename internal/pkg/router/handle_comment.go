@@ -14,9 +14,11 @@ import(
 )
 
 // Subcomments "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}" handler.
-// It returns (JSON) subcomments under a given comment with id equal to c_id. Offset
-// query parameter indicates how many subcomments to skip, since these data is stored
-// and returned in sequential order. It may return an error in case of the following: 
+// It returns 10 subcomments on a given comment (c_id) on a given thread, on a given 
+// section.
+// The offset query parameter indicates how many subcomments to skip, since these data 
+// is stored and returned in sequential order. It may return an error in case of the 
+// following: 
 // - negative or non-number offset query parameter ------------> INVALID_OFFSET
 // - offset is out of range; there are not that much comments -> OFFSET_OOR
 // - network or encoding failures -----------------------------> INTERNAL_FAILURE
@@ -31,7 +33,8 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	commentId := vars["c_id"]
 	thread := vars["thread"]
 	section := vard["section"]
-	subcommentsReq := &pb.GetSubcmmentsRequest{
+
+	subcommentsReq := &pb.GetSubcommentsRequest{
 		Offset: uint32(offset),
 		CommentCtx: &pb.Context.Comment{
 			CommentId: commentId, 
@@ -64,7 +67,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 			if resErr, ok := status.FromError(err); ok {
 				switch resErr.Code() {
 				case codes.NotFound:
-					log.Println("Could not find comment, thread or section")
+					log.Printf("Could not find resource: %v", resErr.Message())
 					http.NotFound(w, r)
 					return
 				case codes.OutOfRange:
