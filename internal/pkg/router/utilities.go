@@ -131,8 +131,7 @@ func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWrite
 // are any errors, it will return an empty string, the error message and the 
 // http status code, which can be StatusBadRequest, StatusInternalServerError or
 // StatusOK.
-func getAndSaveFile(w http.ResponseWriter, req *http.Request, formName string) (string, 
-	error, int) {
+func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	file, fileHeader, err := req.FormFile(formName)
 	if err != nil {
 		if err == http.ErrMissingFile {
