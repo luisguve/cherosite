@@ -96,7 +96,7 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 // - file greater than 64mb -------------> FILE_TOO_BIG
 // - corrupted file ---------------------> INVALID_FILE
 // - file type other than image and gif -> INVALID_FILE_TYPE
-// - file creation/write issues ---------> CANT_WRITE_FILE
+// - file creation/write failure --------> CANT_WRITE_FILE
 // - missing content (empty input) ------> NO_CONTENT
 // - missing title (empty input) --------> NO_TITLE
 // - user has already posted today ------> USER_UNABLE_TO_POST
