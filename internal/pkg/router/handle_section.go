@@ -106,7 +106,8 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 	vars := mux.Vars(req)
 	section := vars["section"]
 	// Get ft_file and save it to the disk with a unique, random name.
-	if filePath, err, status := getAndSaveFile(req, "ft_file"); err != nil {
+	filePath, err, status := getAndSaveFile(req, "ft_file")
+	if err != nil {
 		http.Error(w, err.Error(), status)
 		return
 	}
