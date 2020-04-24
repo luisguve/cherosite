@@ -31,7 +31,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	// Load thread
 	content, err := r.crudClient.GetThread(context.Background(),
 		&pb.GetThreadRequest{ 
-			Thread: &pb.FullUserData.ThreadInfo{Id: thread, Section: section},
+			Thread: &pb.FullUserData_ThreadInfo{Id: thread, Section: section},
 		})
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
