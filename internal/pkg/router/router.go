@@ -78,17 +78,27 @@ func (r *Router) SetupRoutes() {
 	// matches GET "/explore/recycle"
 	root.HandleFunc("/explore/recycle", 
 		r.onlyUsers(userContentsHandler(r.handleExploreRecycle))).Methods("GET")
-		.headers("X-Requested-With", "XMLHttpRequest")
+	.headers("X-Requested-With", "XMLHttpRequest")
 	//
-	// GET REQUEST TO READ ALL NOTIFICATIONS FROM THIS USER
+	// REQUEST TO READ ALL NOTIFICATIONS FROM THIS USER
 	// matches GET "/readnotifs"
 	root.HandleFunc("/readnotifs", r.onlyUsers(userContentsHandler(r.handleReadNotifs)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 	//
-	// GET REQUEST TO CLEAR ALL NOTIFICATIONS FROM THIS USER
+	// REQUEST TO CLEAR ALL NOTIFICATIONS FROM THIS USER
 	// matches GET "/clearnotifs"
 	root.HandleFunc("/clearnotifs", r.onlyUsers(userContentsHandler(r.handleClearNotifs)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
+	//
+	// REQUEST TO FOLLOW USER
+	// matches POST "/follow?username={username}"
+	root.HandleFunc("/follow", r.onlyUsers(userContentsHandler(r.handleFollow)))
+	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
+	//
+	// REQUEST TO UNFOLLOW USER
+	// matches POST "/unfollow?username={username}"
+	root.HandleFunc("/unfollow", r.onlyUsers(userContentsHandler(r.handleUnfollow)))
+	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
 	//
 	// SECTION LEVEL HANDLERS
 	//
@@ -126,8 +136,8 @@ func (r *Router) SetupRoutes() {
 	// GET SUBCOMMENTS OF A COMMENT IN JSON FORMAT
 	// matches GET "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}"
 	comments.HandleFunc("/", r.handleGetSubcomments).Methods("GET")
-	.Headers("X-Requested-With", "XMLHttpRequest").Queries("c_id", "{c_id:[a-zA-Z0-9]+}",
-	 "offset", "{offset:[0-9]+}")
+	.Headers("X-Requested-With", "XMLHttpRequest")
+	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "offset", "{offset:[0-9]+}")
 	//
 	// POST A COMMENT IN A THREAD
 	// matches POST "/{section}/{thread}/comment/"
@@ -153,7 +163,7 @@ func (r *Router) SetupRoutes() {
 	//
 	// POST AN UPVOTE TO A SUBCOMMENT
 	// matches POST "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}"
-	upvotes.HandleFunc("/", 
-		r.onlyUsers(userContentsHandler(r.handleUpvoteSubcomment))).Methods("POST")
-		.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
+	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteSubcomment)))
+	.Methods("POST")
+	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 }
