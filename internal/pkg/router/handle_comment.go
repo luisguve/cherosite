@@ -147,7 +147,7 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 			},
 		},
 	}
-	stream, err := r.crudClient.Comment(context.Background(), postCommentRequest)
+	err = postComment(postCommentRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -169,7 +169,89 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		http.Error(w, errInternalFailure.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
 
+// Post Subcomment "/{section}/{thread}/comment/?c_id={c_id}" handler. It handles the
+// submit of a subcomment on a given comment on a given thread on a given section
+// through POSTing a form.
+// As opposed to creating a thread, when posting a subcomment it is optional to submit
+// a ft_file, and a title isn't submitted. Also note that a user is allowed to create
+// one single thread per day, but can comment multiple times on different comments.
+// It returns "OK" on success, or an error in case of the following:
+// - invalid section, thread or comment -> 404 NOT_FOUND
+// - file greater than 64mb -------------> FILE_TOO_BIG
+// - corrupted file ---------------------> INVALID_FILE
+// - file type other than image and gif -> INVALID_FILE_TYPE
+// - file creation/write failure --------> CANT_WRITE_FILE
+// - missing content (empty input) ------> NO_CONTENT
+// - user unathenticated ----------------> USER_UNREGISTERED
+// - network failures -------------------> INTERNAL_FAILURE
+func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter, 
+	r *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+	// Get ft_file and save it to the disk with a unique, random name.
+	filePath, err, status := getAndSaveFile(req, "ft_file")
+	if err != nil {
+		// It's ok to get an errMissingFile, but if it's not such an error, it is
+		// an internal failure.
+		if !errors.Is(err, errMissingFile) {
+			http.Error(w, err.Error(), status)
+			return
+		}
+	}
+	postCommentRequest := &pb.CommentRequest{
+		Data:           &pb.BasicContentData{
+			PublishDate: time.Now().Unix(),
+			Content:     content,
+			FtFile:      filePath,
+			AuthorId:    userId,
+		},
+		ContentContext: &pb.Context.Comment{
+			CommentId: comment,
+			ThreadCtx: &pb.Context.Thread{
+				ThreadId: thread,
+				SectionCtx: &pb.Context.Section{
+					SectionName: section,
+				},
+			},
+		},
+	}
+	err = postComment(postCommentRequest)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// section, thread or comment not found
+				http.NotFound(w, r)
+				return
+			case codes.Unauthenticated:
+				log.Println("This user is unregistered")
+				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown code: %v - %s\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request to Comment: %v\n", err)
+		http.Error(w, errInternalFailure.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+func (r *Router) postComment (postCommentRequest *pb.CommentRequest) error {
+	stream, err := r.crudClient.Comment(context.Background(), postCommentRequest)
+	if err != nil {
+		return err
+	}
 	// Continuously receive notifications and the user ids they are for.
 	for {
 		notifyUser, err := stream.Recv()
@@ -185,6 +267,5 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		// send notification
 		go r.hub.Broadcast(userId, notification)
 	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	return nil
 }
