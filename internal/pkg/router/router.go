@@ -131,8 +131,9 @@ func (r *Router) SetupRoutes() {
 	//
 	// POST A SUBCOMMENT
 	// matches POST "/{section}/{thread}/comment/?c_id={c_id}"
-	comments.HandleFunc("/", r.handlePostSubcomment).Methods("POST").Queries("c_id",
-		"{c_id:[a-zA-Z0-9]+}")
+	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostSubcomment)))
+	.Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
+	// UPVOTES
 	upvotes := thread.PathPrefix("/upvote").Subrouter()
 	//
 	// POST AN UPVOTE TO A THREAD
