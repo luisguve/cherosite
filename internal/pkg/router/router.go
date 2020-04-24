@@ -82,7 +82,7 @@ func (r *Router) SetupRoutes() {
 	//
 	// GET REQUEST TO READ ALL NOTIFICATIONS FROM THIS USER
 	// matches GET "/readall"
-	root.HandleFunc("/readall", r.onlyUsers(userContentsHandler(r.handleReadAll)))
+	root.HandleFunc("/readnotifs", r.onlyUsers(userContentsHandler(r.handleReadNotifs)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// SECTION LEVEL HANDLERS
