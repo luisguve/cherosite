@@ -147,7 +147,7 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 			},
 		},
 	}
-	err = postComment(postCommentRequest)
+	err = r.postComment(postCommentRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -221,7 +221,7 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 			},
 		},
 	}
-	err = postComment(postCommentRequest)
+	err = r.postComment(postCommentRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
