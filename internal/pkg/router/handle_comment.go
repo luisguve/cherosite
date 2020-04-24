@@ -4,6 +4,7 @@ import(
 	"log"
 	"errors"
 	"net/http"
+	"strconv"
 	"context"
 	"encoding/json"
 
@@ -25,7 +26,7 @@ import(
 // - network or encoding failures -----------------------------> INTERNAL_FAILURE
 func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	offset, err := strconv.Atoi(vars["offset"], 10)
+	offset, err := strconv.Atoi(vars["offset"])
 	if err != nil || offset < 0 {
 		log.Printf("offset (%v) is not valid\n", offset)
 		http.Error(w, "INVALID_OFFSET", http.StatusBadRequest)
