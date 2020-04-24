@@ -185,6 +185,24 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	return newPath, nil, http.StatusOK
 }
 
+func (r *Router) broadcastNotifs(stream &pb.CrudCheropatilla_UpvoteClient) {
+	// Continuously receive notifications and the user ids they are for.
+	for {
+		notifyUser, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Printf("Error receiving response from stream: %v\n", err)
+			break
+		}
+		userId := notifyUser.userId
+		notification := notifyUser.Notification
+		// send notification
+		go r.hub.Broadcast(userId, notification)
+	}
+}
+
 // currentUser returns a string containing the current user id or an empty 
 // string if the user is not logged in.
 func (r *Router) currentUser(req *http.Request) string {

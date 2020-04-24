@@ -204,7 +204,7 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 		},
 	}
 
-	err = r.postUpvote(request)
+	stream, err := r.crudClient.Upvote(request)
 
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
@@ -226,15 +226,18 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
 	}
+	// Call broadcastNotifs in a separate goroutine to collect the garbage in this
+	// handler
+	go r.broadcastNotifs(stream)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. It returns OK on 
 // success or an error in case of the following:
-// - invalid section name or thread id -> 404 NOT_FOUND
-// - section or thread are unavailable -> SECTION_UNAVAILABLE
-// - network failures ------------------> INTERNAL_FAILURE
+// - invalid section name, thread id or comment -> 404 NOT_FOUND
+// - section or thread are unavailable ----------> SECTION_UNAVAILABLE
+// - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter, 
 	r *http.Request) {
 	vars := mux.Vars(req)
@@ -254,7 +257,7 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 			},
 		},
 	}
-	err = r.postUpvote(request)
+	stream, err := r.crudClient.Upvote(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -275,30 +278,11 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
 	}
+	// Call broadcastNotifs in a separate goroutine to collect the garbage in this
+	// handler
+	go r.broadcastNotifs(stream)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func (r *Router) postUpvote(postUpvoteRequest *pb.UpvoteRequest) error {
-	stream, err := r.crudClient.Upvote(context.Background(), request)
-	if err != nil {
-		return err
-	}
 
-	// Continuously receive notifications and the user ids they are for.
-	for {
-		notifyUser, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Printf("Error receiving response from stream: %v\n", err)
-			break
-		}
-		userId := notifyUser.userId
-		notification := notifyUser.Notification
-		// send notification
-		go r.hub.Broadcast(userId, notification)
-	}
-	return nil
-}
