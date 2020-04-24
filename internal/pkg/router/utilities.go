@@ -185,6 +185,45 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	return newPath, nil, http.StatusOK
 }
 
+// handleUpvote is an utility method to help reduce the repetition of similar code in 
+// other handlers that perform the same operation, in this case, an upvote, 
+// since all of the handlers that are called in an upvote event share the same
+// upvote request object. The duties of returning a response to the client are also
+// delegated to postUpvote, which returns OK on success or an error in case of the 
+// following:
+// - invalid section name, thread id or comment -> 404 NOT_FOUND
+// - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
+// - network failures ---------------------------> INTERNAL_FAILURE
+func (r *Router) handleUpvote(w http.ResponseWriter, r *http.Request, 
+	upvoteRequest *pb.UpvoteRequest) {
+	stream, err := r.crudClient.Upvote(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// section or thread not found
+				http.NotFound(w, r)
+				return
+			case codes.Unavailable:
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	// Call broadcastNotifs in a separate goroutine to collect the garbage in this
+	// handler
+	go r.broadcastNotifs(stream)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 func (r *Router) broadcastNotifs(stream &pb.CrudCheropatilla_UpvoteClient) {
 	// Continuously receive notifications and the user ids they are for.
 	for {

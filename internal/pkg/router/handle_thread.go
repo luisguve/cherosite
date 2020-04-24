@@ -183,8 +183,9 @@ func (r *Router) handleRecycleComments (w http.ResponseWriter, r *http.Request){
 	}
 }
 
-// Post Upvote "/{section}/{thread}/upvote/" handler. It returns OK on success or an
-// error in case of the following:
+// Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of 
+// submitting the upvote to the method handleUpvote, which returns OK on success or 
+// an error in case of the following:
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network failures ------------------> INTERNAL_FAILURE
@@ -204,85 +205,5 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 		},
 	}
 
-	stream, err := r.crudClient.Upvote(request)
-
-	if err != nil {
-		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code() {
-			case codes.NotFound:
-				// section or thread not found
-				http.NotFound(w, r)
-				return
-			case codes.Unavailable:
-				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
-				return
-			default:
-				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
-			}
-		}
-		log.Printf("Could not send request: %v\n", err)
-		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-		return
-	}
-	// Call broadcastNotifs in a separate goroutine to collect the garbage in this
-	// handler
-	go r.broadcastNotifs(stream)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	r.handleUpvote(w, r, request)
 }
-
-// Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. It returns OK on 
-// success or an error in case of the following:
-// - invalid section name, thread id or comment -> 404 NOT_FOUND
-// - section or thread are unavailable ----------> SECTION_UNAVAILABLE
-// - network failures ---------------------------> INTERNAL_FAILURE
-func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter, 
-	r *http.Request) {
-	vars := mux.Vars(req)
-	section := vars["section"]
-	thread := vars["thread"]
-	comment := vars["c_id"]
-
-	request := &pb.UpvoteRequest{
-		UserId: userId,
-		ContentContext: &pb.Context.Comment{
-			CommentId: comment,
-			ThreadCtx: &pb.Context.Thread{
-				ThreadId: thread,
-				SectionCtx: &pb.Context.Section{
-					SectionName: section,
-				},
-			},
-		},
-	}
-	stream, err := r.crudClient.Upvote(context.Background(), request)
-	if err != nil {
-		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code() {
-			case codes.NotFound:
-				// section or thread not found
-				http.NotFound(w, r)
-				return
-			case codes.Unavailable:
-				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
-				return
-			default:
-				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
-			}
-		}
-		log.Printf("Could not send request: %v\n", err)
-		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-		return
-	}
-	// Call broadcastNotifs in a separate goroutine to collect the garbage in this
-	// handler
-	go r.broadcastNotifs(stream)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
-}
-
-

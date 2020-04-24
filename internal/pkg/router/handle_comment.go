@@ -269,3 +269,65 @@ func (r *Router) postComment (postCommentRequest *pb.CommentRequest) error {
 	}
 	return nil
 }
+
+// Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. 
+// It leverages the operation of submitting the upvote to the method handleUpvote
+// which returns OK on success or an error in case of the following:
+// - invalid section name, thread id or comment -> 404 NOT_FOUND
+// - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
+// - network failures ---------------------------> INTERNAL_FAILURE
+func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter, 
+	r *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+
+	request := &pb.UpvoteRequest{
+		UserId: userId,
+		ContentContext: &pb.Context.Comment{
+			CommentId: comment,
+			ThreadCtx: &pb.Context.Thread{
+				ThreadId: thread,
+				SectionCtx: &pb.Context.Section{
+					SectionName: section,
+				},
+			},
+		},
+	}
+
+	r.handleUpvote(w, r, request)
+}
+
+// Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}" handler.
+// It leverages the operation of submitting the upvote to the method handleUpvote,
+// which returns OK on success or an error in case of the following:
+// - invalid section name, thread id or comment -> 404 NOT_FOUND
+// - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
+// - network failures ---------------------------> INTERNAL_FAILURE
+func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter, 
+	r *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+	subcomment := vars["sc_id"]
+
+	request := &pb.Request{
+		UserId: userId,
+		ContentContext: &pb.Context.Subcomment{
+			SubcommentId: subcomment,
+			CommentCtx: &pb.Context.Comment{
+				CommentId: comment,
+				ThreadCtx: &pb.Context.Thread{
+					ThreadId: thread,
+					SectionCtx: &pb.Context.Section{
+						SectionName: section,
+					},
+				},
+			},
+		},
+	}
+
+	r.handleUpvote(w, r, request)
+}
