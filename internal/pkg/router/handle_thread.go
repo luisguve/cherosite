@@ -116,7 +116,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 // - no more comments are available ----> OUT_OF_RANGE
 // - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network or encoding failures ------> INTERNAL_FAILURE
-func (r *Router) handleRecycleComments (w http.ResponseWriter, r *http.Request){
+func (r *Router) handleRecycleComments (w http.ResponseWriter, req *http.Request){
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
@@ -190,7 +190,7 @@ func (r *Router) handleRecycleComments (w http.ResponseWriter, r *http.Request){
 // - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network failures ------------------> INTERNAL_FAILURE
 func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter, 
-	r *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]

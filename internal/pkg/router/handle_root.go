@@ -21,7 +21,7 @@ import(
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
 // - template rendering ---> TEMPLATE_ERROR
-func (r *Router) handleRoot(userId string, w http.ResponseWriter, r *http.Request) {
+func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Request) {
 	userData, err := r.crudClient.GetFullUserData(context.Background(), 
 	&pb.GetFullUserDataRequest{UserId: userId})
 	if err != nil {
@@ -133,7 +133,8 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, r *http.Reques
 // - user is not following other users -> NO_USERS_FOLLOWING
 // - there is no more feed available ---> NO_NEW_FEED
 // - network or encoding failures ------> INTERNAL_FAILURE
-func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter, req *http.Request) {
+func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter, 
+	req *http.Request) {
 	userData, err := r.crudClient.GetFullUserData(context.Background(), 
 	&pb.GetFullUserDataRequest{UserId: userId})
 	if err != nil {

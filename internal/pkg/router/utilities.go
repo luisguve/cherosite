@@ -194,7 +194,7 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
-func (r *Router) handleUpvote(w http.ResponseWriter, r *http.Request, 
+func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request, 
 	upvoteRequest *pb.UpvoteRequest) {
 	stream, err := r.crudClient.Upvote(context.Background(), request)
 	if err != nil {

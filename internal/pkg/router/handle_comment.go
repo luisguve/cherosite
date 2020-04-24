@@ -189,7 +189,7 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 // - user unathenticated ----------------> USER_UNREGISTERED
 // - network failures -------------------> INTERNAL_FAILURE
 func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter, 
-	r *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
@@ -277,7 +277,7 @@ func (r *Router) postComment (postCommentRequest *pb.CommentRequest) error {
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter, 
-	r *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
@@ -306,7 +306,7 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter, 
-	r *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
