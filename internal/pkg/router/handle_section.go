@@ -31,7 +31,7 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 		Pattern:        templates.FeedPattern,
 		// Do not discard any thread
 		DiscardIds:     []string{},
-		ContentContext: &pb.Context.Section{
+		ContentContext: &pb.Context_Section{
 			SectionName: section,
 		},
 	}
@@ -131,7 +131,7 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 			FtFile:      filePath,
 			AuthorId:    userId,
 		},
-		SectionCtx: &pb.Context.Section{
+		SectionCtx: &pb.Context_Section{
 			SectionName: section,
 		},
 	}
@@ -184,7 +184,7 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 	contentPattern := &pb.ContentPattern{
 		Pattern:        templates.FeedPattern,
 		DiscardIds:     discard.SectionThreads[section],
-		ContentContext: &pb.Context.Section{
+		ContentContext: &pb.Context_Section{
 			SectionName: section,
 		},
 	}

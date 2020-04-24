@@ -64,9 +64,11 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 		Pattern:        templates.FeedPattern,
 		// Do not discard any comment
 		DiscardIds:     []string{},
-		ContentContext: &pb.Context.Thread{
-			SectionCtx: &pb.Context.Section{SectionName: section},
+		ContentContext: &pb.Context_Thread{
 			ThreadId:   thread,
+			SectionCtx: &pb.Context_Section{
+				SectionName: section
+			},
 		},
 	}
 	feed := templates.FeedContent{}
@@ -129,9 +131,9 @@ func (r *Router) handleRecycleComments (w http.ResponseWriter, req *http.Request
 		Pattern:        templates.FeedPattern,
 		// Discard previous comments
 		DiscardIds:     discard.ThreadComments[thread],
-		ContentContext: &pb.Context.Thread{
+		ContentContext: &pb.Context_Thread{
 			ThreadId:   thread,
-			SectionCtx: &pb.Context.Section{
+			SectionCtx: &pb.Context_Section{
 				SectionName: section,
 			},
 		},
@@ -197,9 +199,9 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 
 	request := &pb.UpvoteRequest{
 		UserId: userId,
-		ContentContext: &pb.Context.Thread{
+		ContentContext: &pb.Context_Thread{
 			ThreadId: thread,
-			SectionCtx: &pb.Context.Section{
+			SectionCtx: &pb.Context_Section{
 				SectionName: section,
 			},
 		},

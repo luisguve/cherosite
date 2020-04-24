@@ -37,11 +37,11 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 
 	subcommentsReq := &pb.GetSubcommentsRequest{
 		Offset: uint32(offset),
-		CommentCtx: &pb.Context.Comment{
+		CommentCtx: &pb.Context_Comment{
 			CommentId: commentId, 
-			ThreadCtx: &pb.Context.Thread{
+			ThreadCtx: &pb.Context_Thread{
 				ThreadId: thread,
-				SectionCtx: &pb.Context.Section{
+				SectionCtx: &pb.Context_Section{
 					SectionName: section,
 				},
 			},
@@ -140,9 +140,9 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 			FtFile:      filePath,
 			AuthorId:    userId,
 		},
-		ContentContext: &pb.Context.Thread{
+		ContentContext: &pb.Context_Thread{
 			ThreadId: thread,
-			SectionCtx: &pb.Context.Section{
+			SectionCtx: &pb.Context_Section{
 				SectionName: section,
 			},
 		},
@@ -211,11 +211,11 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 			FtFile:      filePath,
 			AuthorId:    userId,
 		},
-		ContentContext: &pb.Context.Comment{
+		ContentContext: &pb.Context_Comment{
 			CommentId: comment,
-			ThreadCtx: &pb.Context.Thread{
+			ThreadCtx: &pb.Context_Thread{
 				ThreadId: thread,
-				SectionCtx: &pb.Context.Section{
+				SectionCtx: &pb.Context_Section{
 					SectionName: section,
 				},
 			},
@@ -285,11 +285,11 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 
 	request := &pb.UpvoteRequest{
 		UserId: userId,
-		ContentContext: &pb.Context.Comment{
+		ContentContext: &pb.Context_Comment{
 			CommentId: comment,
-			ThreadCtx: &pb.Context.Thread{
+			ThreadCtx: &pb.Context_Thread{
 				ThreadId: thread,
-				SectionCtx: &pb.Context.Section{
+				SectionCtx: &pb.Context_Section{
 					SectionName: section,
 				},
 			},
@@ -315,13 +315,13 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 
 	request := &pb.Request{
 		UserId: userId,
-		ContentContext: &pb.Context.Subcomment{
+		ContentContext: &pb.Context_Subcomment{
 			SubcommentId: subcomment,
-			CommentCtx: &pb.Context.Comment{
+			CommentCtx: &pb.Context_Comment{
 				CommentId: comment,
-				ThreadCtx: &pb.Context.Thread{
+				ThreadCtx: &pb.Context_Thread{
 					ThreadId: thread,
-					SectionCtx: &pb.Context.Section{
+					SectionCtx: &pb.Context_Section{
 						SectionName: section,
 					},
 				},

@@ -92,7 +92,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 			Pattern:        templates.FeedPattern,
 			// Do not discard any thread
 			DiscardIds:     []string{},
-			ContentContext: &pb.Context.Feed{
+			ContentContext: &pb.Context_Feed{
 				UserIds: userData.FollowingIds,
 			},
 		}
@@ -177,7 +177,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	contentPattern := &pb.ContentPattern{
 		Pattern:        templates.FeedPattern,
 		DiscardIds:     discard.FeedThreads,
-		ContentContext: &pb.Context.Feed{
+		ContentContext: &pb.Context_Feed{
 			UserIds: userData.FollowingIds,
 		},
 	}
