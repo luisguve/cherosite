@@ -182,3 +182,74 @@ func (r *Router) handleRecycleComments (w http.ResponseWriter, r *http.Request){
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
 }
+
+// Post Upvote "/{section}/{thread}/upvote/" handler. It returns OK on success or an
+// error in case of the following:
+// - invalid section name or thread id -> 404 NOT_FOUND
+// - section or thread are unavailable -> SECTION_UNAVAILABLE
+// - network failures ------------------> INTERNAL_FAILURE
+func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter, 
+	r *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+
+	request := &pb.UpvoteRequest{
+		UserId: userId,
+		ContentContext: &pb.Context.Thread{
+			ThreadId: thread,
+			SectionCtx: &pb.Context.Section{
+				SectionName: section,
+			},
+		},
+	}
+
+	err = r.postUpvote(request)
+
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// section or thread not found
+				http.NotFound(w, r)
+				return
+			case codes.Unavailable:
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+func (r *Router) postUpvote(postUpvoteRequest *pb.UpvoteRequest) error {
+	stream, err := r.crudClient.Upvote(context.Background(), request)
+	if err != nil {
+		return err
+	}
+
+	// Continuously receive notifications and the user ids they are for.
+	for {
+		notifyUser, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Printf("Error receiving response from stream: %v\n", err)
+			break
+		}
+		userId := notifyUser.userId
+		notification := notifyUser.Notification
+		// send notification
+		go r.hub.Broadcast(userId, notification)
+	}
+	return nil
+}
