@@ -230,6 +230,55 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 	w.Write([]byte("OK"))
 }
 
+// Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. It returns OK on 
+// success or an error in case of the following:
+// - invalid section name or thread id -> 404 NOT_FOUND
+// - section or thread are unavailable -> SECTION_UNAVAILABLE
+// - network failures ------------------> INTERNAL_FAILURE
+func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter, 
+	r *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+
+	request := &pb.UpvoteRequest{
+		UserId: userId,
+		ContentContext: &pb.Context.Comment{
+			CommentId: comment,
+			ThreadCtx: &pb.Context.Thread{
+				ThreadId: thread,
+				SectionCtx: &pb.Context.Section{
+					SectionName: section,
+				},
+			},
+		},
+	}
+	err = r.postUpvote(request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// section or thread not found
+				http.NotFound(w, r)
+				return
+			case codes.Unavailable:
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 func (r *Router) postUpvote(postUpvoteRequest *pb.UpvoteRequest) error {
 	stream, err := r.crudClient.Upvote(context.Background(), request)
 	if err != nil {
