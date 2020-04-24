@@ -81,8 +81,13 @@ func (r *Router) SetupRoutes() {
 		.headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// GET REQUEST TO READ ALL NOTIFICATIONS FROM THIS USER
-	// matches GET "/readall"
+	// matches GET "/readnotifs"
 	root.HandleFunc("/readnotifs", r.onlyUsers(userContentsHandler(r.handleReadNotifs)))
+	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
+	//
+	// GET REQUEST TO CLEAR ALL NOTIFICATIONS FROM THIS USER
+	// matches GET "/clearnotifs"
+	root.HandleFunc("/clearnotifs", r.onlyUsers(userContentsHandler(r.handleClearNotifs)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// SECTION LEVEL HANDLERS

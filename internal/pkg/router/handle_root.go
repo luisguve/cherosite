@@ -341,3 +341,33 @@ func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
+
+// Clear Notifications "/clearnotifs" handler. It returns OK on success or an error
+// in case of the following:
+// - user is unregistered -> USER_UNREGISTERED
+// - network failures -----> INTERNAL_FAILURE
+func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+	request := &pb.ClearNotifsRequest {
+		UserId: userId,
+	}
+	_, err := r.crudClient.ClearNotifs(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.Unauthenticated:
+				log.Println(resErr.Message())
+				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				return
+			default:
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
