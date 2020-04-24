@@ -114,9 +114,14 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 
 	// update session only if there is feed.
 	if len(data.Feed.ContentIds) > 0 {
-		r.updateDiscardIdsSession(req, w, data.Feed.ContentIds, 
-			func(discard *pagination.DiscardIds, ids []string){
-			discard.FeedThreads = ids
+		// make a map holding all of the content ids on its only key "user_feed"
+		feedIds := map[string][]string{
+			"user_feed": data.Feed.ContentIds,
+		}
+		// Update session
+		r.updateDiscardIdsSession(req, w, feedIds, 
+			func(discard *pagination.DiscardIds, feedIds map[string][]string){
+			discard.FeedThreads = feedIds["user_feed"]
 		})
 	}
 	// render dashboard
@@ -186,10 +191,14 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 		w.Write([]byte("NO_NEW_FEED"))
 		return
 	}
+	// make a map holding all of the content ids on its only key "user_feed"
+	feedIds := map[string][]string{
+		"user_feed": feed.ContentIds,
+	}
 	// Update session
-	r.updateDiscardIdsSession(req, w, feed.ContentIds, 
-		func(discard *pagination.DiscardIds, ids []string) {
-			discard.FeedThreads = append(discard.FeedThreads, ids...)
+	r.updateDiscardIdsSession(req, w, feedIds, 
+		func(discard *pagination.DiscardIds, feedIds map[string][]string) {
+			discard.FeedThreads = append(discard.FeedThreads, feedIds["user_feed"]...)
 		})
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
@@ -206,7 +215,7 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 	contentPattern := &pb.GeneralPattern{
 		Pattern:    templates.FeedPattern,
 		// Do not discard any thread
-		DiscardIds: map[string][]string{{}},
+		DiscardIds: map[string]*pb.GeneralPattern_Ids{},
 	}
 	feed, err := r.recycleGeneral(contentPattern)
 	if err != nil {
@@ -265,10 +274,20 @@ func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	discard := getDiscardIds(session)
+	generalIds := make(map[string]*pb.GeneralPattern_Ids)
+
+	// discard.GeneralThreads holds a map[string][]string, but pb.GeneralPattern
+	// requires a map[string]*pb.GeneralPattern.
+	// pb.GeneralPattern holds the []string in its Ids field.
+	for section, ids := range discard.GeneralThreads {
+		generalIds[section] = &pb.GeneralPattern_Ids {
+			Ids: ids,
+		}
+	}
 	contentPattern := &pb.GeneralPattern{
 		Pattern:    templates.FeedPattern,
 		// Discard threads previously seen
-		DiscardIds: discard.GeneralThreads,
+		DiscardIds: generalIds,
 	}
 	feed, err := r.recycleGeneral(contentPattern)
 	if err != nil {
