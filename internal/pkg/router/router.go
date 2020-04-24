@@ -100,6 +100,12 @@ func (r *Router) SetupRoutes() {
 	root.HandleFunc("/unfollow", r.onlyUsers(userContentsHandler(r.handleUnfollow)))
 	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
 	//
+	// REQUEST TO GET USERS INFO (FOLLOWING OR FOLLOWERS)
+	// matches GET "/viewusers?context={context}&userid={userid}"
+	root.HandleFunc("/viewusers", r.handleViewUsers).Methods("GET")
+	.Queries("context", "{context:[a-z]+}", "userid", "{userid:[a-zA-Z0-9]+}")
+	.Headers("X-Requested-With", "XMLHttpRequest")
+	//
 	// SECTION LEVEL HANDLERS
 	//
 	section := root.PathPrefix("/{section}").Subrouter()
