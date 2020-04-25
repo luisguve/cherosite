@@ -106,6 +106,29 @@ func (r *Router) SetupRoutes() {
 	.Queries("context", "{context:[a-z]+}", "userid", "{userid:[a-zA-Z0-9]+}")
 	.Headers("X-Requested-With", "XMLHttpRequest")
 	//
+	// REQUEST TO VIEW MY PROFILE PAGE
+	// matches GET "/myprofile"
+	root.HandleFunc("/myprofile", r.onlyUsers(userContentsHandler(r.handleMyProfile)))
+	.Methods("GET")
+	//
+	// REQUEST TO UPDATE MY PROFILE PAGE
+	// matches PUT "/myprofile/update"
+	root.HandleFunc("/myprofile/update", 
+	r.onlyUsers(userContentsHandler(r.handleUpdateMyProfile))).Methods("PUT")
+	//
+	// REQUEST TO VIEW USER PROFILE
+	// matches GET "/profile?username={username}"
+	root.HandleFunc("/profile", r.handleViewUserProfile).Methods("GET")
+	.Queries("username", "{username:[a-zA-Z0-9]+}")
+	//
+	// REQUEST TO POST USER CREDENTIALS
+	// matches POST "/login"
+	root.HandleFunc("/login", r.handleLogin).Methods("POST")
+	//
+	// REQUEST TO POST USER DATA FOR SIGNING IN
+	// matches POST "/signin"
+	root.HandleFunc("/signin", r.handleSignin).Methods("POST")
+	//
 	// SECTION LEVEL HANDLERS
 	//
 	section := root.PathPrefix("/{section}").Subrouter()
