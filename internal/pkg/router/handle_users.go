@@ -14,7 +14,8 @@ import(
 	pb "github.com/luisguve/cheropatilla/internal/protogen/cheropatillapb"
 )
 
-// Read Notifications "/readnotifs" handler. It returns OK on success or an error
+// Read Notifications "/readnotifs" handler. It moves the unread notifications of 
+// the current user to the read notifications and returns OK on success or an error 
 // in case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
@@ -44,8 +45,9 @@ func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 	w.Write([]byte("OK"))
 }
 
-// Clear Notifications "/clearnotifs" handler. It returns OK on success or an error
-// in case of the following:
+// Clear Notifications "/clearnotifs" handler. It deletes both read and unread 
+// notifications of the current user and returns OK on success or an error in 
+// case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
 func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter, 
@@ -74,7 +76,8 @@ func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter,
 	w.Write([]byte("OK"))
 }
 
-// Follow User "/follow?username={username}" handler. It returns OK on success or an
+// Follow User "/follow?username={username}" handler. It updates the current user
+// to follow the user with the given username and returns OK on success or an
 // error in case of the following:
 // - username not found ---> 404 NOT_FOUND
 // - user is unregistered -> USER_UNREGISTERED
@@ -109,8 +112,9 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 	w.Write([]byte("OK"))
 }
 
-// Unfollow User "/unfollow?username={username}" handler. It returns OK on success or 
-// an error in case of the following:
+// Unfollow User "/unfollow?username={username}" handler. It updates the current user
+// to unfollow the user with the given username and returns OK on success or an
+// error in case of the following:
 // - username not found ---> 404 NOT_FOUND
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
@@ -146,10 +150,10 @@ func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.
 
 // View Users "/viewusers" handler. It returns a list of user data containing basic
 // info in JSON format. It may return an error in case of the following:
-// - context other than "followers" or "following" ----> INVALID CONTEXT
-// - negative or non-number offset query parameter ----> INVALID_OFFSET
-// - offset is out of range; there are not more users -> OFFSET_OOR
-// - network or encoding failures ---------------------> INTERNAL_FAILURE
+// - context other than "followers" or "following" ---> INVALID CONTEXT
+// - negative or non-number offset query parameter ---> INVALID_OFFSET
+// - offset is out of range; there are no more users -> OFFSET_OOR
+// - network or encoding failures --------------------> INTERNAL_FAILURE
 func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	context := strings.ToLower(vars["context"])
