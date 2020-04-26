@@ -9,7 +9,7 @@ type UserInfo struct {
 	Username        string
 	PicUrl          string
 	About           string
-	LastTimeCreated uint64
+	LastTimeCreated int64
 }
 
 type DashboardView struct {

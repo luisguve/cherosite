@@ -343,7 +343,7 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 			Username:        userData.Username,
 			PicUrl:          userData.PicUrl,
 			About:           userData.About,
-			LastTimeCreated: userData.LastTimeCreated,
+			LastTimeCreated: userData.LastTimeCreated.Seconds,
 		},
 		ThreadsCreated: threadsCreated.Threads,
 		Following:      following,
