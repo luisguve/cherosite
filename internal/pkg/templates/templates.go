@@ -4,6 +4,14 @@ import(
 	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
 )
 
+type UserInfo struct {
+	Alias           string
+	Username        string
+	PicUrl          string
+	About           string
+	LastTimeCreated uint64
+}
+
 type DashboardView struct {
 	FullUserData   *pb.FullUserData `json="user_data"`
 	ThreadsCreated []*pb.FullContentData `json="threads_created"`
@@ -14,7 +22,7 @@ type DashboardView struct {
 }
 
 type ProfileView struct {
-	FullUserData   *pb.ViewUserResponse `json="user_data"`
+	BasicData       UserInfo
 	ThreadsCreated []*pb.FullContentData `json="threads_created"`
 	Following      uint32 `json="following"`
 	Followers      uint32 `json="followers"`
