@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Patilla profile - {{.BasicData.Alias}} (@{{.BasicData.Username}})</title>
+</head>
+<body>
+	{{ partial "header.html" .Username }}
+	{{ with .BasicData}}
+	<div>
+		<img src="{{.PicUrl}}"><p>{{.Alias}} (@{{.Username}})</p>
+		<p>Following: {{$.Following}}</p>
+		<p>Followers: {{$.Followers}}</p>
+	</div>
+	<div>
+		<p>{{.About}}</p>
+		{{if .LastTimeCreated > 0}}<p>Last thread created: {{.LastTimeCreated}}</p>{{end}}
+	</div>
+	{{ end }}
+	{{ range ThreadsCreated }}
+		<article>
+			<a href="{{.Permalink}}">
+				<h2>{{.BasicContentData.Title}}</h2>
+				<h6>Section: {{.Section}}</h6>
+				<p>{{.BasicContentData.Content}}</p>
+				<img src="{{.BasicContentData.FtFile}}">
+				<span>LAST UPDATED: {{.Updated.Seconds}}</span>
+				<footer>
+					<span>Topvotes: {{.Topvotes}}</span>
+					<span>Replies: {{.ThreadRelated.Replies}}</span>
+					<span></span>
+				</footer>
+			</a>
+		</article>
+		</hr>
+	{{ end }}
+</body>
+</html>

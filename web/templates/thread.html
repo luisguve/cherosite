@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Patilla thread - {{ .Content.BasicContentData.Title }}</title>
+</head>
+<body>
+	{{ partial "header.html" .Username }}
+	<article>
+		{{ with .Content.BasicContentData }}
+		<h1>{{ .Title }}</h1>
+		<img src="{{ .FtFile }}">
+		<span>Published: {{.PublishDate}}</span>
+		<p>{{ .Content }}</p>
+		{{ end }}
+		<footer>
+			<span>Topvotes: {{.Content.Topvotes}}</span>
+			<span>Replies: {{.Content.ThreadRelated.Replies}}</span>
+		</footer>
+	</article>
+	{{ range .Feed.ContentPattern }}
+		<article>
+		{{ with .Data.BasicContentData }}
+			<p>{{ .Content }}</p>
+			{{ if .FtFile }}
+			<img src="{{.FtFile}}">
+			{{ end }}
+		{{ end }}
+		</article>
+	{{ end }}
+</body>
+</html>
