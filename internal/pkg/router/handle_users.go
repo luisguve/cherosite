@@ -95,7 +95,7 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			case codes.Unauthenticated:
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
@@ -132,7 +132,7 @@ func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			case codes.Unauthenticated:
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
@@ -190,7 +190,7 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 				return
 			case codes.NotFound:
 				// user not found
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			default:
 				log.Printf("Unknown code %v: %v", resErr.Code(), resErr.Message())
@@ -308,7 +308,7 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code(){
 			case codes.NotFound:
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			default:
 				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
