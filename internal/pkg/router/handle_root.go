@@ -81,8 +81,8 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	feed := templates.FeedContent{}
 	data := &templates.DashboardView{
 		FullUserData:   userData,
-		ThreadsCreated: threadsCreated,
-		ThreadsSaved:   threadsSaved,
+		ThreadsCreated: threadsCreated.Threads,
+		ThreadsSaved:   threadsSaved.Threads,
 		Following:      following,
 		Followers:      followers,
 	}
