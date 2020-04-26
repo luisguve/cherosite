@@ -5,6 +5,7 @@ import(
 	"context"
 	"log"
 	"strings"
+	"errors"
 	"strconv"
 	"encoding/json"
 
@@ -178,7 +179,7 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 		Context: context,
 		Offset:  offset,
 	}
-	users, err := r.crudClient(context.Background(), request)
+	users, err := r.crudClient.ViewUsers(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -203,4 +204,227 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Could not encode users: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
+}
+
+// View My Profile "/myprofile" handler. It returns a page containing the current
+// user's personal information. It may return an error in case of the following:
+// - user is unregistered -> USER_UNREGISTERED
+// - network failures -----> INTERNAL_FAILURE
+// - template rendering ---> TEMPLATE_ERROR
+func (r *Router) handleMyProfile(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+	request := &pb.GetBasicUserDataRequest{
+		UserId: userId,
+	}
+	userData, err := r.crudClient.GetBasicUserData(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.Unauthenticated:
+				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	if err = r.templates.ExecuteTemplate(w, "myprofile.html", userData); err != nil {
+		log.Printf("Could not execute template myprofile.html: %v", err)
+		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
+	}
+}
+
+// Update My Profile "/myprofile/update" handler. It updates all of the fields
+// which may be updated in the /myprofile page. It returns OK on success or an error
+// in case of the following:
+// username already in use -> USERNAME_UNAVAILABLE
+// not valid username ------> INVALID_USERNAME
+// network failures --------> INTERNAL_FAILURE
+func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+	alias := req.FormValue("alias")
+	username := req.FormValue("username")
+	description := req.FormValue("description")
+	newPicUrl, err, status := getAndSaveFile(req, "pic_url")
+	if err != nil {
+		// It's ok to get an errMissingFile, but if it's not such an error, it is
+		// an internal failure.
+		if !errors.Is(err, errMissingFile) {
+			http.Error(w, err.Error(), status)
+			return
+		}
+	}
+	request := &pb.UpdateBasicUserDataRequest{
+		Alias:       alias,
+		Username:    username,
+		Description: description,
+		PicUrl:      newPicUrl,
+	}
+	_, err := r.crudClient.UpdateBasicUserData(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code(){
+			case codes.AlreadyExists:
+				http.Error(w, "USERNAME_UNAVAILABLE", http.StatusOK)
+				return
+			case codes.InvalidArgument:
+				http.Error(w, "INVALID_USERNAME", http.StatusBadRequest)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+// View User Profile "/profile/{username}" handler. It returns a page containing
+// a user's basic data, followers, following and threads created. It may return an
+// error in case of the following:
+// - username not found -> 404 NOT_FOUND
+// - network failure ----> INTERNAL_FAILURE
+// - template rendering -> TEMPLATE_ERROR
+func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	username := vars["username"]
+	request := &pb.ViewUserByUsernameRequest{
+		Username: username,
+	}
+	userData, err := r.crudClient.ViewUserByUsername(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code(){
+			case codes.NotFound:
+				http.NotFound(w, r)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	if err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", userData); err != nil {
+		log.Printf("Could not execute template viewuserprofile.html: %v", err)
+		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
+	}
+}
+
+// Login "/login" handler. It returns OK on successful login or an error in case of the 
+// following:
+// - invalid username or password -> 401 UNAUTHORIZED
+// - network failure --------------> INTERNAL_FAILURE
+// - unable to set cookie ---------> COOKIE_ERROR
+func (r *Router) handleLogin(w http.ResponseWriter, req *http.Request) {
+	username := req.FormValue("username")
+	password := req.FormValue("password")
+	request := &pb.LoginRequest{
+		Username: username,
+		Password: password,
+	}
+	res, err := r.crudClient.Login(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.PermissionDenied:
+				http.Error(w, "INVALID_CREDENTIALS", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	// Set session cookie
+	session, _ := r.store.Get(req, "session")
+	session.Values["user_id"] = res.UserId
+	if err := session.Save(req, w); err != nil {
+		log.Printf("Could not save session because... %v\n", err)
+		http.Error(w, "COOKIE_ERROR", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+// Sign in "/signin" handler. It returns OK on successful sign in or an error in case
+// of the following:
+// - email already in use ----> EMAIL_ALREADY_EXISTS
+// - username already in use -> USERNAME_ALREADY_EXISTS
+// - username not valid ------> INVALID_USERNAME
+// - network failure ---------> INTERNAL_FAILURE
+// - unable to set cookie ----> COOKIE_ERROR
+func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
+	email := req.FormValue("email")
+	name := req.FormValue("name")
+	alias := req.FormValue("alias")
+	about := req.FormValue("about")
+	username := req.FormValue("username")
+	password := req.FormValue("password")
+	picUrl, err, status := getAndSaveFile(req, "pic_url")
+	if err != nil {
+		// It's ok to get an errMissingFile, but if it's not such an error, it is
+		// an internal failure.
+		if !errors.Is(err, errMissingFile) {
+			http.Error(w, err.Error(), status)
+			return
+		}
+		picUrl = "/tmp/default.jpg"
+	}
+	userData := &pb.BasicUserData{
+		Email:    email,
+		Name:     name,
+		PicUrl:   picUrl,
+		Username: username,
+		Alias:    alias,
+		About:    about,
+	}
+	res, err := r.crudClient.RegisterUser(userData)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.AlreadyExists:
+				log.Printf(resErr.Message())
+				http.Error(w, resErr.Message(), http.StatusConflict)
+				return
+			case codes.InvalidArgument:
+				http.Error(w, "INVALID_USERNAME", http.StatusBadRequest)
+				return
+			default:
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	// Set session cookie
+	session, _ := r.store.Get(req, "session")
+	session.Values["user_id"] = res.UserId
+	if err := session.Save(req, w); err != nil {
+		log.Printf("Could not save session because... %v\n", err)
+		http.Error(w, "COOKIE_ERROR", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write("OK")
 }
