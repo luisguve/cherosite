@@ -262,6 +262,7 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 		}
 	}
 	request := &pb.UpdateBasicUserDataRequest{
+		UserId:      userId,
 		Alias:       alias,
 		Username:    username,
 		Description: description,
