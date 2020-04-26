@@ -58,7 +58,7 @@ func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.Fe
 			feed.ErrorMsg = errMsg
 			break
 		}
-		feed.ContentPatternResponse = append(feed.ContentPatternResponse, contentRule)
+		feed.ContentPattern = append(feed.ContentPattern, contentRule)
 		feed.ContentIds = append(feed.ContentIds, contentRule.Data.Id)
 	}
 	return feed, err
@@ -89,9 +89,9 @@ func (r *Router) recycleGeneral(contentPattern *pb.GeneralPattern) (templates.Fe
 			feed.ErrorMsg = errMsg
 			break
 		}
-		section := feed.ContentPatternResponse.Data.Section
-		id := feed.ContentPatternResponse.Data.Id
-		feed.ContentPatternResponse = append(feed.ContentPatternResponse, contentRule)
+		section := feed.ContentPattern.Data.Section
+		id := feed.ContentPattern.Data.Id
+		feed.ContentPattern = append(feed.ContentPattern, contentRule)
 		feed.ContentIds[section] = append(feed.ContentIds[section], id)
 	}
 	return feed, err

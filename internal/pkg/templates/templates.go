@@ -53,8 +53,8 @@ type FeedGeneral struct {
 }
 
 type Feed struct {
-	ContentPatternResponse []*pb.ContentRuleResponse `json="content_pattern"`
-	ErrorMsg               string `json="error_message"`
+	ContentPattern []*pb.ContentRuleResponse `json="content_pattern"`
+	ErrorMsg       string `json="error_message"`
 }
 
 type FeedSubcomments struct {
