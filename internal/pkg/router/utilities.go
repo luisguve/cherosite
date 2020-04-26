@@ -186,6 +186,32 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	return newPath, nil, http.StatusOK
 }
 
+func (r *Router) getFullUserData(w http.ResponseWriter, userId string, dst *string) {
+	userData, err := r.crudClient.GetFullUserData(context.Background(), 
+			&pb.GetFullUserDataRequest{UserId: userId})
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				log.Printf("User %s unregistered\n", userId)
+				w.WriteHeader(http.StatusUnauthorized)
+			case codes.Internal:
+				log.Printf("Internal error: %v\n", resErr.Message())
+				w.WriteHeader(http.StatusPartialContent)
+			default:
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
+				resErr.Message())
+				w.WriteHeader(http.StatusPartialContent)
+			}
+		} else {
+			log.Printf("Could not send request: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
+	} else {
+		*dst = userData.BasicUserData.Username
+	}
+}
+
 // handleUpvote is an utility method to help reduce the repetition of similar code in 
 // other handlers that perform the same operation, in this case, an upvote, 
 // since all of the handlers that are called in an upvote event share the same
