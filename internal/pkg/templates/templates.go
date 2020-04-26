@@ -1,7 +1,7 @@
 package templates
 
 import(
-	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
+	pb "github.com/luisguve/cheropatilla/internal/cheropatillapb"
 )
 
 type UserInfo struct {
@@ -57,39 +57,4 @@ type Feed struct {
 type FeedSubcomments struct {
 	Subcomments []*pb.Subcomment `json="subcomments"`
 	ErrorMsg    string `json="error_message"`
-}
-
-var FeedPattern = []*pb.ContentRuleRequest{
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_TOP},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_RELEVANT},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
-	&pb.ContentRuleRequest{Status: pb.ContentStatus_NEW},
 }
