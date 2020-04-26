@@ -17,7 +17,7 @@ type UserInfo struct {
 type DashboardView struct {
 	FullUserData   *pb.FullUserData `json="user_data"`
 	ThreadsCreated []*pb.FullContentData `json="threads_created"`
-	ThreadsSaved   []*pb.FullContentData `json="threads_saved"`
+	ThreadsSaved   []*pb.ThreadData `json="threads_saved"`
 	Following      uint32 `json="following"`
 	Followers      uint32 `json="followers"`
 	Feed           FeedContent `json="feed_content"`

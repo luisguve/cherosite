@@ -321,7 +321,13 @@ message GetThreadsRequest {
 
 // GetThreadsResponse holds a list of full content data of threads requested
 message GetThreadsResponse {
-	repeated FullContentData threads = 1;
+	repeated ThreadData threads = 1;
+}
+
+// ThreadData holds the thread data and the basic data about the author
+message ThreadData {
+	FullContentData Thread = 1;
+	BasicUserData author_data = 2;
 }
 
 // GetThreadRequest holds a single thread id and the section name it belongs to
@@ -329,9 +335,11 @@ message GetThreadRequest {
 	ThreadInfo thread = 1;
 }
 
-// GetThreadResponse holds the full content data of a single thread
+// GetThreadResponse holds the full content data of a single thread and basic data 
+// about the author of the thread.
 message GetThreadResponse {
 	FullContentData thread = 1;
+	BasicUserData author_data = 2;
 }
 
 // GetBasicUsersInfoRequest holds the ids of the users to get their basic info
