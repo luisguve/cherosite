@@ -2,7 +2,7 @@ package router
 
 import(
 	"net/http"
-	"text/template"
+	"html/template"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -47,8 +47,8 @@ func New(t *template.Template, cc *pb.CrudCheropatillaClient, s sessions.Store,
 	}
 }
 
-func (r *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	r.handler.ServeHTTP(w, r)
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.handler.ServeHTTP(w, req)
 }
 
 func (r *Router) SetupRoutes() {
