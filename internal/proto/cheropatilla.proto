@@ -4,8 +4,8 @@ package cheropatillapb;
 
 import "google/protobuf/timestamp.proto";
 
-/* 	BasicContentData is the core data fields related to content (i.e: thread,
-	comment or subcomment) */
+// BasicContentData is the core data fields related to content (i.e: thread,
+// comment or subcomment)
 message BasicContentData {
 	google.protobuf.Timestamp publish_date = 1;
 	string title = 2;
@@ -13,12 +13,11 @@ message BasicContentData {
 	string ft_file = 4;
 	string author_id = 5;
 }
-/*
-	FullContentData holds the entire data structure for contents,
-	including metadata about the content such as how many (and what) 
-	users have topvoted it.
-	This is the format the data will be stored in.
-*/
+
+// FullContentData holds the entire data structure for contents,
+// including metadata about the content such as how many (and what) 
+// users have topvoted it.
+// This is the format the data will be stored in.
 message FullContentData {
 	BasicContentData basic_content_data = 1;
 	// permalink is the URL of this content
@@ -42,10 +41,8 @@ message FullContentData {
 	string id = 9;
 }
 
-/*	
-	ContentInfo holds information about the content (i.e. metadata). The purpose of it 
-	is evaluating the	relevance of contents.
-*/
+// ContentInfo holds information about the content (i.e. metadata). The purpose of it 
+// is evaluating the	relevance of contents.
 message ContentInfo {
 	// interactions is the total number of topvotes + comments that the content has
 	// accummulated.
@@ -76,10 +73,10 @@ message ThreadInfo {
 	string section = 2;
 }
 
-/*
-	BasicUserData holds basic information about an user. This information is intended for
-	succinct data interchange between gRPC server and client on the user registration event.
-*/
+
+// BasicUserData holds basic information about an user. This information 
+// is intended for succinct data interchange between gRPC server and client 
+// on the user registration event.
 message BasicUserData {
 	string email = 1;
 	string name = 2;
@@ -90,10 +87,8 @@ message BasicUserData {
 	string about = 7;
 }
 
-/*
-	FullUserData holds all the information of users. This is the format users will be 
-	stored in.
-*/
+// FullUserData holds all the information of users. This is the format users will 
+// be stored in.
 message FullUserData {
 	BasicUserData basic_user_data = 1;
 	// ids of threads that this user created.
@@ -112,9 +107,8 @@ message FullUserData {
 	repeated Notif read_notifs = 8;
 }
 
-/*
-	Notif is the format in which users get their notifications.
-*/
+
+// Notif is the format in which users get their notifications.
 message Notif {
 	google.protobuf.Timestamp timestamp = 1;
 	// example message: "User1234 and 2 more have commented out your thread"
@@ -142,43 +136,35 @@ message Notif {
 	}
 }
 
-/*
-	NotifyUser maps notifications to users.
-*/
+// NotifyUser maps notifications to users.
 message NotifyUser {
 	string user_id = 1; // receiver
 	Notif notification = 2; // actual message
 }
 
-/*
-	ContentStatus defines the different categories that fits content at a particular time,
-	trying to describe the quality of the content.
-*/
+
+// ContentStatus defines the different categories that fits content at a particular
+// time ,trying to describe the quality of the content.
 enum ContentStatus {
 	NEW = 0;
 	RELEVANT = 1;
 	TOP = 2;
 }
 
-/*
-	ContentRuleResponse holds a piece of content and its current status.
-*/
+
+// ContentRuleResponse holds a piece of content and its current status.
 message ContentRuleResponse {
 	ContentStatus status = 1;
 	FullContentData data = 2;
 }
 
-/*
-	ContentRuleRequest holds the content status for the content it is expecting to get.
-*/
+// ContentRuleRequest holds the content status for the content it is expecting to get.
 message ContentRuleRequest {
 	ContentStatus status = 1;
 }
 
-/*
-	ContentPattern holds an array of ContentRuleRequest (i.e. content status), composing up
-	a pattern of content that's expected to get back.
-*/
+// ContentPattern holds an array of ContentRuleRequest (i.e. content status),
+// composing up a pattern of content that's expected to get back.
 message ContentPattern {
 	repeated ContentRuleRequest pattern = 1;
 	// discard_ids is an array of content ids that must not be returned back, since it's
@@ -192,11 +178,10 @@ message ContentPattern {
 	}
 }
 
-/*
-	GeneralPattern holds an array of ContentRuleRequest (i.e. content status), composing 
-	up a pattern of content that's expected to get back. It is intended for recycling 
-	content from every section.
-*/
+
+// GeneralPattern holds an array of ContentRuleRequest (i.e. content status), composing 
+// up a pattern of content that's expected to get back. It is intended for recycling 
+// content from every section.
 message GeneralPattern {
 	repeated ContentRuleRequest pattern = 1;
 	// discard_ids is a map of section names mapped to content ids that must not be 
@@ -207,10 +192,9 @@ message GeneralPattern {
 	}
 }
 
-/*
-	The Context holds information about the place at which an event occurs or where 
-	content should be retrieved from.
-*/
+
+// The Context holds information about the place at which an event occurs or where 
+// content should be retrieved from.
 message Context {
 	// A Section is the highest level and just has the name of the section.
 	message Section {
@@ -239,9 +223,7 @@ message Context {
 	}
 }
 
-/*
-	UpvoteRequest holds information about the upvote event.
-*/
+// UpvoteRequest holds information about the upvote event.
 message UpvoteRequest {
 	string user_id = 1; // Who is submitting the upvote
 	// The upvote event occurs either in a thread, in a comment or in a subcomment.
@@ -252,9 +234,7 @@ message UpvoteRequest {
 	}
 }
 
-/*
-	CommentRequest holds information about the comment event.
-*/
+// CommentRequest holds information about the comment event.
 message CommentRequest {
 	// A comment has the same basic structure as regular content.
 	BasicContentData data = 1;
@@ -265,9 +245,7 @@ message CommentRequest {
 	}
 }
 
-/*
-	UpdateContentRequest holds information about the comment event.
-*/
+// UpdateContentRequest holds information about the comment event.
 message UpdateContentRequest {
 	// data holds the actual content updated, along with the user id of who's submitting the
 	// updated content. This user id must match the user id of the author of the content.
@@ -280,9 +258,7 @@ message UpdateContentRequest {
 	}
 }
 
-/*
-	DeleteContentRequest holds information about the delete content event.
-*/
+// DeleteContentRequest holds information about the delete content event.
 message DeleteContentRequest {
 	string user_id = 1; // Who is updating the content
 	// The delete content event occurs either in a thread, in a comment or in a subcomment.
@@ -295,87 +271,110 @@ message DeleteContentRequest {
 
 message DeleteContentResponse {}
 
-/*
-	CreateThreadRequest holds the content itself and the section at which the content
-	is being created.
-*/
+// CreateThreadRequest holds the content itself and the section at which the content
+// is being created.
 message CreateThreadRequest {
 	BasicContentData data = 1;
 	Context.Section section_ctx = 2;
 }
 
+// CreateThreadResponse holds the relative URL of the thread just created
 message CreateThreadResponse {
 	string permalink = 1;
 }
 
+// GetFullUserDataRequest holds the id of the user to get its full data
 message GetFullUserDataRequest {
 	string user_id = 1;
 }
 
+// GetFullUserDataResponse holds the full user data for the user requested
 message GetFullUserDataResponse {
 	FullUserData full_user_data = 1;
 }
 
+// GetBasicUserDataRequest holds the id of the user to get its basic data
 message GetBasicUserDataRequest {
 	string user_id = 1;
 }
 
+// GetBasicUserDataResponse holds the basic data for the user requested
 message GetBasicUserDataResponse {
 	BasicUserData basic_user_data = 1;
 }
 
+// GetThreadsRequest holds a list of thread ids and the section they belong to
 message GetThreadsRequest {
 	repeated ThreadInfo threads = 1;
 }
 
+// GetThreadsResponse holds a list of full content data of threads requested
 message GetThreadsResponse {
 	repeated FullContentData threads = 1;
 }
 
+// GetThreadRequest holds a single thread id and the section name it belongs to
 message GetThreadRequest {
 	ThreadInfo thread = 1;
 }
 
+// GetThreadResponse holds the full content data of a single thread
 message GetThreadResponse {
 	FullContentData thread = 1;
 }
 
+// GetBasicUsersInfoRequest holds the ids of the users to get their basic info
 message GetBasicUsersInfoRequest {
 	repeated string ids = 1;
 }
 
+// GetBasicUsersInfoResponse holds the basic info of the users requested
 message GetBasicUsersInfoResponse {
 	repeated BasicUserData users_data = 1;
 }
 
+// GetSubcommentsRequest is the message for requesting a comment's subcomments.
 message GetSubcommentsRequest {
+	// comment_ctx indicates what comment is being requested
 	Context.Comment comment_ctx = 1;
+	// offset indicates the number of comments to be ignored, since subcomments 
+	// are stored and returned sequentially in cronological order
 	uint32 offset = 2;
 }
 
+// Subcomment holds full content data of a single subcomment
 message Subcomment {
 	FullContentData data = 1;
 }
 
+// ReadNotifsRequest holds the id of the user whose unread notifications will be 
+// marked as read
 message ReadNotifsRequest {
 	string user_id = 1;
 }
 
 message ReadNotifsResponse {}
 
+// ClearNotifsRequest holds the id of the user whose both unread and read 
+// notifications will be deleted
 message ClearNotifsRequest {
 	string user_id = 1;
 }
 
 message ClearNotifsResponse {}
 
+// FollowUserRequest holds the id of the user which is following and the username
+// of the user being followed
 message FollowUserRequest {
 	string user_id = 1;
+	// user_to_follow indicates the username
 	string user_to_follow = 2;
 }
 
 message FollowUserResponse {}
 
+// UnfollowUserRequest holds the id of the user which is unfollowing and the username
+// of the user losing a follower
 message UnfollowUserRequest {
 	string user_id = 1;
 	string user_to_unfollow = 2;
@@ -383,20 +382,28 @@ message UnfollowUserRequest {
 
 message UnfollowUserResponse {}
 
+// ViewUsersRequest is a message for requesting either following or followers users 
+// data of a given user
 message ViewUsersRequest {
 	string user_id = 1;
+	// context is either following or followers
 	string context = 2;
+	// offset indicates how many users to ignore for pagination
 	uint32 offset = 3;
 }
 
+// ViewUsersResponse holds a list of basic user data of requested users following
+// or followers of a user
 message ViewUsersResponse {
 	repeated BasicUserData basic_user_data = 1;
 }
 
+// ViewUserByUsernameRequest is a message for requesting public data of a user
 message ViewUserByUsernameRequest {
 	string username = 1;
 }
 
+// ViewUserResponse holds some basic data of a requested user
 message ViewUserResponse {
 	string alias = 1;
 	string username = 2;
@@ -408,15 +415,18 @@ message ViewUserResponse {
 	repeated string following_ids = 8;
 }
 
+// LoginRequest is a message for requesting the validation of a user's credentials
 message LoginRequest {
 	string username = 1;
 	string password = 2;
 }
 
+// LoginResponse holds the id of the user that just logged in
 message LoginResponse {
 	string user_id = 1;
 }
 
+// RegisterUserResponse holds the id of the user that just signed in
 message RegisterUserResponse {
 	string user_id = 1;
 }
