@@ -320,7 +320,36 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
 	}
-	if err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", userData); err != nil {
+
+	var threadsCreated *pb.GetThreadsResponse
+	// Load threads created only if this user has created some threads.
+	if len(userData.ThreadsCreated) > 0 {
+		threadsRequest := &pb.GetThreadsRequest{Threads: userData.ThreadsCreated}
+		threadsCreated, err = r.crudClient.GetThreads(context.Background(), 
+		threadsRequest)
+		if err != nil {
+			log.Printf("Could not get threads created: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
+	}
+
+	followers := len(userData.FollowersIds)
+	following := len(userData.FollowingIds)
+
+	data := &templates.ProfileView{
+		BasicData:      templates.UserInfo{
+			Alias:           userData.Alias,
+			Username:        userData.Username,
+			PicUrl:          userData.PicUrl,
+			About:           userData.About,
+			LastTimeCreated: userData.LastTimeCreated,
+		},
+		ThreadsCreated: threadsCreated.Threads,
+		Following:      following,
+		Followers:      followers,
+	}
+
+	if err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", data); err != nil {
 		log.Printf("Could not execute template viewuserprofile.html: %v", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}
