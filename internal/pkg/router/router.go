@@ -129,6 +129,11 @@ func (r *Router) SetupRoutes() {
 	// matches POST "/signin"
 	root.HandleFunc("/signin", r.handleSignin).Methods("POST")
 	//
+	// REQUEST TO LOGOUT
+	// matches GET "/logout"
+	root.HandleFunc("/logout", r.onlyUsers(userContentsHandler(r.handleSignin)))
+	.Methods("GET")
+	//
 	// SECTION LEVEL HANDLERS
 	//
 	section := root.PathPrefix("/{section}").Subrouter()

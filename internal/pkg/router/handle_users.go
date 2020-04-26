@@ -452,11 +452,30 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 	// Set session cookie
 	session, _ := r.store.Get(req, "session")
 	session.Values["user_id"] = res.UserId
-	if err := session.Save(req, w); err != nil {
+	if err = session.Save(req, w); err != nil {
 		log.Printf("Could not save session because... %v\n", err)
 		http.Error(w, "COOKIE_ERROR", http.StatusServiceUnavailable)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write("OK")
+}
+
+// Logout "/logout" handler. It removes the session. It doesn't use the userId 
+// provided by r.onlyUsers middleware. It returns OK on success or an error in 
+// case of the following:
+// - unable to set cookie -> COOKIE_ERROR
+func (r *Router) handleLogout(_ string, w http.ResponseWriter, req *http.Request) {
+	session, _ := r.store.Get(req, "session")
+	session.Options = &sessions.Options{
+		// MaxAge < 0 means delete cookie immediately
+		MaxAge: -1,
+	}
+	if err := session.Save(req, w); err != nil {
+		log.Printf("Could not save session because... %v\n", err)
+		http.Error(w, "COOKIE_ERROR", htp.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
