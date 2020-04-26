@@ -303,6 +303,17 @@ message GetBasicUserDataResponse {
 	BasicUserData basic_user_data = 1;
 }
 
+// UpdateBasicUserDataRequest holds public data of a user that could be updated.
+message UpdateBasicUserDataRequest {
+	string user_id = 1;
+	string username = 2;
+	string description = 3;
+	string pic_url = 4;
+	string alias = 5;
+}
+
+message UpdateBasicUserDataResponse {}
+
 // GetThreadsRequest holds a list of thread ids and the section they belong to
 message GetThreadsRequest {
 	repeated ThreadInfo threads = 1;
