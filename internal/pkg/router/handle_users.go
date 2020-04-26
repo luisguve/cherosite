@@ -349,6 +349,12 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		Following:      following,
 		Followers:      followers,
 	}
+	// get user and set username
+	userId := currentUser(req)
+	if userId != "" {
+		// A user is logged in. Get its data.
+		r.getFullUserData(w, userId, &data.Username)
+	}
 
 	if err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", data); err != nil {
 		log.Printf("Could not execute template viewuserprofile.html: %v", err)
