@@ -17,7 +17,7 @@ func (r *Router) handleLiveNotifs(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "not logged in", http.StatusForbidden)
 		return
 	}
-	conn, err := r.upgrader.Upgrade(w, r, nil)
+	conn, err := r.upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Printf("Could not upgrade connection: %v\n", err)
 		http.Error(w, "an error occurred", http.StatusInternalServerError)
