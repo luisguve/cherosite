@@ -31,6 +31,7 @@ func NewHub() *Hub {
 	}
 }
 
+// Run continuously listens for user registering/unregistering messages
 func (h *Hub) Run(crudServiceClient *pb.CrudCheropatillaClient) {
 	for {
 		select {

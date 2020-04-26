@@ -7,6 +7,7 @@ import(
 	"github.com/luisguve/cheropatilla/internal/pkg/livedata"
 )
 
+// Register new clients into the hub.
 // Send notifications to registered and logged in users and receive signal
 // to mark all notifications as read via websocket.
 func (r *Router) handleLiveNotifs(w http.ResponseWriter, req *http.Request) {
