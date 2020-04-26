@@ -87,7 +87,8 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 	vars := mux.Vars(req)
 	username = vars["username"]
 	request := &pb.FollowUserRequest{
-		UserId: userId,
+		UserId:       userId,
+		UserToFollow: username,
 	}
 	_, err := r.crudClient.FollowUser(context.Background(), request)
 	if err != nil {
@@ -123,7 +124,8 @@ func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.
 	vars := mux.Vars(req)
 	username = vars["username"]
 	request := &pb.UnfollowUserRequest{
-		UserId: userId,
+		UserId:         userId,
+		UserToUnfollow: username,
 	}
 	_, err := r.crudClient.UnfollowUser(context.Background(), request)
 	if err != nil {
