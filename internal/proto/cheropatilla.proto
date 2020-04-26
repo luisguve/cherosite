@@ -69,6 +69,13 @@ message ContentInfo {
 	string content_data_key = 4;
 }
 
+// ThreadInfo holds information of a thread to be searched more easily across the
+// different sections available.
+message ThreadInfo {
+	string id = 1;
+	string section = 2;
+}
+
 /*
 	BasicUserData holds basic information about an user. This information is intended for
 	succinct data interchange between gRPC server and client on the user registration event.
@@ -103,10 +110,6 @@ message FullUserData {
 	repeated Notif unread_notifs = 7;
 	// read notifications of this user.
 	repeated Notif read_notifs = 8;
-	message ThreadInfo {
-		string id = 1;
-		string section = 2;
-	}
 }
 
 /*
@@ -313,14 +316,16 @@ message GetFullUserDataResponse {
 	FullUserData full_user_data = 1;
 }
 
-message RegisterUserRequest {
+message GetBasicUserDataRequest {
+	string user_id = 1;
+}
+
+message GetBasicUserDataResponse {
 	BasicUserData basic_user_data = 1;
 }
 
-message RegisterUserResponse {}
-
 message GetThreadsRequest {
-	repeated FullUserData.ThreadInfo threads = 1;
+	repeated ThreadInfo threads = 1;
 }
 
 message GetThreadsResponse {
@@ -328,7 +333,7 @@ message GetThreadsResponse {
 }
 
 message GetThreadRequest {
-	FullUserData.ThreadInfo thread = 1;
+	ThreadInfo thread = 1;
 }
 
 message GetThreadResponse {
@@ -358,6 +363,64 @@ message ReadNotifsRequest {
 
 message ReadNotifsResponse {}
 
+message ClearNotifsRequest {
+	string user_id = 1;
+}
+
+message ClearNotifsResponse {}
+
+message FollowUserRequest {
+	string user_id = 1;
+	string user_to_follow = 2;
+}
+
+message FollowUserResponse {}
+
+message UnfollowUserRequest {
+	string user_id = 1;
+	string user_to_unfollow = 2;
+}
+
+message UnfollowUserResponse {}
+
+message ViewUsersRequest {
+	string user_id = 1;
+	string context = 2;
+	uint32 offset = 3;
+}
+
+message ViewUsersResponse {
+	repeated BasicUserData basic_user_data = 1;
+}
+
+message ViewUserByUsernameRequest {
+	string username = 1;
+}
+
+message ViewUserResponse {
+	string alias = 1;
+	string username = 2;
+	string pic_url = 3;
+	string about = 4;
+	repeated ThreadInfo threads_created = 5;
+	google.protobuf.Timestamp last_time_created = 6;
+	repeated string followers_ids = 7;
+	repeated string following_ids = 8;
+}
+
+message LoginRequest {
+	string username = 1;
+	string password = 2;
+}
+
+message LoginResponse {
+	string user_id = 1;
+}
+
+message RegisterUserResponse {
+	string user_id = 1;
+}
+
 service CrudCheropatilla {
 	// Get new feed of threads in a section or comments in a thread
 	rpc RecycleContent(ContentPattern) returns (stream ContentRuleResponse) {}
@@ -373,10 +436,12 @@ service CrudCheropatilla {
 	rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
 	// Post a thread to create
 	rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse) {}
-	// Get full user data
+	// Get a user's full data
 	rpc GetFullUserData(GetFullUserDataRequest) returns (GetFullUserDataResponse) {}
-	// Register new user
-	rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {}
+	// Get a user's basic data
+	rpc GetBasicUserData(GetBasicUserDataRequest) returns (GetBasicUserDataResponse) {}
+	// Update a user's basic data
+	rpc UpdateBasicUserData(UpdateBasicUserDataRequest) returns (UpdateBasicUserDataResponse) {}
 	// Get array of threads
 	rpc GetThreads(GetThreadsRequest) returns (GetThreadsResponse) {}
 	// Get single thread
@@ -385,5 +450,20 @@ service CrudCheropatilla {
 	rpc GetSubcomments(GetSubcommentsRequest) returns (stream Subcomment) {}
 	// Get users' basic data
 	rpc GetBasicUsersInfo(GetBasicUsersInfoRequest) returns (GetBasicUsersInfoResponse) {}
+	// Mark unread notifications as read
 	rpc MarkAllAsRead(ReadNotifsRequest) returns (ReadNotifsResponse) {}
+	// Clear all the notifications
+	rpc ClearNotifs(ClearNotifsRequest) returns (ClearNotifsResponse) {}
+	// Follow a user
+	rpc FollowUser(FollowUserRequest) returns (FollowUserResponse) {}
+	// Unfollow a user
+	rpc UnfollowUser(UnfollowUserRequest) returns (UnfollowUserResponse) {}
+	// Get either following or followers users' basic data
+	rpc ViewUsers(ViewUsersRequest) returns (ViewUsersResponse) {}
+	// Get username basic data, following, followers and threads created
+	rpc ViewUserByUsername(ViewUserByUsernameRequest) returns (ViewUserResponse) {}
+	// Validate user credentials to login
+	rpc Login(LoginRequest) returns (LoginResponse) {}
+	// Register new user
+	rpc RegisterUser(BasicUserData) returns (RegisterUserResponse) {}
 }
