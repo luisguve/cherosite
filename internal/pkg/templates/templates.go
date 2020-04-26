@@ -13,6 +13,13 @@ type DashboardView struct {
 	Feed           FeedContent `json="feed_content"`
 }
 
+type ProfileView struct {
+	FullUserData   *pb.ViewUserResponse `json="user_data"`
+	ThreadsCreated []*pb.FullContentData `json="threads_created"`
+	Following      uint32 `json="following"`
+	Followers      uint32 `json="followers"`
+}
+
 type ThreadView struct {
 	Username string `json="username"`
 	Content  *pb.FullContentData `json="content"`
