@@ -79,7 +79,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	following := len(userData.FollowingIds)
 
 	feed := templates.FeedContent{}
-	data := &templates.FeedView{
+	data := &templates.DashboardView{
 		FullUserData:   userData,
 		ThreadsCreated: threadsCreated,
 		ThreadsSaved:   threadsSaved,

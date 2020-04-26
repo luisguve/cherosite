@@ -4,7 +4,7 @@ import(
 	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
 )
 
-type FeedView struct {
+type DashboardView struct {
 	FullUserData   *pb.FullUserData `json="user_data"`
 	ThreadsCreated []*pb.FullContentData `json="threads_created"`
 	ThreadsSaved   []*pb.FullContentData `json="threads_saved"`
