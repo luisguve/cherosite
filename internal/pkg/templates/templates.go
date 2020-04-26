@@ -1,6 +1,8 @@
 package templates
 
 import(
+	"html/template"
+	
 	pb "github.com/luisguve/cheropatilla/internal/cheropatillapb"
 )
 
@@ -57,4 +59,8 @@ type Feed struct {
 type FeedSubcomments struct {
 	Subcomments []*pb.Subcomment `json="subcomments"`
 	ErrorMsg    string `json="error_message"`
+}
+
+func New() *template.Template {
+	return template.Must(template.ParseGlob("*.gohtml"))
 }
