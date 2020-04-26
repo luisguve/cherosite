@@ -3,6 +3,8 @@ package app
 import (
 	"net/http"
 	"time"
+
+	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
 )
 
 func (app *App) Run() error {
@@ -10,6 +12,8 @@ func (app *App) Run() error {
 }
 
 func New(h http.Handler) *App {
+	// Register pagination
+	pagination.RegisterSessionTypes()
 	return &App{
 		srv: &http.Server{
 			Handler: h,	
