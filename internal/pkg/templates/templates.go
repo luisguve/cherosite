@@ -24,7 +24,8 @@ type DashboardView struct {
 }
 
 type ProfileView struct {
-	BasicData       UserInfo
+	Username       string
+	BasicData      UserInfo
 	ThreadsCreated []*pb.FullContentData `json="threads_created"`
 	Following      uint32 `json="following"`
 	Followers      uint32 `json="followers"`
