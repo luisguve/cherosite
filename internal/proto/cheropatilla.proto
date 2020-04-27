@@ -83,20 +83,25 @@ message BasicUserData {
 // be stored in.
 message FullUserData {
 	BasicUserData basic_user_data = 1;
-	// ids of threads that this user created.
-	repeated Context.Thread threads_created = 2;
-	// ids of threads that this user saved to read later.
-	repeated Context.Thread threads_saved = 3;
 	// the last time this user created a thread.
-	google.protobuf.Timestamp last_time_created = 4;
+	google.protobuf.Timestamp last_time_created = 2;
 	// ids of users that are following this user.
-	repeated string followers_ids = 5;
+	repeated string followers_ids = 3;
 	// ids of users that this user is following.
-	repeated string following_ids = 6;
+	repeated string following_ids = 4;
 	// unread notifications of this user.
-	repeated Notif unread_notifs = 7;
+	repeated Notif unread_notifs = 5;
 	// read notifications of this user.
-	repeated Notif read_notifs = 8;
+	repeated Notif read_notifs = 6;
+	// ids of content this user has created.
+	Activity activity = 7;
+	// ids of threads that this user has saved to read later.
+	repeated Context.Thread threads_saved = 8;
+	message Activity {
+		repeated Context.Thread threads_created = 1;
+		repeated Context.Comment comments = 2;
+		repeated Context.Subcomment subcomments = 3;
+	}
 }
 
 // Notif is the format in which users get their notifications.
