@@ -73,7 +73,6 @@ message ThreadInfo {
 	string section = 2;
 }
 
-
 // BasicUserData holds basic information about an user. This information 
 // is intended for succinct data interchange between gRPC server and client 
 // on the user registration event.
@@ -106,7 +105,6 @@ message FullUserData {
 	// read notifications of this user.
 	repeated Notif read_notifs = 8;
 }
-
 
 // Notif is the format in which users get their notifications.
 message Notif {
@@ -142,7 +140,6 @@ message NotifyUser {
 	Notif notification = 2; // actual message
 }
 
-
 // ContentStatus defines the different categories that fits content at a particular
 // time ,trying to describe the quality of the content.
 enum ContentStatus {
@@ -150,7 +147,6 @@ enum ContentStatus {
 	RELEVANT = 1;
 	TOP = 2;
 }
-
 
 // ContentRuleResponse holds a piece of content and its current status.
 message ContentRuleResponse {
@@ -178,7 +174,6 @@ message ContentPattern {
 	}
 }
 
-
 // GeneralPattern holds an array of ContentRuleRequest (i.e. content status), composing 
 // up a pattern of content that's expected to get back. It is intended for recycling 
 // content from every section.
@@ -192,6 +187,17 @@ message GeneralPattern {
 	}
 }
 
+// ProfilePattern holds an array of ContentRuleRequest (i.e. content status), composing 
+// up a pattern of content that's expected to get back. It is intended for recycling 
+// content from a specific user.
+message ProfilePattern {
+	repeated ContentRuleRequest pattern = 1;
+	// discard_ids is a map of section names mapped to content ids that must not be 
+	// returned back, since it's content the user has already seen.
+	map<string, GeneralPattern.Ids> discard_ids = 2;
+	// user_id indicates which is the author of the content
+	string user_id = 3;
+}
 
 // The Context holds information about the place at which an event occurs or where 
 // content should be retrieved from.
@@ -326,7 +332,7 @@ message GetThreadsResponse {
 
 // ThreadData holds the thread data and the basic data about the author
 message ThreadData {
-	FullContentData Thread = 1;
+	FullContentData thread = 1;
 	BasicUserData author_data = 2;
 }
 
