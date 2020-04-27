@@ -66,13 +66,6 @@ message ContentInfo {
 	string content_data_key = 4;
 }
 
-// ThreadInfo holds information of a thread to be searched more easily across the
-// different sections available.
-message ThreadInfo {
-	string id = 1;
-	string section = 2;
-}
-
 // BasicUserData holds basic information about an user. This information 
 // is intended for succinct data interchange between gRPC server and client 
 // on the user registration event.
@@ -91,9 +84,9 @@ message BasicUserData {
 message FullUserData {
 	BasicUserData basic_user_data = 1;
 	// ids of threads that this user created.
-	repeated ThreadInfo threads_created = 2;
+	repeated Context.Thread threads_created = 2;
 	// ids of threads that this user saved to read later.
-	repeated ThreadInfo threads_saved = 3;
+	repeated Context.Thread threads_saved = 3;
 	// the last time this user created a thread.
 	google.protobuf.Timestamp last_time_created = 4;
 	// ids of users that are following this user.
@@ -322,7 +315,7 @@ message UpdateBasicUserDataResponse {}
 
 // GetThreadsRequest holds a list of thread ids and the section they belong to
 message GetThreadsRequest {
-	repeated ThreadInfo threads = 1;
+	repeated Context.Thread threads = 1;
 }
 
 // GetThreadsResponse holds a list of full content data of threads requested
@@ -338,7 +331,7 @@ message ThreadData {
 
 // GetThreadRequest holds a single thread id and the section name it belongs to
 message GetThreadRequest {
-	ThreadInfo thread = 1;
+	Context.Thread thread = 1;
 }
 
 // GetThreadResponse holds the full content data of a single thread and basic data 
@@ -434,7 +427,7 @@ message ViewUserResponse {
 	string username = 2;
 	string pic_url = 3;
 	string about = 4;
-	repeated ThreadInfo threads_created = 5;
+	string user_id = 5;
 	google.protobuf.Timestamp last_time_created = 6;
 	repeated string followers_ids = 7;
 	repeated string following_ids = 8;
