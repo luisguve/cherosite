@@ -63,5 +63,5 @@ type FeedSubcomments struct {
 }
 
 func New() *template.Template {
-	return template.Must(template.ParseGlob("*.gohtml"))
+	return template.Must(template.ParseGlob("*.html"))
 }
