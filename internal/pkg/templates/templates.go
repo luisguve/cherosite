@@ -73,7 +73,7 @@ func (t *ThreadView) Render() template.HTML {
 	var tplName string
 	switch t.BasicContent.Status() {
 	case "NEW":
-		tplName = "newthread.html"
+		tplName = "newcontent.html"
 	case "RELEVANT":
 		tplName = "relthread.html"
 	case "TOP":
@@ -96,7 +96,7 @@ func (c *CommentView) Render() template.HTML {
 	var tplName string
 	switch c.BasicContent.Status() {
 	case "NEW":
-		tplName = "newcomment.html"
+		tplName = "newcontent.html"
 	case "RELEVANT":
 		tplName = "relcomment.html"
 	case "TOP":
@@ -119,7 +119,7 @@ func (sc *SubcommentView) Render() template.HTML {
 	var tplName string
 	switch sc.BasicContent.Status() {
 	case "NEW":
-		tplName = "newsubcomment.html"
+		tplName = "newcontent.html"
 	case "RELEVANT":
 		tplName = "relsubcomment.html"
 	case "TOP":
