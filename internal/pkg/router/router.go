@@ -60,161 +60,101 @@ func (r *Router) SetupRoutes() {
 	//
 	root.HandleFunc("/livenotifs", r.handleLiveNotifs).Methods("GET")
 	.Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// GET DASHBOARD OR LOGIN PAGE
-	// matches GET "/"
+	
+	// handlers for homepage "/" features
 	root.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleRoot))).Methods("GET")
-	//
-	// GET RECYCLE USER FEED
-	// matches GET "/recyclefeed"
+
 	root.HandleFunc("/recyclefeed", r.onlyUsers(userContentsHandler(r.handleRecycleFeed)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// GET RECYCLE USER ACTIVITY
-	// matches GET "/recycleactivity"
+
 	root.HandleFunc("/recycleactivity", 
-		r.onlyUsers(userContentsHandler(r.handleRecycleMyActivity))).Methods("GET")
-		.Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// GET RECYCLE USER SAVED THREADS
-	// matches GET "/recyclesaved"
+	r.onlyUsers(userContentsHandler(r.handleRecycleMyActivity))).Methods("GET")
+	.Headers("X-Requested-With", "XMLHttpRequest")
+
 	root.HandleFunc("/recyclesaved", 
-		r.onlyUsers(userContentsHandler(r.handleRecycleMySaved))).Methods("GET")
-		.Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// GET EXPLORE PAGE
-	// matches GET "/explore"
+	r.onlyUsers(userContentsHandler(r.handleRecycleMySaved))).Methods("GET")
+	.Headers("X-Requested-With", "XMLHttpRequest")
+
+	// explore page
 	root.HandleFunc("/explore", r.handleExplore).Methods("GET")
-	//
-	// GET RECYCLE EXPLORE FEED
-	// matches GET "/explore/recycle"
-	root.HandleFunc("/explore/recycle", 
-		r.onlyUsers(userContentsHandler(r.handleExploreRecycle))).Methods("GET")
+	root.HandleFunc("/explore/recycle", r.handleExploreRecycle).Methods("GET")
 	.headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// REQUEST TO READ ALL NOTIFICATIONS FROM THIS USER
-	// matches GET "/readnotifs"
+
+	// notifications
 	root.HandleFunc("/readnotifs", r.onlyUsers(userContentsHandler(r.handleReadNotifs)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// REQUEST TO CLEAR ALL NOTIFICATIONS FROM THIS USER
-	// matches GET "/clearnotifs"
 	root.HandleFunc("/clearnotifs", r.onlyUsers(userContentsHandler(r.handleClearNotifs)))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// REQUEST TO FOLLOW USER
-	// matches POST "/follow?username={username}"
+
+	// follow event
 	root.HandleFunc("/follow", r.onlyUsers(userContentsHandler(r.handleFollow)))
 	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
-	//
-	// REQUEST TO UNFOLLOW USER
-	// matches POST "/unfollow?username={username}"
+	// unfollow event
 	root.HandleFunc("/unfollow", r.onlyUsers(userContentsHandler(r.handleUnfollow)))
 	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
-	//
-	// REQUEST TO GET USERS INFO (FOLLOWING OR FOLLOWERS)
-	// matches GET "/viewusers?context={context}&userid={userid}"
+
+	// get basic info of users either following or followers
 	root.HandleFunc("/viewusers", r.handleViewUsers).Methods("GET")
 	.Queries("context", "{context:[a-z]+}", "userid", "{userid:[a-zA-Z0-9]+}")
 	.Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// REQUEST TO VIEW MY PROFILE PAGE
-	// matches GET "/myprofile"
+
+	// current user's profile page
 	root.HandleFunc("/myprofile", r.onlyUsers(userContentsHandler(r.handleMyProfile)))
 	.Methods("GET")
-	//
-	// REQUEST TO UPDATE MY PROFILE PAGE
-	// matches PUT "/myprofile/update"
 	root.HandleFunc("/myprofile/update", 
 	r.onlyUsers(userContentsHandler(r.handleUpdateMyProfile))).Methods("PUT")
-	//
-	// REQUEST TO VIEW USER PROFILE
-	// matches GET "/profile?username={username}"
+
+	// show other user's profile
 	root.HandleFunc("/profile", r.handleViewUserProfile).Methods("GET")
 	.Queries("username", "{username:[a-zA-Z0-9]+}")
-	//
-	// REQUEST TO RECYCLE USER ACTIVITY
-	// matches GET "/profile/recycle?username={username}"
+	// recycle other user's activity
 	root.HandleFunc("/profile/recycle", r.handleRecycleUserActivity).Methods("GET")
 	.Queries("username", "{username:[a-zA-Z0-9]+}")
 	.Headers("X-Requested-With", "XMLHttpRequest")
-	//
-	// REQUEST TO POST USER CREDENTIALS
-	// matches POST "/login"
+
 	root.HandleFunc("/login", r.handleLogin).Methods("POST")
-	//
-	// REQUEST TO POST USER DATA FOR SIGNING IN
-	// matches POST "/signin"
 	root.HandleFunc("/signin", r.handleSignin).Methods("POST")
-	//
-	// REQUEST TO LOGOUT
-	// matches GET "/logout"
-	root.HandleFunc("/logout", r.onlyUsers(userContentsHandler(r.handleSignin)))
+	root.HandleFunc("/logout", r.onlyUsers(userContentsHandler(r.handleLogout)))
 	.Methods("GET")
-	//
-	// SECTION LEVEL HANDLERS
-	//
+
+	// handlers for sections
 	section := root.PathPrefix("/{section}").Subrouter()
-	//
-	// GET SECTION THREADS
-	// matches GET "/{section}"
+
 	section.HandleFunc("/", r.handleViewSection).Methods("GET")
-	//
-	// POST A THREAD IN A SECTION
-	// matches POST "/{section}/new"
+	// create a thread
 	section.HandleFunc("/new", r.onlyUsers(userContentsHandler(r.handleNewThread)))
 	.Methods("POST")
-	//
-	// GET RECYCLE SECTION FEED
-	// matches GET "/{section}/recycle"
+	// recycle section threads
 	section.HandleFunc("/recycle", r.handleRecycleSection).Methods("GET")
-	//
-	// THREAD LEVEL HANDLERS
-	//
+
+	// handlers for threads
 	thread := section.PathPrefix("/{thread}").Subrouter()
-	//
-	// GET A THREAD IN A SECTION AND ITS COMMENTS
-	// matches GET "/{section}/{thread}/"
 	thread.HandleFunc("/", r.handleViewThread).Methods("GET")
-	//
-	// GET RECYCLE COMMENTS
-	// matches GET "/{section}/{thread}/recycle"
+	// recycle thread comments
 	thread.HandleFunc("/recycle", r.handleRecycleComments).Methods("GET")
-	//
-	// COMMENT LEVEL HANDLERS
-	//
+
+	// handlers for comments
 	comments := thread.PathPrefix("/comment").Subrouter()
-	//
-	// GET SUBCOMMENTS OF A COMMENT IN JSON FORMAT
-	// matches GET "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}"
+	// get 15 subcomments
 	comments.HandleFunc("/", r.handleGetSubcomments).Methods("GET")
 	.Headers("X-Requested-With", "XMLHttpRequest")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "offset", "{offset:[0-9]+}")
-	//
-	// POST A COMMENT IN A THREAD
-	// matches POST "/{section}/{thread}/comment/"
+	// post a comment
 	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostComment)))
 	.Methods("POST")
-	//
-	// POST A SUBCOMMENT
-	// matches POST "/{section}/{thread}/comment/?c_id={c_id}"
+	// post a subcomment
 	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostSubcomment)))
 	.Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
-	// UPVOTES
+
+	// handlers for upvotes
 	upvotes := thread.PathPrefix("/upvote").Subrouter()
-	//
-	// POST AN UPVOTE TO A THREAD
-	// matches POST "/{section}/{thread}/upvote/"
+	// upvote a thread
 	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteThread)))
 	.Methods("POST")
-	//
-	// POST AN UPVOTE TO A COMMENT
-	// matches POST "/{section}/{thread}/upvote/?c_id={c_id}"
+	// upvote a comment
 	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteComment)))
 	.Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
-	//
-	// POST AN UPVOTE TO A SUBCOMMENT
-	// matches POST "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}"
+	// upvote a subcomment
 	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteSubcomment)))
 	.Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
