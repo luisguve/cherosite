@@ -70,18 +70,18 @@ type ThreadView struct {
 }
 
 func (t *ThreadView) Render() template.HTML {
-	var name string
+	var tplName string
 	switch t.BasicContent.Status() {
 	case "NEW":
-		name = "newthread.html"
+		tplName = "newthread.html"
 	case "RELEVANT":
-		name = "relthread.html"
+		tplName = "relthread.html"
 	case "TOP":
-		name = "topthread.html"
+		tplName = "topthread.html"
 	}
 	result := new(strings.Builder)
-	if err := tpl.ExecuteTemplate(result, name, t); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", name, err)
+	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
+		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
 	}
 	return template.HTML(result.String())
 }
@@ -93,18 +93,18 @@ type CommentView struct {
 }
 
 func (c *CommentView) Render() template.HTML {
-	var name string
+	var tplName string
 	switch c.BasicContent.Status() {
 	case "NEW":
-		name = "newcomment.html"
+		tplName = "newcomment.html"
 	case "RELEVANT":
-		name = "relcomment.html"
+		tplName = "relcomment.html"
 	case "TOP":
-		name = "topcomment.html"
+		tplName = "topcomment.html"
 	}
 	result := new(strings.Builder)
-	if err := tpl.ExecuteTemplate(result, name, c); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", name, err)
+	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
+		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
 	}
 	return template.HTML(result.String())
 }
@@ -116,18 +116,18 @@ type SubcommentView struct {
 }
 
 func (sc *SubcommentView) Render() template.HTML {
-	var name string
+	var tplName string
 	switch sc.BasicContent.Status() {
 	case "NEW":
-		name = "newsubcomment.html"
+		tplName = "newsubcomment.html"
 	case "RELEVANT":
-		name = "relsubcomment.html"
+		tplName = "relsubcomment.html"
 	case "TOP":
-		name = "topsubcomment.html"
+		tplName = "topsubcomment.html"
 	}
 	result := new(strings.Builder)
-	if err := tpl.ExecuteTemplate(result, name, sc); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", name, err)
+	if err := tpl.ExecuteTemplate(result, tplName, sc); err != nil {
+		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
 	}
 	return template.HTML(result.String())
 }
