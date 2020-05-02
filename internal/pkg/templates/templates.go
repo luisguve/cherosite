@@ -40,6 +40,7 @@ type Content interface {
 // BasicContent is the set of fields that are shared by all the kinds of content:
 // threads, comments and subcomments
 type BasicContent struct {
+	Title         string
 	ContentType   string // thread, comment or subcomment
 	ContentStatus string // NEW, RELEVANT or TOP
 	Thumbnail     string // Thumbnail URL
@@ -65,7 +66,6 @@ func (b *BasicContent) Status() string {
 
 type ThreadView struct {
 	*BasicContent
-	Title   string
 	Replies uint32
 }
 

@@ -4,9 +4,11 @@
 {{ end }}
 </header>
 <main>
-	<a href="/{{.BasicContent.Permalink}}"><h2>{{.Title}}</h2></a>
+	{{ with .BasicContent }}
+	<a href="/{{.Permalink}}"><h2>{{.Title}}</h2></a>
 	<hr>
-	<img src="/{{.BasicContent.Thumbnail}}" alt="thumbnail">
+	<img src="/{{.Thumbnail}}" alt="thumbnail">
+	{{ end }}
 </main>
 <footer>
 	{{ with .BasicContent }}
