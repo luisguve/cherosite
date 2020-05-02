@@ -287,7 +287,8 @@ func (r *Router) currentUser(req *http.Request) string {
 // onlyUsers middleware displays the login page if the user has not logged in yet,
 // otherwise it executes the next handler passing it the current user id, the
 // ResponseWriter and the Request.
-func (r *Router) onlyUsers(next userContentsHandler) http.HandlerFunc {
+func (r *Router) onlyUsers(next func(userId string, w http.ResponseWriter, r *http.Request)) 
+http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId := currentUser(r)
 		if userId == "" {
@@ -301,8 +302,6 @@ func (r *Router) onlyUsers(next userContentsHandler) http.HandlerFunc {
 		next(userId, w, r)
 	}
 }
-
-type userContentsHandler func(userId string, w http.ResponseWriter, r *http.Request)
 
 // renderError is an helper function to set a given status code header and
 // return a given error message to the client.

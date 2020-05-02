@@ -62,18 +62,16 @@ func (r *Router) SetupRoutes() {
 	.Headers("X-Requested-With", "XMLHttpRequest")
 	
 	// handlers for homepage "/" features
-	root.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleRoot))).Methods("GET")
+	root.HandleFunc("/", r.onlyUsers(r.handleRoot)).Methods("GET")
 
-	root.HandleFunc("/recyclefeed", r.onlyUsers(userContentsHandler(r.handleRecycleFeed)))
+	root.HandleFunc("/recyclefeed", r.onlyUsers(r.handleRecycleFeed))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 
-	root.HandleFunc("/recycleactivity", 
-	r.onlyUsers(userContentsHandler(r.handleRecycleMyActivity))).Methods("GET")
-	.Headers("X-Requested-With", "XMLHttpRequest")
+	root.HandleFunc("/recycleactivity", r.onlyUsers(r.handleRecycleMyActivity))
+	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 
-	root.HandleFunc("/recyclesaved", 
-	r.onlyUsers(userContentsHandler(r.handleRecycleMySaved))).Methods("GET")
-	.Headers("X-Requested-With", "XMLHttpRequest")
+	root.HandleFunc("/recyclesaved", r.onlyUsers(r.handleRecycleMySaved))
+	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 
 	// explore page
 	root.HandleFunc("/explore", r.handleExplore).Methods("GET")
@@ -81,17 +79,17 @@ func (r *Router) SetupRoutes() {
 	.headers("X-Requested-With", "XMLHttpRequest")
 
 	// notifications
-	root.HandleFunc("/readnotifs", r.onlyUsers(userContentsHandler(r.handleReadNotifs)))
+	root.HandleFunc("/readnotifs", r.onlyUsers(r.handleReadNotifs))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
-	root.HandleFunc("/clearnotifs", r.onlyUsers(userContentsHandler(r.handleClearNotifs)))
+	root.HandleFunc("/clearnotifs", r.onlyUsers(r.handleClearNotifs))
 	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 
 	// follow event
-	root.HandleFunc("/follow", r.onlyUsers(userContentsHandler(r.handleFollow)))
-	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/follow", r.onlyUsers(r.handleFollow)).Methods("POST")
+	.Queries("username","{username:[a-zA-Z0-9]+}")
 	// unfollow event
-	root.HandleFunc("/unfollow", r.onlyUsers(userContentsHandler(r.handleUnfollow)))
-	.Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/unfollow", r.onlyUsers(r.handleUnfollow)).Methods("POST")
+	.Queries("username","{username:[a-zA-Z0-9]+}")
 
 	// get basic info of users either following or followers
 	root.HandleFunc("/viewusers", r.handleViewUsers).Methods("GET")
@@ -99,10 +97,9 @@ func (r *Router) SetupRoutes() {
 	.Headers("X-Requested-With", "XMLHttpRequest")
 
 	// current user's profile page
-	root.HandleFunc("/myprofile", r.onlyUsers(userContentsHandler(r.handleMyProfile)))
-	.Methods("GET")
-	root.HandleFunc("/myprofile/update", 
-	r.onlyUsers(userContentsHandler(r.handleUpdateMyProfile))).Methods("PUT")
+	root.HandleFunc("/myprofile", r.onlyUsers(r.handleMyProfile)).Methods("GET")
+	root.HandleFunc("/myprofile/update", r.onlyUsers(r.handleUpdateMyProfile))
+	.Methods("PUT")
 
 	// show other user's profile
 	root.HandleFunc("/profile", r.handleViewUserProfile).Methods("GET")
@@ -114,7 +111,7 @@ func (r *Router) SetupRoutes() {
 
 	root.HandleFunc("/login", r.handleLogin).Methods("POST")
 	root.HandleFunc("/signin", r.handleSignin).Methods("POST")
-	root.HandleFunc("/logout", r.onlyUsers(userContentsHandler(r.handleLogout)))
+	root.HandleFunc("/logout", r.onlyUsers(r.handleLogout))
 	.Methods("GET")
 
 	// handlers for sections
@@ -122,8 +119,7 @@ func (r *Router) SetupRoutes() {
 
 	section.HandleFunc("/", r.handleViewSection).Methods("GET")
 	// create a thread
-	section.HandleFunc("/new", r.onlyUsers(userContentsHandler(r.handleNewThread)))
-	.Methods("POST")
+	section.HandleFunc("/new", r.onlyUsers(r.handleNewThread)).Methods("POST")
 	// recycle section threads
 	section.HandleFunc("/recycle", r.handleRecycleSection).Methods("GET")
 
@@ -140,22 +136,19 @@ func (r *Router) SetupRoutes() {
 	.Headers("X-Requested-With", "XMLHttpRequest")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "offset", "{offset:[0-9]+}")
 	// post a comment
-	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostComment)))
-	.Methods("POST")
+	comments.HandleFunc("/", r.onlyUsers(r.handlePostComment)).Methods("POST")
 	// post a subcomment
-	comments.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handlePostSubcomment)))
-	.Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
+	comments.HandleFunc("/", r.onlyUsers(r.handlePostSubcomment)).Methods("POST")
+	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 
 	// handlers for upvotes
 	upvotes := thread.PathPrefix("/upvote").Subrouter()
 	// upvote a thread
-	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteThread)))
-	.Methods("POST")
+	upvotes.HandleFunc("/", r.onlyUsers(r.handleUpvoteThread)).Methods("POST")
 	// upvote a comment
-	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteComment)))
-	.Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
+	upvotes.HandleFunc("/", r.onlyUsers(r.handleUpvoteComment)).Methods("POST")
+	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 	// upvote a subcomment
-	upvotes.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleUpvoteSubcomment)))
-	.Methods("POST")
+	upvotes.HandleFunc("/", r.onlyUsers(r.handleUpvoteSubcomment)).Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 }
