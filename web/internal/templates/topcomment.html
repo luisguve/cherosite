@@ -18,7 +18,7 @@
 	<a href="{{ printf "/%s/upvote/?c_id=%s" .BasicContent.ThreadLink .Id }}">
 	{{ with .BasicContent }}
 		{{.Upvotes}} Upvotes
-		{{- if .Topvoted }}; You upvoted this.{{ end }}
+		{{- if .Upvoted }}; You upvoted this.{{ end }}
 	{{ end }}
 	</a>
 	</div>

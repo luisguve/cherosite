@@ -47,8 +47,8 @@ type BasicContent struct {
 	Permalink     string // Content URL
 	Content       string
 	Summary       string
-	Topvotes      uint32
-	Topvoted      bool // Has the current user topvote'd this content?
+	Upvotes       uint32
+	Upvoted       bool // Has the current user topvote'd this content?
 	SectionName   string
 	Author        string // User alias
 	PublishDate   string

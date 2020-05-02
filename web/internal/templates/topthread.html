@@ -16,7 +16,7 @@
 	<div class="upvotes">
 	<a href="{{ printf "/%s/upvote/" .ThreadLink }}">
 		{{.Upvotes}} Upvotes 
-		{{- if .Topvoted }}; You upvoted this.{{ end }}
+		{{- if .Upvoted }}; You upvoted this.{{ end }}
 	</a>
 	</div>
 	{{ end }}
