@@ -66,9 +66,21 @@ func (r *Router) SetupRoutes() {
 	root.HandleFunc("/", r.onlyUsers(userContentsHandler(r.handleRoot))).Methods("GET")
 	//
 	// GET RECYCLE USER FEED
-	// matches GET "/recycle"
-	root.HandleFunc("/recycle", r.onlyUsers(userContentsHandler(r.handleRecycleFeed)))
-	.Methods("GET")
+	// matches GET "/recyclefeed"
+	root.HandleFunc("/recyclefeed", r.onlyUsers(userContentsHandler(r.handleRecycleFeed)))
+	.Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
+	//
+	// GET RECYCLE USER ACTIVITY
+	// matches GET "/recycleactivity"
+	root.HandleFunc("/recycleactivity", 
+		r.onlyUsers(userContentsHandler(r.handleRecycleMyActivity))).Methods("GET")
+		.Headers("X-Requested-With", "XMLHttpRequest")
+	//
+	// GET RECYCLE USER SAVED THREADS
+	// matches GET "/recyclesaved"
+	root.HandleFunc("/recyclesaved", 
+		r.onlyUsers(userContentsHandler(r.handleRecycleMySaved))).Methods("GET")
+		.Headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// GET EXPLORE PAGE
 	// matches GET "/explore"
@@ -120,6 +132,12 @@ func (r *Router) SetupRoutes() {
 	// matches GET "/profile?username={username}"
 	root.HandleFunc("/profile", r.handleViewUserProfile).Methods("GET")
 	.Queries("username", "{username:[a-zA-Z0-9]+}")
+	//
+	// REQUEST TO RECYCLE USER ACTIVITY
+	// matches GET "/profile/recycle?username={username}"
+	root.HandleFunc("/profile/recycle", r.handleRecycleUserActivity).Methods("GET")
+	.Queries("username", "{username:[a-zA-Z0-9]+}")
+	.Headers("X-Requested-With", "XMLHttpRequest")
 	//
 	// REQUEST TO POST USER CREDENTIALS
 	// matches POST "/login"
