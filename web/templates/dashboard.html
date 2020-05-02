@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Patilla dashboard</title>
+</head>
+<body>
+	{{ partial "header.html" .CurrentUser }}
+	<!-- User feed section -->
+	<section class="feed">
+		{{ with .Feed }}
+			<h4>Your feed</h4>
+			{{ $idx, $content := range . }}
+				{{/* class example: class="thread NEW-3" */}}
+				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
+					{{$content.Render}}
+				</article>
+			{{ end }}
+		{{ else }}
+			<h4>
+				You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
+			</h4>
+		{{ end }}
+	</section>
+	{{ with .CurrentUserData }}
+	<!-- User activity section -->
+	<section class="user-activity">
+		{{ with .Activity }}
+			<h4>Your recent activity</h4>
+			{{ $idx, $content := range . }}
+				{{/* class example: class="thread NEW-3" */}}
+				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
+					{{$content.Render}}
+				</article>
+			{{ end }}
+		{{ else }}
+			<h4>
+				You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
+			</h4>
+		{{ end }}
+	</section>
+	<!-- User saved content section -->
+	<section class="saved-content">
+		{{ with .SavedContent }}
+			<h4>You saved these threads</h4>
+			{{ $idx, $content := range . }}
+				{{/* class example: class="thread NEW-3" */}}
+				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
+					{{$content.Render}}
+				</article>
+			{{ end }}
+		{{ else }}
+			<h4>
+				You haven't saved any thread. Press the save button to save it here permanently.
+			</h4>
+		{{ end }}
+	</section>
+	<!-- User info section -->
+	<div class="follow">
+		<p>You have {{.Followers}} followers and are following {{.Following}} users</p>
+	</div>
+	{{ end }}
+</body>
+</html>
