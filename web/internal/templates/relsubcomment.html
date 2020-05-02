@@ -1,0 +1,22 @@
+<header>
+{{ with .BasicContent }}
+	By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
+{{ end }}
+</header>
+<main>
+	{{ with .BasicContent }}
+	<a href="/{{.Permalink}}"><h2>{{.Title}}</h2></a>
+	<hr>
+	<p class="summary">{{.Summary}} ...<a href="{{.Permalink}}">Read more</a></p>
+	{{ end }}
+</main>
+<footer>
+	<div class="upvotes">
+	<a href="{{ printf "/%s/upvote/?c_id=%s&sc_id=%s" .BasicContent.ThreadLink .CommentId .Id }}">
+	{{ with .BasicContent }}
+		{{.Upvotes}} Upvotes
+		{{- if .Upvoted }}; You upvoted this.{{ end }}
+	{{ end }}
+	</a>
+	</div>
+</footer>
