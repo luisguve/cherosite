@@ -1,0 +1,30 @@
+<header>
+{{ with .BasicContent }}
+	By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
+{{ end }}
+</header>
+<main>
+	{{ with .BasicContent }}
+	<a href="/{{.Permalink}}"><h2>{{.Title}}</h2></a>
+	<hr>
+		{{ if .Thumbnail }}
+		<img src="/{{.Thumbnail}}" alt="thumbnail">
+		{{ end }}
+		{{.Content}}
+	{{ end }}
+</main>
+<footer>
+	<div class="upvotes">
+	<a href="{{ printf "/%s/upvote/?c_id=%s" .BasicContent.ThreadLink .Id }}">
+	{{ with .BasicContent }}
+		{{.Upvotes}} Upvotes
+		{{- if .Topvoted }}; You upvoted this.{{ end }}
+	{{ end }}
+	</a>
+	</div>
+	<div class="replies">
+		<a href="{{ printf "/%s#c_id=%s" .BasicContent.ThreadLink .Id }}">
+			{{ .Replies }} Replies
+		</a>
+	</div>
+</footer>
