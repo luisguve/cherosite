@@ -1,31 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Patilla thread - {{ .Content.BasicContentData.Title }}</title>
+	<title>Patilla thread - {{ .Title }}</title>
 </head>
 <body>
-	{{ partial "header.html" .Username }}
-	<article>
-		{{ with .Content.BasicContentData }}
-		<h1>{{ .Title }}</h1>
-		<img src="{{ .FtFile }}">
-		<span>Published: {{.PublishDate}}</span>
-		<p>{{ .Content }}</p>
-		{{ end }}
-		<footer>
-			<span>Topvotes: {{.Content.Topvotes}}</span>
-			<span>Replies: {{.Content.ThreadRelated.Replies}}</span>
-		</footer>
-	</article>
-	{{ range .Feed.ContentPattern }}
+	{{ partial "header.html" .HeaderData }}
+	<section class="thread-view">
 		<article>
-		{{ with .Data.BasicContentData }}
-			<p>{{ .Content }}</p>
-			{{ if .FtFile }}
-			<img src="{{.FtFile}}">
-			{{ end }}
-		{{ end }}
+			{{ .Content.Render }}
 		</article>
-	{{ end }}
+	</section>
+	<section class="thread-comments">
+		<h2>{{len .Comments}} Comments on this thread</h2>
+		{{ $idx, $comment := range .Comments }}
+		{{/* class example: class="comment NEW-3" */}}
+		<article class="{{printf "%s %s-%d" $comment.Kind $comment.Status $idx}}">
+			{{ $comment.Render }}
+		</article>
+		{{ end }}
+	</section>
 </body>
 </html>
