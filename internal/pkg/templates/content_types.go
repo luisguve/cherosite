@@ -81,7 +81,7 @@ func (t *ThreadView) Render() template.HTML {
 	return template.HTML(result.String())
 }
 
-// type for displaying content of a comment in the page of the thread
+// type for displaying content of a comment in the page of the thread it belongs to
 type CommentContent struct {
 	*BasicContent
 	Id      string
@@ -89,7 +89,15 @@ type CommentContent struct {
 }
 
 func (c *CommentContent) Render() template.HTML {
-	tplName := "commentcontent.html"
+	var tplName string
+	switch c.BasicContent.Status() {
+	case "NEW":
+		tplName = "newcomment.html"
+	case "RELEVANT":
+		tplName = "relcommentcontent.html"
+	case "TOP":
+		tplName = "topcommentcontent.html"
+	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
 		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
