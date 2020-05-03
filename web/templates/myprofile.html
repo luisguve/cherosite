@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>My Patilla profile - {{.ProfileData.Alias}} (@{{.ProfileData.Username}})</title>
+	{{ with .ProfileData }}
+	<title>My Patilla profile - {{.Alias}} (@{{.Username}})</title>
+	{{ end }}
 </head>
 <body>
 	{{ partial "header.html" .HeaderData }}
