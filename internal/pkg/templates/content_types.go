@@ -55,6 +55,7 @@ func (t *ThreadContent) Render() template.HTML {
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
 		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
 	}
+	return template.HTML(result.String())
 }
 
 // type for displaying content of a thread in section level page
@@ -80,6 +81,23 @@ func (t *ThreadView) Render() template.HTML {
 	return template.HTML(result.String())
 }
 
+// type for displaying content of a comment in the page of the thread
+type CommentContent struct {
+	*BasicContent
+	Id      string
+	Replies uint32
+}
+
+func (c *CommentContent) Render() template.HTML {
+	tplName := "commentcontent.html"
+	result := new(strings.Builder)
+	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
+		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+	}
+	return template.HTML(result.String())
+}
+
+// type for displaying content of a comment in section level page
 type CommentView struct {
 	*BasicContent
 	Id      string
