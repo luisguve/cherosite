@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Cheropatilla - {{.SectionName}}</title>
+</head>
+<body>
+	{{ partial "header.html" .HeaderData }}
+	<h1>You are in the section <strong>{{.SectionName}}</strong></h1>
+	<section class="feed">
+		{{ $idx, $content := range .Feed }}
+			{{/* class example: class="thread NEW-3" */}}
+			<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
+				{{$content.Render}}
+			</article>
+		{{ else }}
+			<h3>There are no threads to show. Come back later and see if someone created content.</h3>
+		{{ end }}
+	</section>
+</body>
+</html>
