@@ -139,7 +139,6 @@ type ProfileData struct {
 	Followers    uint32
 	Following    uint32
 	Description  string
-	Activity     []*Content
 }
 
 type Notif struct {
@@ -175,9 +174,10 @@ type HeaderData struct {
 type ProfileView struct {
 	HeaderData
 	ProfileData
+	Activity   []*Content
 	// IsFollower indicates whether the current user is following another user,
 	// in a context in which it is viewing another user's profile or content
-	IsFollower    bool
+	IsFollower bool
 }
 
 type CurrentUserData struct {

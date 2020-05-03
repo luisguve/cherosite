@@ -29,20 +29,20 @@
 			</p>
 		</div>
 	</section>
+	{{ end }}
 	<!-- User activity section -->
 	<section class="feed">
-		{{ with .Activity }}
-			<h4>{{ $userAlias }} activity</h4>
-			{{ $idx, $content := range . }}
-				{{/* class example: class="thread NEW-3" */}}
-				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
-					{{$content.Render}}
-				</article>
-			{{ end }}
-		{{ else }}
-			<h4>{{ $userAlias }} has no recent activity.</h4>
+	{{ with .Activity }}
+		<h4>{{ $userAlias }} activity</h4>
+		{{ $idx, $content := range . }}
+			{{/* class example: class="thread NEW-3" */}}
+			<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
+				{{$content.Render}}
+			</article>
 		{{ end }}
-	</section>
+	{{ else }}
+		<h4>{{ $userAlias }} has no recent activity.</h4>
 	{{ end }}
+	</section>
 </body>
 </html>
