@@ -38,6 +38,7 @@
 				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
 					{{$content.Render}}
 				</article>
+			{{ end }}
 		{{ else }}
 			<h4>{{ $userAlias }} has no recent activity.</h4>
 		{{ end }}
