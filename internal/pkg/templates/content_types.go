@@ -43,6 +43,21 @@ func (b *BasicContent) Status() string {
 	return b.ContentStatus
 }
 
+// type for displaying content of a thread in its page
+type ThreadContent struct {
+	*BasicContent
+	Replies uint32
+}
+
+func (t *ThreadContent) Render() template.HTML {
+	tplName := "threadcontent.html"
+	result := new(strings.Builder)
+	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
+		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+	}
+}
+
+// type for displaying content of a thread in section level page
 type ThreadView struct {
 	*BasicContent
 	Replies uint32
