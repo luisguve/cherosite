@@ -1,11 +1,5 @@
 package templates
 
-import(
-	"fmt"
-	"strings"
-	"html/template"
-)
-
 type ProfileData struct {
 	Patillavatar string // URL to user profile pic
 	Alias        string
@@ -54,17 +48,13 @@ type ProfileView struct {
 	IsFollower bool
 }
 
-type CurrentUserData struct {
+type DashboardView struct {
+	HeaderData
 	Followers    uint32
 	Following    uint32
 	Activity     []*Content
 	SavedContent []*Content
-}
-
-type DashboardView struct {
-	HeaderData
-	CurrentUserData
-	Feed []*Content
+	Feed         []*Content
 }
 
 type ExploreView struct {

@@ -21,7 +21,6 @@
 			</h4>
 		{{ end }}
 	</section>
-	{{ with .CurrentUserData }}
 	<!-- User activity section -->
 	<section class="user-activity">
 		{{ with .Activity }}
@@ -58,6 +57,5 @@
 	<div class="follow">
 		<p>You have {{.Followers}} followers and are following {{.Following}} users</p>
 	</div>
-	{{ end }}
 </body>
 </html>
