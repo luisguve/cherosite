@@ -50,7 +50,7 @@ type ThreadContent struct {
 }
 
 func (t *ThreadContent) Render() template.HTML {
-	tplName := "threadcontent.html"
+	tplName := "thread_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
 		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
@@ -68,11 +68,11 @@ func (t *ThreadView) Render() template.HTML {
 	var tplName string
 	switch t.BasicContent.Status() {
 	case "NEW":
-		tplName = "newcontent.html"
+		tplName = "new_content.html"
 	case "RELEVANT":
-		tplName = "relthread.html"
+		tplName = "rel_thread.html"
 	case "TOP":
-		tplName = "topthread.html"
+		tplName = "top_thread.html"
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
@@ -92,11 +92,11 @@ func (c *CommentContent) Render() template.HTML {
 	var tplName string
 	switch c.BasicContent.Status() {
 	case "NEW":
-		tplName = "newcomment.html"
+		tplName = "new_comment.html"
 	case "RELEVANT":
-		tplName = "relcommentcontent.html"
+		tplName = "rel_comment_content.html"
 	case "TOP":
-		tplName = "topcommentcontent.html"
+		tplName = "top_comment_content.html"
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
@@ -116,11 +116,11 @@ func (c *CommentView) Render() template.HTML {
 	var tplName string
 	switch c.BasicContent.Status() {
 	case "NEW":
-		tplName = "newcontent.html"
+		tplName = "new_content.html"
 	case "RELEVANT":
-		tplName = "relcomment.html"
+		tplName = "rel_comment.html"
 	case "TOP":
-		tplName = "topcomment.html"
+		tplName = "top_comment.html"
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
@@ -139,11 +139,11 @@ func (sc *SubcommentView) Render() template.HTML {
 	var tplName string
 	switch sc.BasicContent.Status() {
 	case "NEW":
-		tplName = "newcontent.html"
+		tplName = "new_content.html"
 	case "RELEVANT":
-		tplName = "relsubcomment.html"
+		tplName = "rel_subcomment.html"
 	case "TOP":
-		tplName = "topsubcomment.html"
+		tplName = "top_subcomment.html"
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, sc); err != nil {
