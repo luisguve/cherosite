@@ -198,6 +198,30 @@ type ExploreView struct {
 	Feed []*Content
 }
 
+type SectionView struct {
+	HeaderData
+	Feed        []*Content
+	SectionName string
+}
+
+type ThreadView struct {
+	HeaderData
+	Content  *Content
+	Comments []*Content
+}
+
+type MyProfileData struct {
+	Patillavatar string // URL to user profile pic
+	Alias        string
+	Username     string
+	Description  string
+}
+
+type MyProfileView struct {
+	HeaderData
+	MyProfileData
+}
+
 /*old below*/
 
 type ThreadView struct {
