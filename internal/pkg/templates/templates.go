@@ -210,16 +210,9 @@ type ThreadView struct {
 	Comments []*Content
 }
 
-type MyProfileData struct {
-	Patillavatar string // URL to user profile pic
-	Alias        string
-	Username     string
-	Description  string
-}
-
 type MyProfileView struct {
 	HeaderData
-	MyProfileData
+	ProfileData
 }
 
 /*old below*/
