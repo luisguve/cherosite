@@ -4,10 +4,11 @@
 	<title>Patilla profile - {{.ProfileData.Alias}} (@{{.ProfileData.Username}})</title>
 </head>
 <body>
-	{{ partial "header.html" .CurrentUser }}
-	{{ $isFollowing := .CurrentUser.IsFollowing }}
+	{{ partial "header.html" .HeaderData }}
+	{{ $isFollowing := .IsFollowing }}
 	{{ $userAlias := .ProfileData.Alias }}
 	{{ with .ProfileData }}
+	<!-- User data section -->
 	<section class="profile-info">
 		<div class="profile-pic">
 			<img src="{{ .Patillavatar }}" alt="Patillavatar">
@@ -28,6 +29,7 @@
 			</p>
 		</div>
 	</section>
+	<!-- User activity section -->
 	<section class="feed">
 		{{ with .Activity }}
 			<h4>{{ $userAlias }} activity</h4>
