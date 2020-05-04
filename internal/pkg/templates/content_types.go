@@ -14,6 +14,8 @@ type Content interface {
 	Kind() string
 	// Status returns the status of the content, which may be NEW, RELEVANT or TOP
 	Status() string
+	// Id returns the Id of the content, used to uniquely identify it
+	Id() string
 }
 
 // BasicContent is the set of fields that are shared by all the kinds of content:
@@ -22,6 +24,7 @@ type BasicContent struct {
 	Title         string
 	ContentType   string // thread, comment or subcomment
 	ContentStatus string // NEW, RELEVANT or TOP
+	ContentId     string
 	Thumbnail     string // Thumbnail URL
 	Permalink     string // Content URL
 	Content       string
@@ -41,6 +44,10 @@ func (b *BasicContent) Kind() string {
 
 func (b *BasicContent) Status() string {
 	return b.ContentStatus
+}
+
+func (b *BasicContent) Id() string {
+	return b.ContentId
 }
 
 // type for displaying content of a thread in its page
