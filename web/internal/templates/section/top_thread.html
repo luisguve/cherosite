@@ -14,15 +14,15 @@
 <footer>
 	{{ with .BasicContent }}
 	<div class="upvotes">
-	<a href="{{ printf "/%s/upvote/" .ThreadLink }}">
-		{{.Upvotes}} Upvotes 
-		{{- if .Upvoted }}; You upvoted this.{{ end }}
-	</a>
+		<button type="button">
+			{{.Upvotes}} Upvotes 
+			{{- if .Upvoted }}; You upvoted this.{{ end }}
+		</button>
 	</div>
 	{{ end }}
 	<div class="replies">
-		<a href="{{ printf "/%s#comments" .BasicContent.ThreadLink }}">
+		<button type="button">
 			{{ .Replies }} Replies
-		</a>
+		</button>
 	</div>
 </footer>

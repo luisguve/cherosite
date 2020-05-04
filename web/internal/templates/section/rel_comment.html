@@ -18,12 +18,12 @@
 </main>
 <footer>
 	<div class="upvotes">
-	<a href="{{ printf "/%s/upvote/?c_id=%s" .BasicContent.ThreadLink .Id }}">
+	<button type="button">
 	{{ with .BasicContent }}
 		{{.Upvotes}} Upvotes
 		{{- if .Upvoted }}; You upvoted this.{{ end }}
 	{{ end }}
-	</a>
+	</button>
 	</div>
 	<div class="replies">
 		<a href="{{.Permalink}}">
