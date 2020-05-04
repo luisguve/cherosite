@@ -6,7 +6,11 @@
 		{{.SectionName}}
 	</a>
 	<p class="summary">
-		{{.Summary}} ...<a href="{{.Permalink}}">Read more</a>
+		{{ with .Summary }}
+		{{.}} ...<a href="{{.Permalink}}">Read more</a>
+		{{ else }}
+		{{ .Content }}
+		{{ end }}
 	</p>
 </h3>
 {{ end }}
