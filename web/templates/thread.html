@@ -13,7 +13,8 @@
 	<section class="thread-comments" id="comments">
 		{{ $idx, $comment := range .Comments }}
 		{{/* class example: class="comment NEW-3" */}}
-		<article class="{{printf "%s %s-%d" $comment.Kind $comment.Status $idx}}">
+		{{ $class := printf "%s %s-%d" $comment.Kind $comment.Status $idx }}
+		<article class="{{$class}}">
 			{{ $comment.Render }}
 		</article>
 		{{ end }}
