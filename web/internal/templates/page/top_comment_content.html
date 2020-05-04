@@ -6,7 +6,7 @@
 <main>
 	{{ with .BasicContent }}
 	{{ with .Thumbnail }}<img src="/{{.}}" alt="thumbnail">{{ end }}
-	{{.Content}}
+	<div class="content">{{.Content}}</div>
 	{{ end }}
 </main>
 <footer>
