@@ -91,15 +91,7 @@ type CommentContent struct {
 }
 
 func (c *CommentContent) Render() template.HTML {
-	var tplName string
-	switch c.BasicContent.Status() {
-	case "NEW":
-		tplName = "new_comment.html"
-	case "RELEVANT":
-		tplName = "rel_comment_content.html"
-	case "TOP":
-		tplName = "top_comment_content.html"
-	}
+	tplName := "comment_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
 		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
