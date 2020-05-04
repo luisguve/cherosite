@@ -53,7 +53,8 @@ func (t *ThreadContent) Render() template.HTML {
 	tplName := "thread_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
 	}
 	return template.HTML(result.String())
 }
@@ -76,7 +77,8 @@ func (t *ThreadView) Render() template.HTML {
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
 	}
 	return template.HTML(result.String())
 }
@@ -100,7 +102,8 @@ func (c *CommentContent) Render() template.HTML {
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
 	}
 	return template.HTML(result.String())
 }
@@ -124,7 +127,8 @@ func (c *CommentView) Render() template.HTML {
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
 	}
 	return template.HTML(result.String())
 }
@@ -147,7 +151,8 @@ func (sc *SubcommentView) Render() template.HTML {
 	}
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, sc); err != nil {
-		return fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
 	}
 	return template.HTML(result.String())
 }
