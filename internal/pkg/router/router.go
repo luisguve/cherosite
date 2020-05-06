@@ -111,8 +111,11 @@ func (r *Router) SetupRoutes() {
 
 	root.HandleFunc("/login", r.handleLogin).Methods("POST")
 	root.HandleFunc("/signin", r.handleSignin).Methods("POST")
-	root.HandleFunc("/logout", r.onlyUsers(r.handleLogout))
-	.Methods("GET")
+	root.HandleFunc("/logout", r.onlyUsers(r.handleLogout)).Methods("GET")
+
+	// save a thread /save?thread={t_id}&section={s_name}
+	root.HandleFunc("/save", r.onlyUsers(r.handleSave)).Methods("POST")
+	.Queries("thread", "{thread:[a-zA-Z0-9]+}", "section", "{section:[a-zA-Z0-9]+}")
 
 	// handlers for sections
 	section := root.PathPrefix("/{section}").Subrouter()
