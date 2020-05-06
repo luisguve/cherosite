@@ -1,16 +1,18 @@
 {{ with .BasicContent }}
-<h3>
-	<a href="{{.Permalink}}">
-		{{.Title}}
-	</a> - <a href="{{.SectionLink}}">
-		{{.SectionName}}
-	</a>
-	<p class="summary">
-		{{ with .Summary }}
-		{{.}} ...<a href="{{.Permalink}}">Read more</a>
-		{{ else }}
-		{{ .Content }}
-		{{ end }}
-	</p>
-</h3>
+<article class=".ClassName">
+	<h3>
+		<a href="{{.Permalink}}">
+			{{.Title}}
+		</a> - <a href="{{.SectionLink}}">
+			{{.SectionName}}
+		</a>
+		<p class="summary">
+			{{ with .Summary }}
+			{{.}} ...<a href="{{.Permalink}}">Read more</a>
+			{{ else }}
+			{{ .Content }}
+			{{ end }}
+		</p>
+	</h3>
+</article>
 {{ end }}

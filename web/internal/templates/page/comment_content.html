@@ -1,24 +1,29 @@
-<header>
-{{ with .BasicContent }}
-	By {{.Author}} on {{.PublishDate}}
-{{ end }}
-</header>
-<main>
+{{ $class := .BasicContent.ClassName }}
+{{ $upvoteLink := .BasicContent.UpvoteLink }}
+
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}">
+	<header>
 	{{ with .BasicContent }}
-	{{ with .Thumbnail }}<img src="/{{.}}" alt="thumbnail">{{ end }}
-	<div class="content">{{.Content}}</div>
+		By {{.Author}} on {{.PublishDate}}
 	{{ end }}
-</main>
-<footer>
-	<div class="upvotes">
-	<button type="button">
-	{{ with .BasicContent }}
-		{{.Upvotes}} Upvotes 
-		{{- if .Upvoted }}; You upvoted this.{{ end }}
-	{{ end }}
-	</button>
-	</div>
-	<div class="replies">
-		<button type="button">{{ .Replies }} Replies | Reply</button>
-	</div>
-</footer>
+	</header>
+	<main>
+		{{ with .BasicContent }}
+		{{ with .Thumbnail }}<img src="/{{.}}" alt="thumbnail">{{ end }}
+		<div class="content">{{.Content}}</div>
+		{{ end }}
+	</main>
+	<footer>
+		<div class="upvotes">
+		<button type="button">
+		{{ with .BasicContent }}
+			{{.Upvotes}} Upvotes 
+			{{- if .Upvoted }}; You upvoted this.{{ end }}
+		{{ end }}
+		</button>
+		</div>
+		<div class="replies">
+			<button type="button">{{ .Replies }} Replies | Reply</button>
+		</div>
+	</footer>
+</article>

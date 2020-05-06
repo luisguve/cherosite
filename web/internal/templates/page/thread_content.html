@@ -1,24 +1,29 @@
-<header>
-{{ with .BasicContent }}
-	By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
-{{ end }}
-</header>
-<main>
+{{ $class := .BasicContent.ClassName }}
+{{ $upvoteLink := .BasicContent.UpvoteLink }}
+
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}">
+	<header>
 	{{ with .BasicContent }}
-	<h2>{{.Title}}</h2>
-	<hr>
-	<img src="/{{.Thumbnail}}" alt="thumbnail">
-	{{.Content}}
+		By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
 	{{ end }}
-</main>
-<footer>
-	{{ with .BasicContent }}
-	<div class="upvotes">
-	<button type="button">
-		{{.Upvotes}} Upvotes 
-		{{- if .Upvoted }}; You upvoted this.{{ end }}
-	</button>
-	</div>
-	{{ end }}
-	<div class="replies">{{ .Replies }} Replies</div>
-</footer>
+	</header>
+	<main>
+		{{ with .BasicContent }}
+		<h2>{{.Title}}</h2>
+		<hr>
+		<img src="/{{.Thumbnail}}" alt="thumbnail">
+		{{.Content}}
+		{{ end }}
+	</main>
+	<footer>
+		{{ with .BasicContent }}
+		<div class="upvotes">
+		<button type="button">
+			{{.Upvotes}} Upvotes 
+			{{- if .Upvoted }}; You upvoted this.{{ end }}
+		</button>
+		</div>
+		{{ end }}
+		<div class="replies">{{ .Replies }} Replies</div>
+	</footer>
+</article>
