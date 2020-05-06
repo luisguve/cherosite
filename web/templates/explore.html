@@ -7,10 +7,7 @@
 	{{ partial "header.html" .HeaderData }}
 	<section class="feed">
 		{{ $idx, $content := range .Feed }}
-			{{/* class example: class="thread NEW-3" */}}
-			<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
-				{{$content.Render}}
-			</article>
+			{{ $content.Render $idx }}
 		{{ else }}
 			<h3>There are no threads to show. Come back later and see if someone created content.</h3>
 		{{ end }}

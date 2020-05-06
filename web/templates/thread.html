@@ -6,9 +6,7 @@
 <body>
 	{{ partial "header.html" .HeaderData }}
 	<section class="thread-view">
-		<article>
-			{{ .Content.Render 0 }}
-		</article>
+		{{ .Content.Render 0 }}
 	</section>
 	<section class="thread-comments" id="comments">
 		{{ $idx, $comment := range .Comments }}

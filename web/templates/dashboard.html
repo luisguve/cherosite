@@ -10,10 +10,7 @@
 		{{ with .Feed }}
 			<h4>Your feed</h4>
 			{{ $idx, $content := range . }}
-				{{/* class example: class="thread NEW-3" */}}
-				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
-					{{$content.Render}}
-				</article>
+				{{ $content.Render $idx }}
 			{{ end }}
 		{{ else }}
 			<h4>
@@ -26,10 +23,7 @@
 		{{ with .Activity }}
 			<h4>Your recent activity</h4>
 			{{ $idx, $content := range . }}
-				{{/* class example: class="thread NEW-3" */}}
-				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
-					{{$content.Render}}
-				</article>
+				{{ $content.Render $idx }}
 			{{ end }}
 		{{ else }}
 			<h4>
@@ -42,14 +36,11 @@
 		{{ with .SavedContent }}
 			<h4>You saved these threads</h4>
 			{{ $idx, $content := range . }}
-				{{/* class example: class="thread NEW-3" */}}
-				<article class="{{printf "%s %s-%d" $content.Kind $content.Status $idx}}">
-					{{$content.Render}}
-				</article>
+				{{ $content.Render $idx }}
 			{{ end }}
 		{{ else }}
 			<h4>
-				You haven't saved any thread. Press the save button to save it here permanently.
+				You haven't saved any thread. Press the save button when viewing a thread to save it.
 			</h4>
 		{{ end }}
 	</section>
