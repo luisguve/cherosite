@@ -9,45 +9,28 @@ import(
 type Content interface {
 	// Render returns the HTML representation of this content, according to its kind
 	// and status.
-	Render() template.HTML
-	// Kind returns the content type, which may be thread, comment or subcomment
-	Kind() string
-	// Status returns the status of the content, which may be NEW, RELEVANT or TOP
-	Status() string
-	// Id returns the Id of the content, used to uniquely identify it
-	Id() string
+	Render(idx int) template.HTML
 }
 
 // BasicContent is the set of fields that are shared by all the kinds of content:
 // threads, comments and subcomments
 type BasicContent struct {
-	Title         string
-	ContentType   string // thread, comment or subcomment
-	ContentStatus string // NEW, RELEVANT or TOP
-	ContentId     string
-	Thumbnail     string // Thumbnail URL
-	Permalink     string // Content URL
-	Content       string
-	Summary       string
-	Upvotes       uint32
-	Upvoted       bool // Has the current user topvote'd this content?
-	SectionName   string
-	Author        string // User alias
-	PublishDate   string
-	ThreadLink    string // Thread URL. It includes SectionLink
-	SectionLink   string // Section URL
-}
-
-func (b *BasicContent) Kind() string {
-	return b.ContentType
-}
-
-func (b *BasicContent) Status() string {
-	return b.ContentStatus
-}
-
-func (b *BasicContent) Id() string {
-	return b.ContentId
+	Title       string
+	Status      string // NEW, RELEVANT or TOP
+	ClassName   string
+	UpvoteLink  string // URL to post upvote to content
+	SaveLink    string // URL to post request to save thread
+	Thumbnail   string // Thumbnail URL
+	Permalink   string // Content URL
+	Content     string
+	Summary     string
+	Upvotes     uint32
+	Upvoted     bool // Has the current user topvote'd this content?
+	SectionName string
+	Author      string // User alias
+	PublishDate string
+	ThreadLink  string // Thread URL. It includes SectionLink
+	SectionLink string // Section URL
 }
 
 // type for displaying content of a thread in its page
@@ -56,7 +39,8 @@ type ThreadContent struct {
 	Replies uint32
 }
 
-func (t *ThreadContent) Render() template.HTML {
+func (t *ThreadContent) Render(idx int) template.HTML {
+	t.BasicContent.ClassName = fmt.Sprintf("%s-%d", t.BasicContent.Status, idx)
 	tplName := "thread_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
@@ -72,7 +56,9 @@ type ThreadView struct {
 	Replies uint32
 }
 
-func (t *ThreadView) Render() template.HTML {
+func (t *ThreadView) Render(idx int) template.HTML {
+	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%d", t.BasicContent.Status, 
+		idx)
 	var tplName string
 	switch t.BasicContent.Status() {
 	case "NEW":
@@ -97,7 +83,8 @@ type CommentContent struct {
 	Replies uint32
 }
 
-func (c *CommentContent) Render() template.HTML {
+func (c *CommentContent) Render(idx int) template.HTML {
+	c.BasicContent.ClassName = fmt.Sprintf("%s-%d", c.BasicContent.Status, idx)
 	tplName := "comment_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
@@ -114,7 +101,9 @@ type CommentView struct {
 	Replies uint32
 }
 
-func (c *CommentView) Render() template.HTML {
+func (c *CommentView) Render(idx int) template.HTML {
+	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%d",	c.BasicContent.Status, 
+		idx)
 	var tplName string
 	switch c.BasicContent.Status() {
 	case "NEW":
@@ -132,13 +121,16 @@ func (c *CommentView) Render() template.HTML {
 	return template.HTML(result.String())
 }
 
+// type for displaying content of a subcomment in section level page
 type SubcommentView struct {
 	*BasicContent
 	CommentId string
 	Id        string
 }
 
-func (sc *SubcommentView) Render() template.HTML {
+func (sc *SubcommentView) Render(idx int) template.HTML {
+	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%d",	sc.BasicContent.Status,
+		idx)
 	var tplName string
 	switch sc.BasicContent.Status() {
 	case "NEW":
