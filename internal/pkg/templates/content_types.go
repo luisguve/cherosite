@@ -62,7 +62,7 @@ func (t *ThreadView) Render(idx int) template.HTML {
 		idx)
 	t.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/", t.BasicContent.ThreadLink)
 	var tplName string
-	switch t.BasicContent.Status() {
+	switch t.BasicContent.Status {
 	case "NEW":
 		tplName = "new_content.html"
 	case "RELEVANT":
@@ -111,7 +111,7 @@ func (c *CommentView) Render(idx int) template.HTML {
 	c.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", 
 		c.BasicContent.ThreadLink, c.Id)
 	var tplName string
-	switch c.BasicContent.Status() {
+	switch c.BasicContent.Status {
 	case "NEW":
 		tplName = "new_content.html"
 	case "RELEVANT":
@@ -140,7 +140,7 @@ func (sc *SubcommentView) Render(idx int) template.HTML {
 	sc.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s&sc_id=%s", 
 		sc.BasicContent.ThreadLink, sc.CommentId, sc.Id)
 	var tplName string
-	switch sc.BasicContent.Status() {
+	switch sc.BasicContent.Status {
 	case "NEW":
 		tplName = "new_content.html"
 	case "RELEVANT":
