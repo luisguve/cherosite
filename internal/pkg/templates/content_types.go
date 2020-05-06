@@ -35,8 +35,9 @@ type BasicContent struct {
 // type for displaying content of a thread in its page
 type ThreadContent struct {
 	*BasicContent
-	Replies  uint32
-	SaveLink string // URL to post request to save thread
+	Replies   uint32
+	SaveLink  string // URL to post request to save thread
+	ReplyLink string // URL to post reply
 }
 
 func (t *ThreadContent) Render(idx int) template.HTML {
@@ -54,8 +55,9 @@ func (t *ThreadContent) Render(idx int) template.HTML {
 // type for displaying content of a thread in section level page
 type ThreadView struct {
 	*BasicContent
-	SaveLink string // URL to post request to save thread
-	Replies  uint32
+	Replies   uint32
+	SaveLink  string // URL to post request to save thread
+	ReplyLink string // URL to post reply
 }
 
 func (t *ThreadView) Render(idx int) template.HTML {
@@ -82,8 +84,9 @@ func (t *ThreadView) Render(idx int) template.HTML {
 // type for displaying content of a comment in the page of the thread it belongs to
 type CommentContent struct {
 	*BasicContent
-	Id      string
-	Replies uint32
+	Id        string
+	Replies   uint32
+	ReplyLink string // URL to post reply
 }
 
 func (c *CommentContent) Render(idx int) template.HTML {
@@ -102,8 +105,9 @@ func (c *CommentContent) Render(idx int) template.HTML {
 // type for displaying content of a comment in section level page
 type CommentView struct {
 	*BasicContent
-	Id      string
-	Replies uint32
+	Id        string
+	Replies   uint32
+	ReplyLink string // URL to post reply
 }
 
 func (c *CommentView) Render(idx int) template.HTML {

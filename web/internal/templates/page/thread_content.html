@@ -1,8 +1,9 @@
 {{ $class := .BasicContent.ClassName }}
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
-{{ $saveLink:= .SaveLink }}
+{{ $saveLink := .SaveLink }}
+{{ $replyLink := .ReplyLink }}
 
-<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-save-link="{{$saveLink}}">
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-save-link="{{$saveLink}}" data-reply-link="{{$replyLink}}">
 	<header>
 	{{ with .BasicContent }}
 		By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
