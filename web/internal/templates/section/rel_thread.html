@@ -1,7 +1,7 @@
 {{ $class := .BasicContent.ClassName }}
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
 
-<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}">
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-save-link="{{$saveLink}}">
 	<header>
 	{{ with .BasicContent }}
 		By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
