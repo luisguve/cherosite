@@ -19,7 +19,6 @@ type BasicContent struct {
 	Status      string // NEW, RELEVANT or TOP
 	ClassName   string
 	UpvoteLink  string // URL to post upvote to content
-	SaveLink    string // URL to post request to save thread
 	Thumbnail   string // Thumbnail URL
 	Permalink   string // Content URL
 	Content     string
@@ -36,7 +35,8 @@ type BasicContent struct {
 // type for displaying content of a thread in its page
 type ThreadContent struct {
 	*BasicContent
-	Replies uint32
+	Replies  uint32
+	SaveLink string // URL to post request to save thread
 }
 
 func (t *ThreadContent) Render(idx int) template.HTML {
@@ -54,7 +54,8 @@ func (t *ThreadContent) Render(idx int) template.HTML {
 // type for displaying content of a thread in section level page
 type ThreadView struct {
 	*BasicContent
-	Replies uint32
+	SaveLink string // URL to post request to save thread
+	Replies  uint32
 }
 
 func (t *ThreadView) Render(idx int) template.HTML {
