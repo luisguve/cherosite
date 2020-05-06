@@ -7,7 +7,7 @@
 	{{ partial "header.html" .HeaderData }}
 	<section class="thread-view">
 		<article>
-			{{ .Content.Render }}
+			{{ .Content.Render 0 }}
 		</article>
 	</section>
 	<section class="thread-comments" id="comments">
