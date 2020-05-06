@@ -12,15 +12,7 @@
 	</section>
 	<section class="thread-comments" id="comments">
 		{{ $idx, $comment := range .Comments }}
-		
-		{{/* class example: class="comment NEW-3" */}}
-		{{ $class := printf "%s %s-%d" $comment.Kind $comment.Status $idx }}
-
-		{{ /* comment identifier */ }}
-		{{ $id := $comment.Id }}
-		<article class="{{$class}}" id="{{$id}}">
-			{{ $comment.Render }}
-		</article>
+			{{ $comment.Render $idx }}
 		{{ end }}
 	</section>
 </body>
