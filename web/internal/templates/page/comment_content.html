@@ -15,16 +15,22 @@
 		{{ end }}
 	</main>
 	<footer>
-		<div class="upvotes">
-		<button type="button">
 		{{ with .BasicContent }}
+		<div class="upvotes">
+		<button type="button" data-upvoted="{{.Upvoted}}">
 			{{.Upvotes}} Upvotes 
 			{{- if .Upvoted }}; You upvoted this.{{ end }}
-		{{ end }}
 		</button>
 		</div>
+		{{ end }}
 		<div class="replies">
 			<button type="button">{{ .Replies }} Replies | Reply</button>
 		</div>
 	</footer>
+	<form class="reply">
+		<label for="ft_file">Upload a file (optional)</label>
+		<input type="file" name="ft_file" id="ft_file">
+		<textarea>Leave a reply</textarea>
+		<input type="submit">
+	</form>
 </article>
