@@ -4,7 +4,7 @@
 	<title>Cheropatilla - {{.SectionName}}</title>
 </head>
 <body>
-	{{ partial "header.html" .HeaderData }}
+	{{ template "header" .HeaderData }}
 	<h1>You are in the section <strong>{{.SectionName}}</strong></h1>
 	<section class="feed">
 		{{ $idx, $content := range .Feed }}

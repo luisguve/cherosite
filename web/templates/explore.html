@@ -4,7 +4,7 @@
 	<title>Cheropatilla - explore</title>
 </head>
 <body>
-	{{ partial "header.html" .HeaderData }}
+	{{ template "header" .HeaderData }}
 	<section class="feed">
 		{{ $idx, $content := range .Feed }}
 			{{ $content.RenderOverview $idx }}

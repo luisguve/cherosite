@@ -4,7 +4,7 @@
 	<title>Patilla dashboard</title>
 </head>
 <body>
-	{{ partial "header.html" .HeaderData }}
+	{{ template "header" .HeaderData }}
 	<!-- User feed section -->
 	<section class="feed">
 		{{ with .Feed }}

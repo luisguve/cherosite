@@ -6,7 +6,7 @@
 	{{ end }}
 </head>
 <body>
-	{{ partial "header.html" .HeaderData }}
+	{{ template "header" .HeaderData }}
 	{{ $isFollowing := .IsFollowing }}
 	{{ $userAlias := .ProfileData.Alias }}
 	{{ with .ProfileData }}

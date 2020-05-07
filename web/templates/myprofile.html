@@ -6,7 +6,7 @@
 	{{ end }}
 </head>
 <body>
-	{{ partial "header.html" .HeaderData }}
+	{{ template "header" .HeaderData }}
 	{{ with .ProfileData }}
 	<!-- User data section -->
 	<section class="profile-info">

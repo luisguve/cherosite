@@ -4,7 +4,7 @@
 	<title>Patilla thread - {{ .Title }}</title>
 </head>
 <body>
-	{{ partial "header.html" .HeaderData }}
+	{{ template "header" .HeaderData }}
 	<section class="thread-view">
 		{{ .Content.RenderContent }}
 	</section>
