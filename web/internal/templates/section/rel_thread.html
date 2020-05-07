@@ -18,7 +18,7 @@
 	<footer>
 		{{ with .BasicContent }}
 		<div class="upvotes">
-			<button type="button">
+			<button type="button" data-upvoted="{{.Upvoted}}">
 				{{.Upvotes}} Upvotes 
 				{{- if .Upvoted }}; You upvoted this.{{ end }}
 			</button>
