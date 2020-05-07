@@ -37,6 +37,7 @@ type ThreadContent struct {
 	*BasicContent
 	Replies   uint32
 	SaveLink  string // URL to post request to save thread
+	Saved     bool // Did the current user save this thread?
 	ReplyLink string // URL to post reply
 }
 
@@ -57,6 +58,7 @@ type ThreadView struct {
 	*BasicContent
 	Replies   uint32
 	SaveLink  string // URL to post request to save thread
+	Saved     bool // Did the current user save this thread?
 	ReplyLink string // URL to post reply
 }
 
