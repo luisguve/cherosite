@@ -7,7 +7,7 @@
 	<header>
 	{{ with .BasicContent }}
 	<div class="thread-info">
-		By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
+		By <a href="/profile?{{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
 	</div>
 	{{ end }}
 	<div class="save">

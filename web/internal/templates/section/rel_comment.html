@@ -4,7 +4,7 @@
 <article class="{{$class}}" data-upvote-link="{{$upvoteLink}}">
 	<header>
 	{{ with .BasicContent }}
-		By {{.Author}} on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
+		By <a href="/profile?{{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
 	{{ end }}
 	</header>
 	<main>

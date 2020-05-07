@@ -27,6 +27,7 @@ type BasicContent struct {
 	Upvoted     bool // Has the current user topvote'd this content?
 	SectionName string
 	Author      string // User alias
+	Username    string // Author's username
 	PublishDate string
 	ThreadLink  string // Thread URL. It includes SectionLink
 	SectionLink string // Section URL
