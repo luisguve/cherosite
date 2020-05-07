@@ -8,9 +8,9 @@
 	{{ end }}
 	</header>
 	<main>
-		{{ with .BasicContent }}
-		<a href="/{{.Permalink}}"><h2>{{.Title}}</h2></a>
+		<a href="/{{.BasicContent.Permalink}}#{{.CommentId}}-{{.Id}}"><h2>{{.BasicContent.Title}}</h2></a>
 		<hr>
+		{{ with .BasicContent }}
 		<p class="summary">
 			{{ with .Summary }}
 			{{.}} ...<a href="{{.Permalink}}">Read more</a>
