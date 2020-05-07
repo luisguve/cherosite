@@ -93,10 +93,12 @@ message FullUserData {
 	repeated Notif unread_notifs = 5;
 	// read notifications of this user.
 	repeated Notif read_notifs = 6;
-	// ids of content this user has created.
-	Activity activity = 7;
+	// ids of content this user has created recently.
+	Activity recent_activity = 7;
+	// ids of unactive content this user has created.
+	Activity old_activity = 8;
 	// ids of threads that this user has saved to read later.
-	repeated Context.Thread threads_saved = 8;
+	repeated Context.Thread threads_saved = 9;
 	message Activity {
 		repeated Context.Thread threads_created = 1;
 		repeated Context.Comment comments = 2;
@@ -185,16 +187,23 @@ message GeneralPattern {
 	}
 }
 
-// ProfilePattern holds an array of ContentRuleRequest (i.e. content status), composing 
+// ActivityPattern holds an array of ContentRuleRequest (i.e. content status), composing 
 // up a pattern of content that's expected to get back. It is intended for recycling 
-// content from a specific user.
-message ProfilePattern {
+// activity from a specific user or a list of users.
+message ActivityPattern {
 	repeated ContentRuleRequest pattern = 1;
-	// discard_ids is a map of section names mapped to content ids that must not be 
-	// returned back, since it's content the user has already seen.
-	map<string, GeneralPattern.Ids> discard_ids = 2;
-	// user_id indicates which is the author of the content
-	string user_id = 3;
+	// discard_ids is a map of user_ids mapped to activity from the user referred by 
+	// the key that must not be returned back, since it's content the user has 
+	// already seen.
+	map<string, FullUserData.Activity> discard_ids = 2;
+	// context is either users following or the user itself.
+	oneof context {
+		UserList users = 3;
+		string user_id = 4;
+	}
+	message UserList {
+		repeated string ids = 1;
+	}
 }
 
 // The Context holds information about the place at which an event occurs or where 
@@ -405,6 +414,24 @@ message UnfollowUserRequest {
 
 message UnfollowUserResponse {}
 
+// SaveThreadRequest holds the id of the user which is saving the thread and the 
+// information about the thread to be saved.
+message SaveThreadRequest {
+	string user_id = 1;
+	Context.Thread thread = 2;
+}
+
+message SaveThreadResponse {}
+
+// UnsaveThreadRequest holds the id of the user which is unsaving the thread and the 
+// information about the thread to be removed from the user's saved thread list.
+message UnsaveThreadRequest {
+	string user_id = 1;
+	Context.Thread thread = 2;
+}
+
+message UnsaveThreadResponse {}
+
 // ViewUsersRequest is a message for requesting either following or followers users 
 // data of a given user
 message ViewUsersRequest {
@@ -459,6 +486,8 @@ service CrudCheropatilla {
 	rpc RecycleContent(ContentPattern) returns (stream ContentRuleResponse) {}
 	// Get new feed of threads in general (from multiple sections)
 	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRuleResponse) {}
+	// Get new activity from either multiple users or a single user.
+	rpc RecycleActivity(ActivityPattern) returns (stream ContentRuleResponse) {}
 	// Post upvote on thread, comment or subcomment
 	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
 	// Post comment on a thread or in a comment
@@ -491,6 +520,10 @@ service CrudCheropatilla {
 	rpc FollowUser(FollowUserRequest) returns (FollowUserResponse) {}
 	// Unfollow a user
 	rpc UnfollowUser(UnfollowUserRequest) returns (UnfollowUserResponse) {}
+	// Request to save thread
+	rpc SaveThread(SaveThreadRequest) returns(SaveThreadResponse) {}
+	// Request to remove thread from user's list of saved threads
+	rpc UnsaveThread(UnsaveThreadRequest) returns (UnsaveThreadResponse) {}
 	// Get either following or followers users' basic data
 	rpc ViewUsers(ViewUsersRequest) returns (ViewUsersResponse) {}
 	// Get username basic data, following, followers and threads created
