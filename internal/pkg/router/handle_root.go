@@ -13,10 +13,10 @@ import(
 	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
 )
 
-// Root "/" handler. It displays the dashboard of the logged in user that consists 
-// of the user notifications, the threads saved, threads created, the number of 
-// followers and following. Below that, a list of the active threads created by 
-// users that this user is following. 
+// Dashboard "/" handler. It displays the dashboard of the logged in user that 
+// consists of the user notifications, the threads saved, threads created, the 
+// number of followers and following. Below that, a list of the active threads 
+// created by users that this user is following. 
 // It may return an error in case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
