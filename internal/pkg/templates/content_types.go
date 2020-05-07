@@ -6,10 +6,22 @@ import(
 	"fmt"
 )
 
-type Content interface {
-	// Render returns the HTML representation of this content, according to its kind
-	// and status.
-	Render(idx int) template.HTML
+// OveriewRenderer is the interface that types must implement in order to be displayed
+// in section level pages, i.e. to build the "view"
+type OverviewRenderer interface {
+	// Render returns the HTML representation of the content, according to its kind
+	// and status, with an appropiate class name to place the content accordingly.
+	RenderOverview(idx int) template.HTML
+}
+
+// ContentRenderer is the interface that types must implement in order to be displayed
+// in single page level, i.e. to build the "content". It is intended for types that
+// have their own page.
+type ContentRenderer interface {
+	// Render returns the HTML representation of the content, according to its kind
+	// and status. Note that it does not receive an idx to place the content in
+	// the page, since the whole page is dedicated to the content being rendered.
+	RenderContent() template.HTML
 }
 
 // BasicContent is the set of fields that are shared by all the kinds of content:
@@ -33,8 +45,8 @@ type BasicContent struct {
 	SectionLink string // Section URL
 }
 
-// type for displaying content of a thread in its page
-type ThreadContent struct {
+// type for displaying content of a thread in section level page
+type Thread struct {
 	*BasicContent
 	Replies   uint32
 	SaveLink  string // URL to post request to save thread
@@ -42,7 +54,7 @@ type ThreadContent struct {
 	ReplyLink string // URL to post reply
 }
 
-func (t *ThreadContent) Render(idx int) template.HTML {
+func (t *Thread) RenderContent(idx int) template.HTML {
 	t.BasicContent.ClassName = fmt.Sprintf("%s-%d", t.BasicContent.Status, idx)
 	t.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/", t.BasicContent.ThreadLink)
 	tplName := "thread_content.html"
@@ -54,16 +66,7 @@ func (t *ThreadContent) Render(idx int) template.HTML {
 	return template.HTML(result.String())
 }
 
-// type for displaying content of a thread in section level page
-type ThreadView struct {
-	*BasicContent
-	Replies   uint32
-	SaveLink  string // URL to post request to save thread
-	Saved     bool // Did the current user save this thread?
-	ReplyLink string // URL to post reply
-}
-
-func (t *ThreadView) Render(idx int) template.HTML {
+func (t *Thread) RenderOverview(idx int) template.HTML {
 	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%d", t.BasicContent.Status, 
 		idx)
 	t.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/", t.BasicContent.ThreadLink)
@@ -92,7 +95,7 @@ type CommentContent struct {
 	ReplyLink string // URL to post reply
 }
 
-func (c *CommentContent) Render(idx int) template.HTML {
+func (c *CommentContent) RenderOverview(idx int) template.HTML {
 	c.BasicContent.ClassName = fmt.Sprintf("%s-%d", c.BasicContent.Status, idx)
 	c.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", 
 		c.BasicContent.ThreadLink, c.Id)
@@ -108,12 +111,11 @@ func (c *CommentContent) Render(idx int) template.HTML {
 // type for displaying content of a comment in section level page
 type CommentView struct {
 	*BasicContent
-	Id        string
-	Replies   uint32
-	ReplyLink string // URL to post reply
+	Id      string
+	Replies uint32
 }
 
-func (c *CommentView) Render(idx int) template.HTML {
+func (c *CommentView) RenderOverview(idx int) template.HTML {
 	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%d",	c.BasicContent.Status, 
 		idx)
 	c.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", 
@@ -142,7 +144,7 @@ type SubcommentView struct {
 	Id        string
 }
 
-func (sc *SubcommentView) Render(idx int) template.HTML {
+func (sc *SubcommentView) RenderOverview(idx int) template.HTML {
 	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%d",	sc.BasicContent.Status,
 		idx)
 	sc.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s&sc_id=%s", 

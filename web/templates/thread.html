@@ -6,11 +6,11 @@
 <body>
 	{{ partial "header.html" .HeaderData }}
 	<section class="thread-view">
-		{{ .Content.Render 0 }}
+		{{ .Content.RenderContent }}
 	</section>
 	<section class="thread-comments" id="comments">
 		{{ $idx, $comment := range .Comments }}
-			{{ $comment.Render $idx }}
+			{{ $comment.RenderOverview $idx }}
 		{{ end }}
 	</section>
 </body>

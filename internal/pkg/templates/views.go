@@ -42,7 +42,7 @@ type HeaderData struct {
 type ProfileView struct {
 	HeaderData
 	ProfileData
-	Activity   []*Content
+	Activity   []OverviewRenderer
 	// IsFollower indicates whether the current user is following another user,
 	// in a context in which it is viewing another user's profile or content
 	IsFollower bool
@@ -52,26 +52,26 @@ type DashboardView struct {
 	HeaderData
 	Followers    uint32
 	Following    uint32
-	Activity     []*Content
-	SavedContent []*Content
-	Feed         []*Content
+	Activity     []OverviewRenderer
+	SavedContent []OverviewRenderer
+	Feed         []OverviewRenderer
 }
 
 type ExploreView struct {
 	HeaderData
-	Feed []*Content
+	Feed []OverviewRenderer
 }
 
 type SectionView struct {
 	HeaderData
-	Feed        []*Content
+	Feed        []OverviewRenderer
 	SectionName string
 }
 
 type ThreadView struct {
 	HeaderData
-	Content  *Content
-	Comments []*Content
+	Content  ContentRenderer
+	Comments []OverviewRenderer
 }
 
 type MyProfileView struct {
