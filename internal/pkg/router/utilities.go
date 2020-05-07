@@ -111,8 +111,8 @@ func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
 // updateDiscardIdsSession replaces id of contents already set in the session 
 // with the provided ids and saves the cookie.
 func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWriter, 
-	ids map[string][]string, 
-	setDiscardIds func(*pagination.DiscardIds, map[string][]string)) {
+	ids interface{}, 
+	setDiscardIds func(*pagination.DiscardIds, interface{})) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	// Get id of contents to be discarded
