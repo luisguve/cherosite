@@ -215,27 +215,15 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 // - template rendering ---> TEMPLATE_ERROR
 func (r *Router) handleMyProfile(userId string, w http.ResponseWriter, 
 	req *http.Request) {
-	request := &pb.GetBasicUserDataRequest{
-		UserId: userId,
-	}
-	userData, err := r.crudClient.GetBasicUserData(context.Background(), request)
-	if err != nil {
-		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code() {
-			case codes.Unauthenticated:
-				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
-				return
-			default:
-				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
-			}
-		}
-		log.Printf("Could not send request: %v\n", err)
-		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+	if userData, status, err := r.getBasicUserData(userId); err != nil {
+		http.Error(w, err.Error(), status)
 		return
 	}
-	if err = r.templates.ExecuteTemplate(w, "myprofile.html", userData); err != nil {
+	userHeader := r.getUserHeaderData(userId)
+
+	profileView := templates.DataToMyProfileView(userData, userHeader)
+
+	if err = r.templates.ExecuteTemplate(w, "myprofile.html", profileView); err != nil {
 		log.Printf("Could not execute template myprofile.html: %v", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}

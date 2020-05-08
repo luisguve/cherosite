@@ -25,7 +25,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	userData, err := r.crudClient.GetFullUserData(context.Background(), 
 	&pb.GetFullUserDataRequest{UserId: userId})
 	if err != nil {
-		if resErr, ok := status.FromError(); ok {
+		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				log.Printf("User %s unregistered\n", userId)
@@ -48,9 +48,27 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	}
 
 	// userData holds only the notifications.
-	// The rest of the data (threads saved, threads created, users following 
-	// and followers) comes in the form of IDs. We should load these sets of 
-	// pieces individually.
+	// The rest of the data (threads saved, activity and feed, users following 
+	// and followers) must be loaded individually.
+
+	followers := len(userData.FollowersIds)
+	following := len(userData.FollowingIds)
+
+	// Get dashboard feed only if this user is following other users
+	if following > 0 {
+		activityPattern := &pb.ActivityPattern{
+			Pattern: templates.FeedPattern,
+			// ignore DiscardIds; do not discard any threads
+			Context: &ActivityPattern.UserList{
+				Ids: userData.FollowingIds,
+			},
+		}
+		feed, err := r.recycleActivity(activityPattern)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
+	}
 
 	var threadsCreated *pb.GetThreadsResponse
 	// Load threads created only if this user has created some threads.
@@ -75,9 +93,6 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		}
 	}
 
-	followers := len(userData.FollowersIds)
-	following := len(userData.FollowingIds)
-
 	feed := templates.FeedContent{}
 	data := &templates.DashboardView{
 		FullUserData:   userData,
@@ -85,22 +100,6 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		ThreadsSaved:   threadsSaved.Threads,
 		Following:      following,
 		Followers:      followers,
-	}
-	// Get dashboard feed only if this user is following other users
-	if following > 0 {
-		contentPattern := &pb.ContentPattern{
-			Pattern:        templates.FeedPattern,
-			// Do not discard any thread
-			DiscardIds:     []string{},
-			ContentContext: &pb.Context_Feed{
-				UserIds: userData.FollowingIds,
-			},
-		}
-		data.Feed, err = r.recycleContent(contentPattern)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
 	}
 	// /*FOR DEBUGGING
 	if len(data.Feed.ContentIds) == 0 {

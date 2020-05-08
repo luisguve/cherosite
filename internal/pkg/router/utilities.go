@@ -31,6 +31,7 @@ var(
 	errInvalidFileType  = errors.New("INVALID_FILE_TYPE")
 	errCantReadFileType = errors.New("CANT_READ_FILE_TYPE")
 	errCantWriteFile    = errors.New("CANT_WRITE_FILE")
+	errUnregistered     = errors.New("USER_UNREGISTERED")
 )
 
 func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.FeedContent, 
@@ -96,6 +97,8 @@ func (r *Router) recycleGeneral(contentPattern *pb.GeneralPattern) (templates.Fe
 	}
 	return feed, err
 }
+
+func (r *Router) RecycleActivity(activityPattern *pb.ActivityPattern) 
 
 // getDiscardIds returns the id of contents to be discarded from loads of new feeds
 func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
@@ -186,9 +189,13 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	return newPath, nil, http.StatusOK
 }
 
-func (r *Router) getFullUserData(w http.ResponseWriter, userId string, dst *string) {
-	userData, err := r.crudClient.GetFullUserData(context.Background(), 
-			&pb.GetFullUserDataRequest{UserId: userId})
+// getUserHeaderData returns username, alias, both read and unread notifs of the given
+// user. It sets the corresponding error header given any error while getting user
+// header data.
+func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) 
+	*pb.UserHeaderData {
+	userData, err := r.crudClient.GetUserHeaderData(context.Background(), 
+			&pb.GetUserHeaderDataRequest{UserId: userId})
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -197,19 +204,42 @@ func (r *Router) getFullUserData(w http.ResponseWriter, userId string, dst *stri
 				w.WriteHeader(http.StatusUnauthorized)
 			case codes.Internal:
 				log.Printf("Internal error: %v\n", resErr.Message())
-				w.WriteHeader(http.StatusPartialContent)
+				w.WriteHeader(http.StatusInternalServerError)
 			default:
 				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
 				resErr.Message())
-				w.WriteHeader(http.StatusPartialContent)
+				w.WriteHeader(http.StatusInternalServerError)
 			}
 		} else {
 			log.Printf("Could not send request: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
+			w.WriteHeader(http.StatusInternalServerError)
 		}
-	} else {
-		*dst = userData.BasicUserData.Username
 	}
+	return userData
+}
+
+// getBasicUserData returns a user's basic data: alias, username, pic_url and 
+// description, along with a status code and any error encountered.
+func (r *Router) getBasicUserData(userId string) (*pb.BasicUserData, int, error) {
+	request := &pb.GetBasicUserDataRequest{
+		UserId: userId
+	}
+	userData, err := r.crudClient.GetBasicUserData(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.Unauthenticated:
+				log.Printf("User %v unregistered\n", userId)
+				return nil, http.StatusUnauthorized, errUnregistered
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				return nil, http.StatusInternalServerError, errInternalFailure
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		return nil, http.StatusInternalServerError, errInternalFailure
+	}
+	return userData, http.StatusOK, nil
 }
 
 // handleUpvote is an utility method to help reduce the repetition of similar code in 
