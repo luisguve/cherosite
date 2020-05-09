@@ -19,7 +19,8 @@ type Notif struct {
 // UserHeader holds information about the user currently logged in
 type UserHeader struct {
 	Alias         string
-	Notifications []*Notif
+	UnreadNotifs []*Notif
+	ReadNotifs   []*Notif
 }
 
 type RecycleType struct {

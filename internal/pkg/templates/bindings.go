@@ -7,7 +7,8 @@ import(
 func DataToMyProfileView(userData *pb.BasicUserData, userHeader *pb.UserHeaderData)
 	*MyProfileView {
 
-	var notifs []*Notif
+	var readNotifs []*Notif
+	var unreadNotifs []*Notif
 	// set read notifs
 	for pbNotif := range userHeader.ReadNotifs {
 		notif := &Notif{
@@ -16,7 +17,7 @@ func DataToMyProfileView(userData *pb.BasicUserData, userHeader *pb.UserHeaderDa
 			Message:   pbNotif.Message,
 			Date:      pbNotif.Timestamp,
 		}
-		notifs = append(notifs, notif)
+		readNotifs = append(readNotifs, notif)
 	}
 	// set unread notifs
 	for pbNotif := range userHeader.UnreadNotifs {
@@ -26,15 +27,16 @@ func DataToMyProfileView(userData *pb.BasicUserData, userHeader *pb.UserHeaderDa
 			Message:   pbNotif.Message,
 			Date:      pbNotif.Timestamp,
 		}
-		notifs = append(notifs, notif)
+		unreadNotifs = append(unreadNotifs, notif)
 	}
 
 	headerData := HeaderData{
-		User: &UserHeader{
-			Alias: userHeader.Alias,
-			Notifications: notifs,
-		},
 		RecycleTypes: nil,
+		User:         &UserHeader{
+			Alias:        userHeader.Alias,
+			UnreadNotifs: unreadNotifs,
+			ReadNotifs:   readNotifs,
+		},
 	}
 	// set user profile data
 	profileData := ProfileData{

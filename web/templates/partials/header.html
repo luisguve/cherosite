@@ -22,7 +22,7 @@
 		<div class="notifs">
 			<button>Notifs ({{len .Notifications}})</button>
 			<div class="dropdown-notifs">
-			{{ range .Notifications }}
+			{{ range .UnreadNotifs }}
 				<a href="{{.Permalink}}">
 					<h6>
 						<i>{{.Date}}</i>{{.Title}}
@@ -31,8 +31,16 @@
 						{{.Message}}
 					</strong>
 				</a>
-			{{ else }}
-				<h6>Your notifications will show up here.</h6>
+			{{ end }}
+			{{ range .ReadNotifs }}
+				<a href="{{.Permalink}}">
+					<h6>
+						<i>{{.Date}}</i>{{.Title}}
+					</h6>
+					<strong>
+						{{.Message}}
+					</strong>
+				</a>
 			{{ end }}
 			</div>
 		</div>
