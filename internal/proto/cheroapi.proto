@@ -137,7 +137,7 @@ message NotifyUser {
 // time, trying to describe the quality of the content.
 enum ContentStatus {
 	NEW = 0;
-	RELEVANT = 1;
+	REL = 1;
 	TOP = 2;
 }
 
