@@ -20,13 +20,18 @@ message ContentAuthor {
 }
 
 message ContentMetadata {
+	// id contains the THREAD ID
 	string id = 1;
+	// section is the name of the section
 	string section = 2;
+	// permalink is the full url to the content, including any fragment
 	string permalink = 3;
 	uint32 topvotes = 4;
 	uint32 replies = 5;
 	repeated string voter_ids = 6;
 	repeated string replier_ids = 7;
+	// list of users who saved this content
+	repeated string users_who_saved = 8;
 }
 
 message RecycleResponse {
@@ -158,7 +163,6 @@ message ContentPattern {
 	oneof content_context {
 		Context.Section section_ctx = 3;
 		Context.Thread thread_ctx = 4;
-		Context.Feed feed_ctx = 5;
 	}
 }
 
@@ -199,23 +203,23 @@ message ActivityPattern {
 message Context {
 	// A Section is the highest level and just has the name of the section.
 	message Section {
-		string section_name = 1;
+		string name = 1;
 	}
 	// A Thread is inside of a section and has a thread identifier unique to that section.
 	message Thread {
 		Section section_ctx = 1;
-		string thread_id = 2;
+		string id = 2;
 	}
 	// A Comment is inside of a thread and has a comment identifier unique to that thread.
 	message Comment {
 		Thread thread_ctx = 1;
-		string comment_id = 2;
+		string id = 2;
 	}
 	// A Subcomment is inside of a comment and has a subcomment identifier unique to that 
 	// comment.
 	message Subcomment {
 		Comment comment_ctx = 1;
-		string subcomment_id = 2;
+		string id = 2;
 	}
 }
 
@@ -232,31 +236,35 @@ message UpvoteRequest {
 
 // CommentRequest holds information about the comment event.
 message CommentRequest {
-	// A comment has the same basic structure as regular content.
-	BasicContentData data = 1;
+	// A comment has the same basic structure as regular content but doesn't have a title.
+	string content = 1;
+	string pic_url = 2;
+	google.protobuf.Timestamp publish_date = 3;
 	// The comment event occurs either in a thread or in a comment.
 	oneof content_context {
-		Context.Thread thread_ctx = 2;
-		Context.Comment comment_ctx = 3;
+		Context.Thread thread_ctx = 4;
+		Context.Comment comment_ctx = 5;
 	}
 }
 
 // UpdateContentRequest holds information about the comment event.
 message UpdateContentRequest {
-	// data holds the actual content updated, along with the user id of who's submitting the
-	// updated content. This user id must match the user id of the author of the content.
-	BasicContentData data = 1;
+	// data holds the actual content updated.
+	Content data = 1;
+	// The user id of who's submitting the updated content must match the user id of 
+	// the original author of the content.
+	string user_id = 2;
 	// The update content event occurs either in a thread, in a comment or in a subcomment.
 	oneof content_context {
-		Context.Thread thread_ctx = 2;
-		Context.Comment comment_ctx = 3;
-		Context.Subcomment subcomment_ctx = 4;
+		Context.Thread thread_ctx = 3;
+		Context.Comment comment_ctx = 4;
+		Context.Subcomment subcomment_ctx = 5;
 	}
 }
 
 // DeleteContentRequest holds information about the delete content event.
 message DeleteContentRequest {
-	string user_id = 1; // Who is updating the content
+	string user_id = 1; // Who is deleting the content
 	// The delete content event occurs either in a thread, in a comment or in a subcomment.
 	oneof content_context {
 		Context.Thread thread_ctx = 2;
@@ -270,7 +278,7 @@ message DeleteContentResponse {}
 // CreateThreadRequest holds the content itself and the section at which the content
 // is being created.
 message CreateThreadRequest {
-	BasicContentData data = 1;
+	Content data = 1;
 	Context.Section section_ctx = 2;
 }
 
@@ -319,7 +327,9 @@ message GetSubcommentsRequest {
 
 // Subcomment holds full content data of a single subcomment
 message Subcomment {
-	FullContentData data = 1;
+	ContentAuthor author = 1;
+	Content content = 2;
+	ContentMetadata metadata = 3;
 }
 
 // ReadNotifsRequest holds the id of the user whose unread notifications will be 
@@ -454,10 +464,8 @@ service CrudCheropatilla {
 	// Post a thread to create
 	rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse) {}
 
-	// Get a user's full data
-	rpc GetFullUserData(GetFullUserDataRequest) returns (GetFullUserDataResponse) {}
 	// Get a user's basic data to be displayed in the header navigation section
-	rpc GetUserHeaderData(GetUserHeaderDataRequest) returns (UserHeaderData) {}
+	rpc GetUserHeaderData(GetBasicUserDataRequest) returns (UserHeaderData) {}
 	// Update a user's basic data
 	rpc UpdateBasicUserData(UpdateBasicUserDataRequest) returns (UpdateBasicUserDataResponse) {}
 	// Get a user's basic data to be dislayed in page

@@ -310,41 +310,40 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	var threadsCreated *pb.GetThreadsResponse
-	// Load threads created only if this user has created some threads.
-	if len(userData.ThreadsCreated) > 0 {
-		threadsRequest := &pb.GetThreadsRequest{Threads: userData.ThreadsCreated}
-		threadsCreated, err = r.crudClient.GetThreads(context.Background(), 
-		threadsRequest)
-		if err != nil {
-			log.Printf("Could not get threads created: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
+	// get user activity
+	activityPattern := &pb.ActivityPattern{
+		pattern: templates.FeedPattern,
+		Context: userData.UserId,
+		// ignore DiscardIds; do not discard any activity
+	}
+	feed, err := r.recycleActivity(activityPattern)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
 	}
 
-	followers := len(userData.FollowersIds)
-	following := len(userData.FollowingIds)
-
-	data := &templates.ProfileView{
-		BasicData:      templates.UserInfo{
-			Alias:           userData.Alias,
-			Username:        userData.Username,
-			PicUrl:          userData.PicUrl,
-			About:           userData.About,
-			LastTimeCreated: userData.LastTimeCreated.Seconds,
-		},
-		ThreadsCreated: threadsCreated.Threads,
-		Following:      following,
-		Followers:      followers,
-	}
-	// get user and set username
+	// get current user data for header section
 	userId := currentUser(req)
+	var userHeader *pb.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
-		r.getFullUserData(w, userId, &data.Username)
+		userHeader = r.getUserHeaderData(w, userId)
 	}
 
-	if err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", data); err != nil {
+	pActivity := feed.GetPaginationActivity()
+	// update session with new activity ids
+	r.updateDiscardIdsSession(req, w, pActivity, 
+		func(discard *pagination.DiscardIds, ids interface{}){
+			content := ids.(pagination.Activity)
+			discard.FeedActivity[userData.UserId].ThreadsCreated = content.ThreadsCreated
+			discard.FeedActivity[userData.UserId].Comments = content.Comments
+			discard.FeedActivity[userData.UserId].Subcomments = content.Subcomments
+		})
+
+	profileView := templates.DataToProfileView(userData, userHeader, feed.Activity, userId)
+
+	err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", profileView)
+	if err != nil {
 		log.Printf("Could not execute template viewuserprofile.html: %v", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}

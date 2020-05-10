@@ -98,7 +98,32 @@ func (r *Router) recycleGeneral(contentPattern *pb.GeneralPattern) (templates.Fe
 	return feed, err
 }
 
-func (r *Router) RecycleActivity(activityPattern *pb.ActivityPattern) 
+func (r *Router) recycleActivity(activityPattern *pb.ActivityPattern) (templates.ActivityFeed,
+	error) {
+	// Send request
+	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	if err != nil {
+		log.Printf("Could not send request to RecycleActivity: %v\n", err)
+		return nil, err
+	}
+	var feed templates.ActivityFeed
+
+	// Continuously receive responses
+	for {
+		activityRule, err := stream.Recv()
+		if err == io.EOF {
+			// Reset err value
+			err = nil
+			break
+		}
+		if err != nil {
+			log.Printf("Error receiving response from stream: %v\n", err)
+			break
+		}
+		feed.Activity = append(feed.Activity, activityRule)
+	}
+	return feed, err
+}
 
 // getDiscardIds returns the id of contents to be discarded from loads of new feeds
 func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {

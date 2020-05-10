@@ -4,8 +4,8 @@ type ProfileData struct {
 	Patillavatar string // URL to user profile pic
 	Alias        string
 	Username     string
-	Followers    uint32
-	Following    uint32
+	Followers    int
+	Following    int
 	Description  string
 }
 
@@ -25,7 +25,7 @@ type UserHeader struct {
 
 type RecycleType struct {
 	// Content type identifier
-	Name string
+	Label string
 	// Link to send request to recycle content
 	Link string
 }
@@ -51,8 +51,8 @@ type ProfileView struct {
 
 type DashboardView struct {
 	HeaderData
-	Followers    uint32
-	Following    uint32
+	Followers    int
+	Following    int
 	Activity     []OverviewRenderer
 	SavedContent []OverviewRenderer
 	Feed         []OverviewRenderer

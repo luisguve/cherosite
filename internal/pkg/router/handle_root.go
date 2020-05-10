@@ -58,7 +58,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	if following > 0 {
 		activityPattern := &pb.ActivityPattern{
 			Pattern: templates.FeedPattern,
-			// ignore DiscardIds; do not discard any threads
+			// ignore DiscardIds; do not discard any activity
 			Context: &ActivityPattern.UserList{
 				Ids: userData.FollowingIds,
 			},
