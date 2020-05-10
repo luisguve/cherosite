@@ -89,6 +89,8 @@ func setProfileData(userData *pb.BasicUserData) ProfileData {
 	}
 }
 
+// activityToOvwRendererSet converts a slice of *pb.ActivityRule into a slice of
+// OverviewRenderer. userId is used to check whether the user has saved the content
 func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string) 
 	[]OverviewRenderer {
 	var ovwRendererSet []OverviewRenderer
@@ -144,6 +146,8 @@ func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string)
 	}
 }
 
+// setBasicContent returns a *BasicContent object filled with data retrieved from a
+// *pb.ActivityRule. userId is used to checkh whether the user has upvoted the content.
 func setBasicContent(activity *pb.ActivityRule, userId string) *BasicContent {
 	author := activity.Data.Author
 	content := activity.Data.Content
