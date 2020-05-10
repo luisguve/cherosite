@@ -363,13 +363,6 @@ http.HandlerFunc {
 	}
 }
 
-// renderError is an helper function to set a given status code header and
-// return a given error message to the client.
-func renderError(w http.ResponseWriter, message string, statusCode int) {
-	r.WriteHeader(statusCode)
-	w.Write([]byte(message))
-}
-
 // randToken generates a random, unique string with a length equal to len.
 func randToken(len int) string {
 	b := make([]byte, len)
