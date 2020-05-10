@@ -147,15 +147,11 @@ message ContentRuleResponse {
 	ContentStatus status = 2;
 }
 
-// ContentRuleRequest holds the content status for the content it is expecting to get.
-message ContentRuleRequest {
-	ContentStatus status = 1;
-}
-
-// ContentPattern holds an array of ContentRuleRequest (i.e. content status),
-// composing up a pattern of content that's expected to get back.
+// ContentPattern holds an array of ContentStatus, composing up a pattern of content 
+// that's expected to get back. It is intended for recycling content in a section, 
+// thread or user saved threads context.
 message ContentPattern {
-	repeated ContentRuleRequest pattern = 1;
+	repeated ContentStatus pattern = 1;
 	// discard_ids is an array of content ids that must not be returned back, since it's
 	// content the user has already seen.
 	repeated string discard_ids = 2;
@@ -166,11 +162,10 @@ message ContentPattern {
 	}
 }
 
-// GeneralPattern holds an array of ContentRuleRequest (i.e. content status), composing 
-// up a pattern of content that's expected to get back. It is intended for recycling 
-// content from every section.
+// GeneralPattern holds an array of ContentStatus, composing up a pattern of content 
+// that's expected to get back. It is intended for recycling content from every section.
 message GeneralPattern {
-	repeated ContentRuleRequest pattern = 1;
+	repeated ContentStatus pattern = 1;
 	// discard_ids is a map of section names mapped to content ids that must not be 
 	// returned back, since it's content the user has already seen.
 	map<string, Ids> discard_ids = 2;
@@ -179,11 +174,11 @@ message GeneralPattern {
 	}
 }
 
-// ActivityPattern holds an array of ContentRuleRequest (i.e. content status), composing 
-// up a pattern of content that's expected to get back. It is intended for recycling 
-// activity from a specific user or a list of users.
+// ActivityPattern holds an array of ContentStatus, composing up a pattern of content 
+// that's expected to get back. It is intended for recycling activity from a specific 
+// user or a list of users.
 message ActivityPattern {
-	repeated ContentRuleRequest pattern = 1;
+	repeated ContentStatus pattern = 1;
 	// discard_ids is a map of user_ids mapped to activity from the user referred by 
 	// the key that must not be returned back, since it's content the user has 
 	// already seen.
