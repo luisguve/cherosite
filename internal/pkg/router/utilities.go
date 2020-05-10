@@ -34,6 +34,12 @@ var(
 	errUnregistered     = errors.New("USER_UNREGISTERED")
 )
 
+// wrapper interface to be used instead of the generated interfaces in pb, for streams
+// that return a NotifyUser object
+type streamNotifs interface {
+	Recv() (*pb.NotifyUser, error)
+}
+
 func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.FeedContent, 
 	error) {
 	// Send request
@@ -268,11 +274,10 @@ func (r *Router) getBasicUserData(userId string) (*pb.BasicUserData, int, error)
 }
 
 // handleUpvote is an utility method to help reduce the repetition of similar code in 
-// other handlers that perform the same operation, in this case, an upvote, 
-// since all of the handlers that are called in an upvote event share the same
-// upvote request object. The duties of returning a response to the client are also
-// delegated to postUpvote, which returns OK on success or an error in case of the 
-// following:
+// other handlers that perform the same operation, in this case, an upvote,  since
+// all the handlers that are called in an upvote event share the same upvote request
+// object. The duties of returning a response to the client are also delegated to
+// postUpvote, which returns OK on success or an error in case of the following:
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
@@ -306,7 +311,7 @@ func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
 	w.Write([]byte("OK"))
 }
 
-func (r *Router) broadcastNotifs(stream &pb.CrudCheropatilla_UpvoteClient) {
+func (r *Router) broadcastNotifs(stream streamNotifs) {
 	// Continuously receive notifications and the user ids they are for.
 	for {
 		notifyUser, err := stream.Recv()
@@ -317,7 +322,7 @@ func (r *Router) broadcastNotifs(stream &pb.CrudCheropatilla_UpvoteClient) {
 			log.Printf("Error receiving response from stream: %v\n", err)
 			break
 		}
-		userId := notifyUser.userId
+		userId := notifyUser.UserId
 		notification := notifyUser.Notification
 		// send notification
 		go r.hub.Broadcast(userId, notification)
