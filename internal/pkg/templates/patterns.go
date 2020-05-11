@@ -48,7 +48,7 @@ var CommentPattern = []pb.ContentStatus{
 	pb.ContentStatus_NEW, // 14
 }
 
-var SuccinctPattern = []pb.ContentStatus{
+var CompactPattern = []pb.ContentStatus{
 	pb.ContentStatus_NEW, // 1
 	pb.ContentStatus_NEW, // 2
 	pb.ContentStatus_REL, // 3
