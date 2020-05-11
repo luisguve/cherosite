@@ -14,18 +14,18 @@ func Setup() *template.Template {
 	return template.Must(template.ParseGlob("/web/templates/*.html"))
 }
 
-type ActivityFeed struct {
-	Activity []*pb.ActivityRule
+type ContentsFeed struct {
+	Contents []*pb.ContentRule
 }
 
 // GetPaginationActivity converts an ActivityFeed object into a pagination.Activity 
 // object
-func (af ActivityFeed) GetPaginationActivity() p.Activity {
+func (cf ContentsFeed) GetPaginationActivity() p.Activity {
 	var pActivity p.Activity
 
-	for activity := range af.Activity {
+	for activity := range cf.Contents {
 		switch content := activity.ContentContext.(type) {
-		case *pb.ActivityRule_ThreadCtx:
+		case *pb.ContentRule_ThreadCtx:
 			// content type: THREAD
 			ctx := content.ThreadCtx
 			thread := p.Thread{
@@ -33,7 +33,7 @@ func (af ActivityFeed) GetPaginationActivity() p.Activity {
 				SectionName: ctx.SectionCtx.Name,
 			}
 			pActivity.ThreadsCreated = append(pActivity.ThreadsCreated, thread)
-		case *pb.ActivityRule_CommentCtx:
+		case *pb.ContentRule_CommentCtx:
 			// content type: COMMENT
 			ctx := content.CommentCtx
 			comment := p.Comment{
@@ -44,7 +44,7 @@ func (af ActivityFeed) GetPaginationActivity() p.Activity {
 				},
 			}
 			pActivity.Comments = append(pActivity.Comments, comment)
-		case *pb.ActivityRule_SubcommentCtx:
+		case *pb.ContentRule_SubcommentCtx:
 			// content type: SUBCOMMENT
 			ctx := content.SubcommentCtx
 			subcomment := p.Subcomment{
@@ -60,4 +60,35 @@ func (af ActivityFeed) GetPaginationActivity() p.Activity {
 			pActivity.Subcomments = append(pActivity.Subcomments, subcomment)
 		}
 	}
+}
+
+// GetPaginationThreads returns thread ids mapped to their section names
+func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
+	var result map[string][]string
+
+	for content := range cf.Contents {
+		metadata := content.Data.Metadata
+		section := metadata.Section
+		id := metadata.Id
+		result[section] = append(result[section], id)
+	}
+	return result
+}
+
+// GetPaginationComments returns comment ids mapped to their thread ids
+func (cf ContentsFeed) GetPaginationComments() map[string][]string {
+	var result map[string][]string
+
+	for content := range cf.Contents {
+		metadata := content.Data.Metadata
+		threadId := metadata.Id
+
+		ctx, ok := content.ContentContext.(*pb.ContentRule_CommentCtx)
+		if !ok {
+			return result
+		}
+		commentId := ctx.Id
+		result[threadId] = append(result[threadId], commentId)
+	}
+	return result
 }
