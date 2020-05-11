@@ -20,7 +20,7 @@ func DataToMyProfileView(userData *pb.BasicUserData, uhd *pb.UserHeaderData)
 }
 
 func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData, 
-	activity []*pb.ActivityRule, currentUserId string) *ProfileView {
+	activity []*pb.ContentsRule, currentUserId string) *ProfileView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
@@ -89,9 +89,9 @@ func setProfileData(userData *pb.BasicUserData) ProfileData {
 	}
 }
 
-// activityToOvwRendererSet converts a slice of *pb.ActivityRule into a slice of
+// activityToOvwRendererSet converts a slice of *pb.ContentsRule into a slice of
 // OverviewRenderer. userId is used to check whether the user has saved the content
-func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string) 
+func activityToOvwRendererSet(activitySet []*pb.ContentsRule, userId string) 
 	[]OverviewRenderer {
 	var ovwRendererSet []OverviewRenderer
 
@@ -145,8 +145,8 @@ func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string)
 }
 
 // setBasicContent returns a *BasicContent object filled with data retrieved from a
-// *pb.ActivityRule. userId is used to checkh whether the user has upvoted the content.
-func setBasicContent(activity *pb.ActivityRule, userId string) *BasicContent {
+// *pb.ContentsRule. userId is used to checkh whether the user has upvoted the content.
+func setBasicContent(activity *pb.ContentsRule, userId string) *BasicContent {
 	author := activity.Data.Author
 	content := activity.Data.Content
 	metadata := activity.Data.Metadata
