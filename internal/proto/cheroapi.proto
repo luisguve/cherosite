@@ -40,16 +40,6 @@ message RecycleResponse {
 	ContentMetadata metadata = 3;
 }
 
-message ActivityRule {
-	RecycleResponse data = 1;
-	ContentStatus status = 2;
-	oneof content_context {
-		Context.Thread thread_ctx = 3;
-		Context.Comment comment_ctx = 4;
-		Context.Subcomment subcomment_ctx = 5;
-	}
-}
-
 // UserHeaderData holds information to be displayed in the header navigation section
 // of every page.
 message UserHeaderData {
@@ -141,12 +131,6 @@ enum ContentStatus {
 	TOP = 2;
 }
 
-// ContentRuleResponse holds a piece of content and its current status.
-message ContentRuleResponse {
-	RecycleResponse data = 1;
-	ContentStatus status = 2;
-}
-
 // ContentPattern holds an array of ContentStatus, composing up a pattern of content 
 // that's expected to get back. It is intended for recycling content in a section, 
 // thread or user saved threads context.
@@ -190,6 +174,24 @@ message ActivityPattern {
 	}
 	message UserList {
 		repeated string ids = 1;
+	}
+}
+
+// ContentRule holds a piece of content and its current status.
+message ContentRule {
+	RecycleResponse data = 1;
+	ContentStatus status = 2;
+}
+
+// ActivityRule holds a piece of content, its current status and its type, which may
+// be either thread, comment or subcomment.
+message ActivityRule {
+	RecycleResponse data = 1;
+	ContentStatus status = 2;
+	oneof content_context {
+		Context.Thread thread_ctx = 3;
+		Context.Comment comment_ctx = 4;
+		Context.Subcomment subcomment_ctx = 5;
 	}
 }
 
@@ -442,11 +444,11 @@ message RegisterUserResponse {
 
 service CrudCheropatilla {
 	// Get new feed of either threads in a section or comments in a thread
-	rpc RecycleContent(ContentPattern) returns (stream ContentRuleResponse) {}
+	rpc RecycleContent(ContentPattern) returns (stream ContentRule) {}
 	// Get new feed of threads in general (from multiple sections)
-	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRuleResponse) {}
+	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRule) {}
 	// Get new activity from either multiple users or a single user.
-	rpc RecycleActivity(ActivityPattern) returns (stream ContentRuleResponse) {}
+	rpc RecycleActivity(ActivityPattern) returns (stream ActivityRule) {}
 	// Post upvote on thread, comment or subcomment
 
 	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
