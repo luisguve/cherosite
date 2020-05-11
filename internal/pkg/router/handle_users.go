@@ -153,7 +153,7 @@ func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.
 
 // View Users "/viewusers" handler. It returns a list of user data containing basic
 // info in JSON format. It may return an error in case of the following:
-// - context other than "followers" or "following" ---> INVALID CONTEXT
+// - context other than "followers" or "following" ---> INVALID_CONTEXT
 // - negative or non-number offset query parameter ---> INVALID_OFFSET
 // - offset is out of range; there are no more users -> OFFSET_OOR
 // - network or encoding failures --------------------> INTERNAL_FAILURE
@@ -312,14 +312,22 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 
 	// get user activity
 	activityPattern := &pb.ActivityPattern{
-		pattern: templates.FeedPattern,
+		Pattern: templates.CompactPattern,
 		Context: userData.UserId,
 		// ignore DiscardIds; do not discard any activity
 	}
-	feed, err := r.recycleActivity(activityPattern)
+	var feed templates.ContentsFeed
+
+	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
-		log.Printf("An error occurred while getting feed: %v\n", err)
+		log.Printf("Could not send request: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
+	} else {
+		feed, err = getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
 	}
 
 	// get current user data for header section
@@ -340,7 +348,7 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 			discard.FeedActivity[userData.UserId].Subcomments = content.Subcomments
 		})
 
-	profileView := templates.DataToProfileView(userData, userHeader, feed.Activity, userId)
+	profileView := templates.DataToProfileView(userData, userHeader, feed.Contents, userId)
 
 	err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", profileView)
 	if err != nil {
