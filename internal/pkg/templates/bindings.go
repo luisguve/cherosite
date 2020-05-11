@@ -24,7 +24,7 @@ func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData,
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
-			Link: fmt.Sprintf("/profile/recycle?username=%s", userData.Username),
+			Link: fmt.Sprintf("/profile/recycle?userid=%s", userData.UserId),
 		}
 	}
 	// set user header data

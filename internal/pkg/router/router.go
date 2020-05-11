@@ -106,7 +106,7 @@ func (r *Router) SetupRoutes() {
 	.Queries("username", "{username:[a-zA-Z0-9]+}")
 	// recycle other user's activity
 	root.HandleFunc("/profile/recycle", r.handleRecycleUserActivity).Methods("GET")
-	.Queries("username", "{username:[a-zA-Z0-9]+}")
+	.Queries("userid", "{userid:[a-zA-Z0-9]+}")
 	.Headers("X-Requested-With", "XMLHttpRequest")
 
 	root.HandleFunc("/login", r.handleLogin).Methods("POST")
