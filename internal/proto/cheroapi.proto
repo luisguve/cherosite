@@ -181,13 +181,6 @@ message ActivityPattern {
 message ContentRule {
 	RecycleResponse data = 1;
 	ContentStatus status = 2;
-}
-
-// ActivityRule holds a piece of content, its current status and its type, which may
-// be either thread, comment or subcomment.
-message ActivityRule {
-	RecycleResponse data = 1;
-	ContentStatus status = 2;
 	oneof content_context {
 		Context.Thread thread_ctx = 3;
 		Context.Comment comment_ctx = 4;
@@ -448,7 +441,7 @@ service CrudCheropatilla {
 	// Get new feed of threads in general (from multiple sections)
 	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRule) {}
 	// Get new activity from either multiple users or a single user.
-	rpc RecycleActivity(ActivityPattern) returns (stream ActivityRule) {}
+	rpc RecycleActivity(ActivityPattern) returns (stream ContentRule) {}
 	// Post upvote on thread, comment or subcomment
 
 	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
