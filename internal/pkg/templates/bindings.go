@@ -105,7 +105,7 @@ func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string)
 		sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "-", -1)
 		threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
 
-		switch content := activity.ContentContext.(type) {
+		switch ctx := activity.ContentContext.(type) {
 		// it's a THREAD
 		case *pb.ActivityRule_ThreadCtx:
 			saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
@@ -126,7 +126,6 @@ func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string)
 			}
 		// it's a COMMENT
 		case *pb.ActivityRule_CommentCtx:
-			ctx := content.CommentCtx
 			ovwRenderer = &CommentView{
 				BasicContent: bc,
 				Id:           ctx.Id,
@@ -134,7 +133,6 @@ func activityToOvwRendererSet(activitySet []*pb.ActivityRule, userId string)
 			}
 		// it's a SUBCOMMENT
 		case *pb.ActivityRule_SubcommentCtx:
-			ctx := content.SubcommentCtx
 			ovwRenderer = &SubcommentView{
 				BasicContent: bc,
 				CommentId:    ctx.CommentCtx.Id,

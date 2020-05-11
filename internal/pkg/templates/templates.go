@@ -18,16 +18,15 @@ type ContentsFeed struct {
 	Contents []*pb.ContentRule
 }
 
-// GetPaginationActivity converts an ActivityFeed object into a pagination.Activity 
+// GetPaginationActivity converts a ContentsFeed object into a pagination.Activity 
 // object
 func (cf ContentsFeed) GetPaginationActivity() p.Activity {
 	var pActivity p.Activity
 
 	for activity := range cf.Contents {
-		switch content := activity.ContentContext.(type) {
+		switch ctx := activity.ContentContext.(type) {
 		case *pb.ContentRule_ThreadCtx:
 			// content type: THREAD
-			ctx := content.ThreadCtx
 			thread := p.Thread{
 				Id:          ctx.Id,
 				SectionName: ctx.SectionCtx.Name,
@@ -35,7 +34,6 @@ func (cf ContentsFeed) GetPaginationActivity() p.Activity {
 			pActivity.ThreadsCreated = append(pActivity.ThreadsCreated, thread)
 		case *pb.ContentRule_CommentCtx:
 			// content type: COMMENT
-			ctx := content.CommentCtx
 			comment := p.Comment{
 				Id:     ctx.Id,
 				Thread: p.Thread{
@@ -46,7 +44,6 @@ func (cf ContentsFeed) GetPaginationActivity() p.Activity {
 			pActivity.Comments = append(pActivity.Comments, comment)
 		case *pb.ContentRule_SubcommentCtx:
 			// content type: SUBCOMMENT
-			ctx := content.SubcommentCtx
 			subcomment := p.Subcomment{
 				Id:      ctx.Id,
 				Comment: p.Comment{
@@ -80,13 +77,11 @@ func (cf ContentsFeed) GetPaginationComments() map[string][]string {
 	var result map[string][]string
 
 	for content := range cf.Contents {
-		metadata := content.Data.Metadata
-		threadId := metadata.Id
-
 		ctx, ok := content.ContentContext.(*pb.ContentRule_CommentCtx)
 		if !ok {
-			return result
+			continue
 		}
+		threadId := ctx.ThreadCtx.Id
 		commentId := ctx.Id
 		result[threadId] = append(result[threadId], commentId)
 	}
