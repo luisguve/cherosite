@@ -40,15 +40,15 @@ type streamNotifs interface {
 	Recv() (*pb.NotifyUser, error)
 }
 
-func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.FeedContent, 
-	error) {
-	// Send request
-	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
-	if err != nil {
-		log.Printf("Could not send request to RecycleContent: %v\n", err)
-		return templates.FeedContent{}, err
-	}
+// wrapper interface to be used instead of the generated interfaces in pb, for streams
+// that return a ContentRule object
+type streamFeed interface {
+	Recv() (*pb.ContentRule, error)
+}
 
+// getFeed continuously receive content rules from the given stream and returns a 
+// templates.ContentsFeed and any error encountered.
+func (r *Router) getFeed(stream streamRecycle) (templates.ContentsFeed, error) {
 	var feed templates.FeedContent
 	
 	// Continuously receive responses
@@ -60,73 +60,10 @@ func (r *Router) recycleContent(contentPattern *pb.ContentPattern) (templates.Fe
 			break
 		}
 		if err != nil {
-			errMsg := fmt.Sprintf("Error receiving response from stream: %v\n", err)
-			log.Printf("%v", errMsg)
-			feed.ErrorMsg = errMsg
-			break
-		}
-		feed.ContentPattern = append(feed.ContentPattern, contentRule)
-		feed.ContentIds = append(feed.ContentIds, contentRule.Data.Id)
-	}
-	return feed, err
-}
-
-func (r *Router) recycleGeneral(contentPattern *pb.GeneralPattern) (templates.FeedGeneral, 
-	error) {
-	// Send request
-	stream, err := r.crudClient.RecycleGeneral(context.Background(), contentPattern)
-	if err != nil {
-		log.Printf("Could not send request to RecycleContent: %v\n", err)
-		return templates.FeedGeneral{}, err
-	}
-
-	var feed templates.FeedGeneral
-	
-	// Continuously receive responses
-	for {
-		contentRule, err := stream.Recv()
-		if err == io.EOF {
-			// Reset err value
-			err = nil
-			break
-		}
-		if err != nil {
-			errMsg := fmt.Sprintf("Error receiving response from stream: %v\n", err)
-			log.Printf("%v", errMsg)
-			feed.ErrorMsg = errMsg
-			break
-		}
-		section := feed.ContentPattern.Data.Section
-		id := feed.ContentPattern.Data.Id
-		feed.ContentPattern = append(feed.ContentPattern, contentRule)
-		feed.ContentIds[section] = append(feed.ContentIds[section], id)
-	}
-	return feed, err
-}
-
-func (r *Router) recycleActivity(activityPattern *pb.ActivityPattern) (templates.ActivityFeed,
-	error) {
-	// Send request
-	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
-	if err != nil {
-		log.Printf("Could not send request to RecycleActivity: %v\n", err)
-		return nil, err
-	}
-	var feed templates.ActivityFeed
-
-	// Continuously receive responses
-	for {
-		activityRule, err := stream.Recv()
-		if err == io.EOF {
-			// Reset err value
-			err = nil
-			break
-		}
-		if err != nil {
 			log.Printf("Error receiving response from stream: %v\n", err)
 			break
 		}
-		feed.Activity = append(feed.Activity, activityRule)
+		feed.Contents = append(feed.Contents, contentRule)
 	}
 	return feed, err
 }
