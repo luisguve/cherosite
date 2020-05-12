@@ -412,6 +412,22 @@ message ViewUserResponse {
 	repeated string following_ids = 8;
 }
 
+// GetDashboardDataRequest holds the user id of the user to request the data for its
+// dashboard.
+message GetDashboardDataRequest {
+	string user_id = 1;
+}
+
+// DashboardData holds the header data, the list of users this user is following
+// and the list of users that are following this user.
+message DashboardData {
+	UserHeaderData user_header_data = 1;
+	// ids of users that are following this user.
+	repeated string followers_ids = 2;
+	// ids of users that this user is following.
+	repeated string following_ids = 3;
+}
+
 // LoginRequest is a message for requesting the validation of a user's credentials
 message LoginRequest {
 	string username = 1;
@@ -489,6 +505,8 @@ service CrudCheropatilla {
 	rpc ViewUsers(ViewUsersRequest) returns (ViewUsersResponse) {}
 	// Get username basic data, following, followers and threads created
 	rpc ViewUserByUsername(ViewUserByUsernameRequest) returns (ViewUserResponse) {}
+	// Get 
+	rpc GetDashboardData(GetDashboardDataRequest) returns (DashboardData) {}
 
 	// Validate user credentials to login
 	rpc Login(LoginRequest) returns (LoginResponse) {}
