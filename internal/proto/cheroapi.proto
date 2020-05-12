@@ -49,6 +49,8 @@ message UserHeaderData {
 	repeated Notif unread_notifs = 3;
 	// read notifications of this user.
 	repeated Notif read_notifs = 4;
+	// last time this user created a thread
+	google.protobuf.Timestamp last_time_created = 5;
 }
 
 // Basic data of users
