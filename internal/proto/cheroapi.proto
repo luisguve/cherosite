@@ -79,11 +79,13 @@ message FullUserData {
 	Activity old_activity = 8;
 	// ids of threads that this user has saved to read later.
 	repeated Context.Thread threads_saved = 9;
-	message Activity {
-		repeated Context.Thread threads_created = 1;
-		repeated Context.Comment comments = 2;
-		repeated Context.Subcomment subcomments = 3;
-	}
+}
+
+// Activity holds the threads created, comments and subcomments of a given user
+message Activity {
+	repeated Context.Thread threads_created = 1;
+	repeated Context.Comment comments = 2;
+	repeated Context.Subcomment subcomments = 3;
 }
 
 // Notif is the format in which users get their notifications.
@@ -166,7 +168,7 @@ message ActivityPattern {
 	// discard_ids is a map of user_ids to activity from the user referred to by 
 	// the key that must not be returned back, since it's content the user has 
 	// already seen.
-	map<string, FullUserData.Activity> discard_ids = 2;
+	map<string, Activity> discard_ids = 2;
 	// context is either users following or the user itself.
 	oneof context {
 		UserList users = 3;
