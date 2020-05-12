@@ -343,9 +343,9 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	r.updateDiscardIdsSession(req, w, pActivity, 
 		func(discard *pagination.DiscardIds, ids interface{}){
 			content := ids.(pagination.Activity)
-			discard.FeedActivity[userData.UserId].ThreadsCreated = content.ThreadsCreated
-			discard.FeedActivity[userData.UserId].Comments = content.Comments
-			discard.FeedActivity[userData.UserId].Subcomments = content.Subcomments
+			discard.UserActivity[userData.UserId].ThreadsCreated = content.ThreadsCreated
+			discard.UserActivity[userData.UserId].Comments = content.Comments
+			discard.UserActivity[userData.UserId].Subcomments = content.Subcomments
 		})
 
 	profileView := templates.DataToProfileView(userData, userHeader, feed.Contents, userId)
@@ -354,6 +354,50 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	if err != nil {
 		log.Printf("Could not execute template viewuserprofile.html: %v", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
+	}
+}
+
+// Recycle user activity "/profile/recycle?userid={userid}" handler
+func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	userId := vars["userid"]
+
+	session, _ :=  r.store.Get(req, "session")
+	discardIds := getDiscardIds(session)
+	activityIds := discardIds.FormatUserActivity(userId)
+
+	activityPattern := &pb.ActivityPattern{
+		Pattern:    templates.CompactPattern,
+		Context:    userId,
+		DiscardIds: activityIds,
+	}
+	var feed templates.ContentsFeed
+
+	// get user activity
+	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	if err != nil {
+		log.Printf("Could not send request: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	} else {
+		feed, err = getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
+	}
+	pActivity := feed.GetPaginationActivity()
+	// Update session
+	r.updateDiscardIdsSession(req, w, pActivity, 
+		func(discard *pagination.DiscardIds, ids interface{}){
+			content := ids.(pagination.Activity)
+			discard.UserActivity[userId].ThreadsCreated = content.ThreadsCreated
+			discard.UserActivity[userId].Comments = content.Comments
+			discard.UserActivity[userId].Subcomments = content.Subcomments
+		})
+	// Encode and send response
+	if err = json.NewEncoder(w).Encode(feed); err != nil {
+		log.Printf("Could not encode feed: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
 }
 
