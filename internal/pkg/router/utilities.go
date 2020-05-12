@@ -48,7 +48,7 @@ type streamFeed interface {
 
 // getFeed continuously receive content rules from the given stream and returns a 
 // templates.ContentsFeed and any error encountered.
-func getFeed(stream streamRecycle) (templates.ContentsFeed, error) {
+func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
 	var feed templates.FeedContent
 	
 	// Continuously receive responses
