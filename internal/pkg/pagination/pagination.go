@@ -29,12 +29,34 @@ type DiscardIds struct {
 	GeneralThreads map[string][]string
 }
 
+// FormatUserActivity converts the field UserActivity into a 
+// map[string]*pb.FullUserData_Activity to be used in a request to recycle activity.
+// It uses the given userId as the key to the activity of the given user.
 func (d *DiscardIds) FormatUserActivity(userId string) 
 map[string]*pb.FullUserData_Activity {
-	var fudActivity *pb.FullUserData_Activity
+	fudActivity := make(map[string]*pb.FullUserData_Activity)
+	fudActivity[userId] = formatActivity(d.FeedActivity[userId])
+	return fudActivity
+}
 
+// FormatFeedActivity converts the field FeedActivity into a 
+// map[string]*pb.FullUserData_Activity to be used in a request to recycle activity.
+// It uses the given userIds as the keys to the activity of the given users.
+func (d *DiscardIds) FormatFeedActivity(userIds []string) 
+map[string]*pb.FullUserData_Activity {
+	fudActivity := make(map[string]*pb.FullUserData_Activity)
+	for userId := range userIds {
+		fudActivity[userId] = formatActivity(d.FeedActivity[userId])
+	}
+	return fudActivity
+}
+
+// formatActivity formats the threads created, comments and subcomments in the
+// given activity into a *pb.FullUserData_Activity
+func formatActivity(activity Activity) *pb.FullUserData_Activity {
+	var fudActivity *pb.FullUserData_Activity
 	// Set threads
-	for t := range d.UserActivity[userId].ThreadsCreated {
+	for t := range activity.ThreadsCreated {
 		pbThread := &pb.Context_Thread{
 			Id:         t.Id,
 			SectionCtx: &pb.Context_section{
@@ -44,7 +66,7 @@ map[string]*pb.FullUserData_Activity {
 		fudActivity.ThreadsCreated = append(fudActivity.ThreadsCreated, pbThread)
 	}
 	// Set comments
-	for c := range d.UserActivity[userId].Comments {
+	for c := range activity.Comments {
 		pbComment := &pb.Context_Comment{
 			Id:        c.Id,
 			ThreadCtx: &pb.Context_Thread{
@@ -57,7 +79,7 @@ map[string]*pb.FullUserData_Activity {
 		fudActivity.Comments = append(fudActivity.Comments, pbComment)
 	}
 	// Set subcomments
-	for sc := range d.UserActivity[userId].Subcomments {
+	for sc := range activity.Subcomments {
 		pbSubcomment := &pb.Context_Subcomment{
 			Id:         sc.Id,
 			CommentCtx: &pb.Context_Comment{
@@ -72,9 +94,7 @@ map[string]*pb.FullUserData_Activity {
 		}
 		fudActivity.Subcomments = append(fudActivity.Subcomments, pbSubcomment)
 	}
-	return map[string]*pb.FullUserData_Activity{
-		userId: fudActivity
-	}
+	return fudActivity
 }
 
 type Activity struct {
