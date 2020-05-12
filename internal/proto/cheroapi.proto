@@ -163,7 +163,7 @@ message GeneralPattern {
 // user or a list of users.
 message ActivityPattern {
 	repeated ContentStatus pattern = 1;
-	// discard_ids is a map of user_ids mapped to activity from the user referred by 
+	// discard_ids is a map of user_ids to activity from the user referred to by 
 	// the key that must not be returned back, since it's content the user has 
 	// already seen.
 	map<string, FullUserData.Activity> discard_ids = 2;
