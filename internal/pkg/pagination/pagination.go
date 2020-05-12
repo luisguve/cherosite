@@ -30,21 +30,21 @@ type DiscardIds struct {
 }
 
 // FormatUserActivity converts the field UserActivity into a 
-// map[string]*pb.FullUserData_Activity to be used in a request to recycle activity.
+// map[string]*pb.Activity to be used in a request to recycle activity.
 // It uses the given userId as the key to the activity of the given user.
 func (d *DiscardIds) FormatUserActivity(userId string) 
-map[string]*pb.FullUserData_Activity {
-	fudActivity := make(map[string]*pb.FullUserData_Activity)
+map[string]*pb.Activity {
+	fudActivity := make(map[string]*pb.Activity)
 	fudActivity[userId] = formatActivity(d.FeedActivity[userId])
 	return fudActivity
 }
 
 // FormatFeedActivity converts the field FeedActivity into a 
-// map[string]*pb.FullUserData_Activity to be used in a request to recycle activity.
+// map[string]*pb.Activity to be used in a request to recycle activity.
 // It uses the given userIds as the keys to the activity of the given users.
 func (d *DiscardIds) FormatFeedActivity(userIds []string) 
-map[string]*pb.FullUserData_Activity {
-	fudActivity := make(map[string]*pb.FullUserData_Activity)
+map[string]*pb.Activity {
+	fudActivity := make(map[string]*pb.Activity)
 	for userId := range userIds {
 		fudActivity[userId] = formatActivity(d.FeedActivity[userId])
 	}
@@ -52,9 +52,9 @@ map[string]*pb.FullUserData_Activity {
 }
 
 // formatActivity formats the threads created, comments and subcomments in the
-// given activity into a *pb.FullUserData_Activity
-func formatActivity(activity Activity) *pb.FullUserData_Activity {
-	var fudActivity *pb.FullUserData_Activity
+// given activity into a *pb.Activity
+func formatActivity(activity Activity) *pb.Activity {
+	var fudActivity *pb.Activity
 	// Set threads
 	for t := range activity.ThreadsCreated {
 		pbThread := &pb.Context_Thread{
