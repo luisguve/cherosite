@@ -364,12 +364,12 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 
 	session, _ :=  r.store.Get(req, "session")
 	discardIds := getDiscardIds(session)
-	activityIds := discardIds.FormatUserActivity(userId)
+	userActivity := discardIds.FormatUserActivity(userId)
 
 	activityPattern := &pb.ActivityPattern{
 		Pattern:    templates.CompactPattern,
 		Context:    userId,
-		DiscardIds: activityIds,
+		DiscardIds: userActivity,
 	}
 	var feed templates.ContentsFeed
 
@@ -390,9 +390,14 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	r.updateDiscardIdsSession(req, w, pActivity, 
 		func(discard *pagination.DiscardIds, ids interface{}){
 			content := ids.(pagination.Activity)
-			discard.UserActivity[userId].ThreadsCreated = content.ThreadsCreated
-			discard.UserActivity[userId].Comments = content.Comments
-			discard.UserActivity[userId].Subcomments = content.Subcomments
+			tc := discard.UserActivity[userId].ThreadsCreated
+			append(tc, content.ThreadsCreated...)
+
+			c := discard.UserActivity[userId].Comments
+			append(c, content.Comments...)
+
+			sc := discard.UserActivity[userId].Subcomments
+			append(sc, content.Subcomments...)
 		})
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
