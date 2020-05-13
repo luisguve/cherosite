@@ -145,8 +145,12 @@ message ContentPattern {
 	repeated string discard_ids = 2;
 	// content_context represents the place in which the content must be retrieved from.
 	oneof content_context {
+		// get content from a section
 		Context.Section section_ctx = 3;
+		// get content (comments) from a thread
 		Context.Thread thread_ctx = 4;
+		// get content saved by the given user
+		string user_id = 5;
 	}
 }
 
@@ -418,14 +422,17 @@ message GetDashboardDataRequest {
 	string user_id = 1;
 }
 
-// DashboardData holds the header data, the list of users this user is following
-// and the list of users that are following this user.
+// DashboardData holds the header data, the list of users this user is following,
+// the list of users that are following this user. the num of threads saved by
+// the user and the user id.
 message DashboardData {
 	UserHeaderData user_header_data = 1;
 	// ids of users that are following this user.
 	repeated string followers_ids = 2;
 	// ids of users that this user is following.
 	repeated string following_ids = 3;
+	uint32 threads_saved = 4;
+	string user_id = 5;
 }
 
 // LoginRequest is a message for requesting the validation of a user's credentials
