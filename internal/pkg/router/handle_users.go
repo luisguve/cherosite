@@ -339,17 +339,18 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
-
-	pActivity := feed.GetPaginationActivity()
-	// update session with new activity ids
-	r.updateDiscardIdsSession(req, w, pActivity, 
-		func(discard *pagination.DiscardIds, ids interface{}){
-			content := ids.(pagination.Activity)
-			discard.UserActivity[userData.UserId].ThreadsCreated = content.ThreadsCreated
-			discard.UserActivity[userData.UserId].Comments = content.Comments
-			discard.UserActivity[userData.UserId].Subcomments = content.Subcomments
-		})
-
+	// update session only if there is content.
+	if len(feed.Contents) > 0 {
+		pActivity := feed.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, pActivity, 
+			func(discard *pagination.DiscardIds, ids interface{}){
+				content := ids.(pagination.Activity)
+				id := userData.UserId
+				discard.UserActivity[id].ThreadsCreated = content.ThreadsCreated
+				discard.UserActivity[id].Comments = content.Comments
+				discard.UserActivity[id].Subcomments = content.Subcomments
+			})
+	}
 	profileView := templates.DataToProfileView(userData, userHeader, feed.Contents, userId)
 
 	err = r.templates.ExecuteTemplate(w, "viewuserprofile.html", profileView)
@@ -389,20 +390,22 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 			w.WriteHeader(http.StatusPartialContent)
 		}
 	}
-	pActivity := feed.GetPaginationActivity()
-	// Update session
-	r.updateDiscardIdsSession(req, w, pActivity, 
-		func(discard *pagination.DiscardIds, ids interface{}){
-			content := ids.(pagination.Activity)
-			tc := discard.UserActivity[userId].ThreadsCreated
-			append(tc, content.ThreadsCreated...)
+	// update session only if there is content.
+	if len(feed.Contents) > 0 {
+		pActivity := feed.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, pActivity, 
+			func(discard *pagination.DiscardIds, ids interface{}){
+				content := ids.(pagination.Activity)
+				tc := discard.UserActivity[userId].ThreadsCreated
+				append(tc, content.ThreadsCreated...)
 
-			c := discard.UserActivity[userId].Comments
-			append(c, content.Comments...)
+				c := discard.UserActivity[userId].Comments
+				append(c, content.Comments...)
 
-			sc := discard.UserActivity[userId].Subcomments
-			append(sc, content.Subcomments...)
-		})
+				sc := discard.UserActivity[userId].Subcomments
+				append(sc, content.Subcomments...)
+			})
+	}
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
 		log.Printf("Could not encode feed: %v\n", err)
