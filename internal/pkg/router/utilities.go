@@ -197,7 +197,7 @@ func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string)
 // description, along with a status code and any error encountered.
 func (r *Router) getBasicUserData(userId string) (*pb.BasicUserData, int, error) {
 	request := &pb.GetBasicUserDataRequest{
-		UserId: userId
+		UserId: userId,
 	}
 	userData, err := r.crudClient.GetBasicUserData(context.Background(), request)
 	if err != nil {
