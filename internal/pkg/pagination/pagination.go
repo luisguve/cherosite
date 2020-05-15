@@ -32,29 +32,27 @@ type DiscardIds struct {
 // FormatUserActivity converts the field UserActivity into a 
 // map[string]*pb.Activity to be used in a request to recycle activity.
 // It uses the given userId as the key to the activity of the given user.
-func (d *DiscardIds) FormatUserActivity(userId string) 
-map[string]*pb.Activity {
-	fudActivity := make(map[string]*pb.Activity)
-	fudActivity[userId] = formatActivity(d.FeedActivity[userId])
-	return fudActivity
+func (d *DiscardIds) FormatUserActivity(userId string) map[string]*pb.Activity {
+	pbActivity := make(map[string]*pb.Activity)
+	pbActivity[userId] = formatActivity(d.UserActivity[userId])
+	return pbActivity
 }
 
 // FormatFeedActivity converts the field FeedActivity into a 
 // map[string]*pb.Activity to be used in a request to recycle activity.
 // It uses the given userIds as the keys to the activity of the given users.
-func (d *DiscardIds) FormatFeedActivity(userIds []string) 
-map[string]*pb.Activity {
-	fudActivity := make(map[string]*pb.Activity)
+func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pb.Activity {
+	pbActivity := make(map[string]*pb.Activity)
 	for userId := range userIds {
-		fudActivity[userId] = formatActivity(d.FeedActivity[userId])
+		pbActivity[userId] = formatActivity(d.FeedActivity[userId])
 	}
-	return fudActivity
+	return pbActivity
 }
 
 // formatActivity formats the threads created, comments and subcomments in the
 // given activity into a *pb.Activity
 func formatActivity(activity Activity) *pb.Activity {
-	var fudActivity *pb.Activity
+	var pbActivity *pb.Activity
 	// Set threads
 	for t := range activity.ThreadsCreated {
 		pbThread := &pb.Context_Thread{
@@ -63,7 +61,7 @@ func formatActivity(activity Activity) *pb.Activity {
 				Name: t.SectionName,
 			},
 		}
-		fudActivity.ThreadsCreated = append(fudActivity.ThreadsCreated, pbThread)
+		pbActivity.ThreadsCreated = append(pbActivity.ThreadsCreated, pbThread)
 	}
 	// Set comments
 	for c := range activity.Comments {
@@ -76,7 +74,7 @@ func formatActivity(activity Activity) *pb.Activity {
 				},
 			},
 		}
-		fudActivity.Comments = append(fudActivity.Comments, pbComment)
+		pbActivity.Comments = append(pbActivity.Comments, pbComment)
 	}
 	// Set subcomments
 	for sc := range activity.Subcomments {
@@ -92,9 +90,9 @@ func formatActivity(activity Activity) *pb.Activity {
 				},
 			},
 		}
-		fudActivity.Subcomments = append(fudActivity.Subcomments, pbSubcomment)
+		pbActivity.Subcomments = append(pbActivity.Subcomments, pbSubcomment)
 	}
-	return fudActivity
+	return pbActivity
 }
 
 type Activity struct {
