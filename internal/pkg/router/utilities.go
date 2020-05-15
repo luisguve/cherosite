@@ -50,7 +50,7 @@ type streamFeed interface {
 // templates.ContentsFeed and any error encountered.
 func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
 	var feed templates.FeedContent
-	
+	var err error
 	// Continuously receive responses
 	for {
 		contentRule, err := stream.Recv()
