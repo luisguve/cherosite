@@ -61,7 +61,7 @@ func (cf ContentsFeed) GetPaginationActivity() p.Activity {
 
 // GetPaginationThreads returns thread ids mapped to their section names
 func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
-	var result map[string][]string
+	result := make(map[string][]string)
 
 	for content := range cf.Contents {
 		metadata := content.Data.Metadata
@@ -74,7 +74,7 @@ func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 
 // GetPaginationComments returns comment ids mapped to their thread ids
 func (cf ContentsFeed) GetPaginationComments() map[string][]string {
-	var result map[string][]string
+	result := make(map[string][]string)
 
 	for content := range cf.Contents {
 		ctx, ok := content.ContentContext.(*pb.ContentRule_CommentCtx)
