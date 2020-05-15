@@ -74,7 +74,14 @@ func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
 	var ok bool
 	if discard, ok = discardIds.(*pagination.DiscardIds); !ok {
 		// This session value has not been set before.
-		discard = &pagination.DiscardIds{}
+		discard = &pagination.DiscardIds{
+			UserActivity:   make(map[string]pagination.Activity),
+			FeedActivity:   make(map[string]pagination.Activity),
+			ThreadsSaved:   make(map[string][]string),
+			SectionThreads: make(map[string][]string),
+			ThreadComments: make(map[string][]string),
+			GeneralThreads: make(map[string][]string),
+		}
 	}
 	return discard
 }
