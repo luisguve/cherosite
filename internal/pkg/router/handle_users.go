@@ -313,7 +313,9 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	// get user activity
 	activityPattern := &pb.ActivityPattern{
 		Pattern: templates.CompactPattern,
-		Context: userData.UserId,
+		Context: &pb.ActivityPattern_UserId{
+			UserId: userData.UserId,
+		},
 		// ignore DiscardIds; do not discard any activity
 	}
 	var feed templates.ContentsFeed
@@ -367,9 +369,11 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	userActivity := discardIds.FormatUserActivity(userId)
 
 	activityPattern := &pb.ActivityPattern{
-		Pattern:    templates.CompactPattern,
-		Context:    userId,
 		DiscardIds: userActivity,
+		Pattern:    templates.CompactPattern,
+		Context:    &pb.ActivityPattern_UserId{
+			UserId: userData.UserId,
+		},
 	}
 	var feed templates.ContentsFeed
 
