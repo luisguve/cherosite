@@ -180,9 +180,11 @@ message ActivityPattern {
 		UserList users = 3;
 		string user_id = 4;
 	}
-	message UserList {
-		repeated string ids = 1;
-	}
+}
+
+// UserList holds a list of user ids
+message UserList {
+	repeated string ids = 1;
 }
 
 // ContentRule holds a piece of content and its current status.
@@ -487,6 +489,8 @@ service CrudCheropatilla {
 	rpc UpdateBasicUserData(UpdateBasicUserDataRequest) returns (UpdateBasicUserDataResponse) {}
 	// Get a user's basic data to be dislayed in page
 	rpc GetBasicUserData(GetBasicUserDataRequest) returns (BasicUserData) {}
+	// Get the list of users followed by a given user
+	rpc GetUserFollowingIds(GetBasicUserDataRequest) returns (UserList) {}
 
 	// Get a single thread
 	rpc GetThread(GetThreadRequest) returns (GetThreadResponse) {}
