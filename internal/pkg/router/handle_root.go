@@ -150,7 +150,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
 			pThreads := savedThreads.GetPaginationThreads()
 			for section, threadIds := range pThreads {
-				d.ThreadsSaved[section] = threadIds
+				d.SavedThreads[section] = threadIds
 			}
 		})
 	}
@@ -164,9 +164,10 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	}
 }
 
-// Recycle Feed "/recyclefeed" handler. It returns a new feed for the user in JSON format.
-// The user must be logged in and follow other users, whose recent activity will compose 
-// up the returned feed. It may return an error in case of the following:
+// Recycle Feed "/recyclefeed" handler. It returns a new activity feed of several users
+// in JSON format. The user must be logged in and follow other users, whose recent
+// activity will compose up the returned feed. It may return an error in case of
+// the following:
 // - user is unregistered --------------> USER_UNREGISTERED
 // - user is not following other users -> NO_USERS_FOLLOWING
 // - network or encoding failures ------> INTERNAL_FAILURE
@@ -219,7 +220,8 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
 		log.Printf("Could not send request: %v\n", err)
-		w.WriteHeader(http.StatusPartialContent)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	} else {
 		feed, err = getFeed(stream)
 		if err != nil {
@@ -258,16 +260,151 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	}
 }
 
-// "/recycleactivity"
+// Recycle activity "/recycleactivity" handler. It returns a new feed of user
+// activity in JSON format. The user must be logged in, and its recent activity
+// will compose up the returned feed. It may return an error in case of the
+// following:
+// - user is unregistered ---------> USER_UNREGISTERED
+// - network or encoding failures -> INTERNAL_FAILURE
 func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter, 
 	req *http.Request) {
+	// Get always returns a session, even if empty
+	session, _ := r.store.Get(req, "session")
+	// Get id of contents to be discarded
+	discard := getDiscardIds(session)
 
+	var userActivity templates.ContentsFeed
+
+	activityPattern := &pb.ActivityPattern{
+		Pattern: templates.CompactPattern,
+		Context: &pb.ActivityPattern_UserId{
+			UserId: userId,
+		},
+		DiscardIds: discard.FormatUserActivity(userId)
+	}
+
+	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				log.Printf("User %s unregistered\n", userId)
+				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
+				resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	} else {
+		userActivity, err = getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
+	}
+	// FOR DEBUGGING
+	if len(userActivity.Contents) == 0 {
+		log.Printf("Could not get any activity of %v\n", userId)
+	}
+	// Update session only if there is content.
+	if len(userActivity.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, userActivity, 
+		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pActivity := cf.GetPaginationActivity()
+
+			tc := d.UserActivity[userId].ThreadsCreated
+			tc = append(tc, pActivity[userId].ThreadsCreated...)
+			d.UserActivity[userId].ThreadsCreated = tc
+
+			c := d.UserActivity[userId].Comments
+			c = append(c, pActivity[userId].Comments...)
+			d.UserActivity[userId].Comments = c
+
+			sc := d.UserActivity[userId].Subcomments
+			sc = append(sc, pActivity[userId].Subcomments...)
+			d.UserActivity[userId].Subcomments = sc
+	})
+	}
+	// Encode and send response
+	if err = json.NewEncoder(w).Encode(userActivity.Contents); err != nil {
+		log.Printf("Could not encode user activity: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+	}
 }
 
-// "/recyclesaved"
+// Recycle saved "/recyclesaved" handler. It returns a new feed of user saved
+// content in JSON format. The user must be logged in, and its saved content
+// will compose up the returned feed. It may return an error in case of the
+// following:
+// - user is unregistered ---------> USER_UNREGISTERED
+// - network or encoding failures -> INTERNAL_FAILURE
 func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter, 
 	req *http.Request) {
+	// Get always returns a session, even if empty
+	session, _ := r.store.Get(req, "session")
+	// Get id of contents to be discarded
+	discard := getDiscardIds(session)
 
+	var userActivity templates.ContentsFeed
+
+	savedPattern := &pb.ContentPattern{
+		Pattern: templates.CompactPattern,
+		ContentContext: &pb.ContentPattern_UserId{
+			UserId: userId,
+		},
+		DiscardIds: discard.SavedThreads
+	}
+
+	stream, err := r.crudClient.RecycleActivity(context.Background(), savedPattern)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				log.Printf("User %s unregistered\n", userId)
+				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
+				resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	} else {
+		savedThreads, err = getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
+	}
+	// FOR DEBUGGING
+	if len(savedThreads.Contents) == 0 {
+		log.Printf("Could not get any activity of %v\n", userId)
+	}
+	// Update session only if there is content.
+	if len(savedThreads.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, savedThreads, 
+		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pThreads := cf.GetPaginationThreads()
+			for section, threadIds := range pThreads {
+				d.SavedThreads[section] = append(d.SavedThreads[section], threadIds...)
+			}
+		})
+	}
+	// Encode and send response
+	if err = json.NewEncoder(w).Encode(savedThreads.Contents); err != nil {
+		log.Printf("Could not encode saved threads: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+	}
 }
 
 // Explore page "/explore" handler. It returns html containing a feed composed of
