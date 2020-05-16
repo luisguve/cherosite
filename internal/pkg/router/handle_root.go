@@ -22,8 +22,10 @@ import(
 // - network failures -----> INTERNAL_FAILURE
 // - template rendering ---> TEMPLATE_ERROR
 func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Request) {
-	userData, err := r.crudClient.GetFullUserData(context.Background(), 
-	&pb.GetFullUserDataRequest{UserId: userId})
+	request := &pb.GetDashboardDataRequest{
+		UserId: userId,
+	}
+	dData, err = r.crudClient.GetDashboardData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -31,10 +33,6 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 				log.Printf("User %s unregistered\n", userId)
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
-			case codes.Internal:
-				log.Printf("Internal error: %v\n", resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
 			default:
 				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
 				resErr.Message())
@@ -47,100 +45,137 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	// userData holds only the notifications.
-	// The rest of the data (threads saved, activity and feed, users following 
-	// and followers) must be loaded individually.
+	followers := len(dData.FollowersIds)
+	following := len(dData.FollowingIds)
 
-	followers := len(userData.FollowersIds)
-	following := len(userData.FollowingIds)
-
+	var feed templates.ContentsFeed
 	// Get dashboard feed only if this user is following other users
 	if following > 0 {
 		activityPattern := &pb.ActivityPattern{
 			Pattern: templates.FeedPattern,
-			// ignore DiscardIds; do not discard any activity
-			Context: &ActivityPattern.UserList{
-				Ids: userData.FollowingIds,
+			Context: &pb.ActivityPattern_Users{
+				Users: &pb.UserList{
+					Ids: dData.FollowingIds,
+				},
 			},
+			// ignore DiscardIds; do not discard any activity
 		}
-		feed, err := r.recycleActivity(activityPattern)
+
+		stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+		if err != nil {
+			log.Printf("Could not send request: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		} else {
+			feed, err = getFeed(stream)
+			if err != nil {
+				log.Printf("An error occurred while getting feed: %v\n", err)
+				w.WriteHeader(http.StatusPartialContent)
+			}
+		}
+		// FOR DEBUGGING
+		if len(feed.Contents) == 0 {
+			log.Printf("Could not get any threads created by %v\n", dData.FollowingIds)
+		}
+	} else {
+		// FOR DEBUGGING
+		log.Printf("This user isn't following anybody\n")
+	}
+
+	// Get user activity
+	var userActivity templates.ContentsFeed
+	activityPattern := &pb.ActivityPattern{
+		Pattern: templates.CompactPattern,
+		Context: &pb.ActivityPattern_UserId{
+			UserId: dData.UserId,
+		},
+		// ignore DiscardIds; do not discard any activity
+	}
+	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	if err != nil {
+		log.Printf("Could not send request: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	} else {
+		userActivity, err = getFeed(stream)
 		if err != nil {
 			log.Printf("An error occurred while getting feed: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
 		}
 	}
 
-	var threadsCreated *pb.GetThreadsResponse
-	// Load threads created only if this user has created some threads.
-	if len(userData.ThreadsCreated) > 0 {
-		threadsRequest := &pb.GetThreadsRequest{Threads: userData.ThreadsCreated}
-		threadsCreated, err = r.crudClient.GetThreads(context.Background(), 
-		threadsRequest)
-		if err != nil {
-			log.Printf("Could not get threads created: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
-	}
-		
-	var threadsSaved *pb.GetThreadsResponse
+	var savedThreads templates.ContentsFeed
 	// Load threads saved only if this user has saved some threads.
-	if len(userData.ThreadsSaved) > 0 {
-		threadsRequest = &pb.GetThreadsRequest{Threads: userData.ThreadsSaved}
-		threadsSaved, err = r.crudClient.GetThreads(context.Background(), threadsRequest)
+	if dData.ThreadsSaved > 0 {
+		savedPattern := &pb.ContentPattern{
+			Pattern:        templates.CompactPattern,
+			ContentContext: &pb.ContentPattern_UserId{
+				UserId: dData.UserId,
+			},
+			// ignore DiscardIds; do not discard any thread
+		}
+		stream, err = r.crudClient.RecycleContent(context.Background(), savedPattern)
 		if err != nil {
-			log.Printf("Could not get threads saved: %v\n", err)
+			log.Printf("Could not send request: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
-		}
-	}
-
-	feed := templates.FeedContent{}
-	data := &templates.DashboardView{
-		FullUserData:   userData,
-		ThreadsCreated: threadsCreated.Threads,
-		ThreadsSaved:   threadsSaved.Threads,
-		Following:      following,
-		Followers:      followers,
-	}
-	// /*FOR DEBUGGING
-	if len(data.Feed.ContentIds) == 0 {
-		if following == 0 {
-			log.Printf("This user isn't following anybody\n")
 		} else {
-			log.Printf("Could not get any threads created by %v\n", 
-			userData.FollowingIds)
+			savedThreads, err = getFeed(stream)
+			if err != nil {
+				log.Printf("An error occurred while getting feed: %v\n", err)
+				w.WriteHeader(http.StatusPartialContent)
+			}
 		}
-	}// FOR DEBUGGING*/
-
-	// update session only if there is feed.
-	if len(data.Feed.ContentIds) > 0 {
-		// make a map holding all of the content ids on its only key "user_feed"
-		feedIds := map[string][]string{
-			"user_feed": data.Feed.ContentIds,
-		}
-		// Update session
-		r.updateDiscardIdsSession(req, w, feedIds, 
-			func(discard *pagination.DiscardIds, feedIds map[string][]string){
-			discard.FeedThreads = feedIds["user_feed"]
+	}
+	// update session only if there is content.
+	switch {
+	case len(feed.Contents) > 0:
+		r.updateDiscardIdsSession(req, w, feed, 
+			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pActivity := cf.GetPaginationActivity()
+			for userId, content := range pActivity {
+				d.FeedActivity[userId].ThreadsCreated = content.ThreadsCreated
+				d.FeedActivity[userId].Comments = content.Comments
+				d.FeedActivity[userId].Subcomments = content.Subcomments
+			}
+		})
+	case len(userActivity.Contents) > 0:
+		r.updateDiscardIdsSession(req, w, userActivity, 
+			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pActivity := cf.GetPaginationActivity()
+			id := dData.UserId
+			d.UserActivity[id].ThreadsCreated = pActivity[id].ThreadsCreated
+			d.UserActivity[id].Comments = pActivity[id].Comments
+			d.UserActivity[id].Subcomments = pActivity[id].Subcomments
+		})
+	case len(savedThreads.Contents) > 0:
+		r.updateDiscardIdsSession(req, w, savedThreads, 
+			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pThreads := savedThreads.GetPaginationThreads()
+			for section, threadIds := range pThreads {
+				d.ThreadsSaved[section] = threadIds
+			}
 		})
 	}
-	// render dashboard
-	if err = r.templates.ExecuteTemplate(w, "dashboard.html", data); err != nil {
+	dashboardView := templates.DataToDashboardView(dData, feed.Contents, 
+		userActivity.Contents, savedThreads.Contents)
+
+	err = r.templates.ExecuteTemplate(w, "dashboard.html", dashboardView)
+	if err != nil {
 		log.Printf("Could not execute template dashboard.html: %v\n", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}
 }
 
-// Recycle Feed "/recycle" handler. It returns a new feed for the user in JSON format.
-// The user must be logged, follow other users and these other users must have posted
-// a thread recently. It may return an error in case of the following:
+// Recycle Feed "/recyclefeed" handler. It returns a new feed for the user in JSON format.
+// The user must be logged in and follow other users, whose recent activity will compose 
+// up the returned feed. It may return an error in case of the following:
 // - user is unregistered --------------> USER_UNREGISTERED
 // - user is not following other users -> NO_USERS_FOLLOWING
-// - there is no more feed available ---> NO_NEW_FEED
 // - network or encoding failures ------> INTERNAL_FAILURE
 func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter, 
 	req *http.Request) {
-	userData, err := r.crudClient.GetFullUserData(context.Background(), 
-	&pb.GetFullUserDataRequest{UserId: userId})
+	request := &pb.GetBasicUserDataRequest{
+		UserId: userId,
+	}
+	following, err := r.crudClient.GetUserFollowingIds(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(); ok {
 			switch resErr.Code() {
@@ -148,10 +183,6 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 				log.Printf("User %s unregistered\n", userId)
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
-			case codes.Internal:
-				log.Printf("Internal error: %v\n", resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
 			default:
 				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
 				resErr.Message())
@@ -159,13 +190,12 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 				return
 			}
 		}
-		log.Printf("Could not get full user data: %v\n", err)
+		log.Printf("Could not send request to get following ids: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
 	}
-	following := len(userData.FollowingIds)
 	// Recycle feed only if this user is following other users.
-	if following == 0 {
+	if len(following.Ids) == 0 {
 		http.Error(w, "NO_USERS_FOLLOWING", http.StatusBadRequest)
 		return
 	}
@@ -173,37 +203,68 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	session, _ := r.store.Get(req, "session")
 	// Get id of contents to be discarded
 	discard := getDiscardIds(session)
-	contentPattern := &pb.ContentPattern{
-		Pattern:        templates.FeedPattern,
-		DiscardIds:     discard.FeedThreads,
-		ContentContext: &pb.Context_Feed{
-			UserIds: userData.FollowingIds,
+
+	var feed templates.ContentsFeed
+
+	activityPattern := &pb.ActivityPattern{
+		Pattern: templates.FeedPattern,
+		Context: &pb.ActivityPattern_Users{
+			Users: &pb.UserList{
+				Ids: following.Ids,
+			},
 		},
+		DiscardIds: discard.FormatFeedActivity(following.Ids)
 	}
-	feed, err := r.recycleContent(contentPattern)
+
+	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
-		log.Printf("An error occurred while getting feed: %v\n", err)
+		log.Printf("Could not send request: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
+	} else {
+		feed, err = getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
+		}
 	}
-	// Check whether it couldn't find new feed
-	if len(feed.ContentIds) == 0 {
-		w.Write([]byte("NO_NEW_FEED"))
-		return
+	// FOR DEBUGGING
+	if len(feed.Contents) == 0 {
+		log.Printf("Could not get any threads created by %v\n", dData.FollowingIds)
 	}
-	// make a map holding all of the content ids on its only key "user_feed"
-	feedIds := map[string][]string{
-		"user_feed": feed.ContentIds,
-	}
-	// Update session
-	r.updateDiscardIdsSession(req, w, feedIds, 
-		func(discard *pagination.DiscardIds, feedIds map[string][]string) {
-			discard.FeedThreads = append(discard.FeedThreads, feedIds["user_feed"]...)
+	// Update session only if there is content.
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, feed, 
+		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pActivity := cf.GetPaginationActivity()
+			for userId, content := range pActivity {
+				tc := d.FeedActivity[userId].ThreadsCreated
+				tc = append(tc, content.ThreadsCreated...)
+
+				c := d.FeedActivity[userId].Comments
+				c = append(c, content.Comments...)
+
+				sc := d.FeedActivity[userId].Subcomments
+				sc = append(sc, content.Subcomments...)
+			}
 		})
+	}
 	// Encode and send response
-	if err = json.NewEncoder(w).Encode(feed); err != nil {
+	if err = json.NewEncoder(w).Encode(feed.Contents); err != nil {
 		log.Printf("Could not encode feed: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
+}
+
+// "/recycleactivity"
+func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+
+}
+
+// "/recyclesaved"
+func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+
 }
 
 // Explore page "/explore" handler. It returns html containing a feed composed of
