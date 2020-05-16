@@ -20,7 +20,7 @@ func DataToMyProfileView(userData *pb.BasicUserData, uhd *pb.UserHeaderData)
 }
 
 func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData, 
-	activity []*pb.ContentsRule, currentUserId string) *ProfileView {
+	activity []*pb.ContentRule, currentUserId string) *ProfileView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
@@ -32,7 +32,7 @@ func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData,
 	// set user profile data
 	pd := setProfileData(userData)
 	// convert each activity into an OverviewRenderer set
-	ovwRendererSet := activityToOvwRendererSet(activity, currentUserId)
+	activitySet := contentsToOvwRendererSet(activity, currentUserId)
 	// check whether the current user is a follower of the user viewing
 	var isF bool
 	if currentUserId == "" {
@@ -44,8 +44,42 @@ func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData,
 	return &ProfileView{
 		HeaderData:  hd,
 		ProfileData: pd,
-		Activity:    ovwRendererSet,
+		Activity:    activitySet,
 		IsFollower:  isF,
+	}
+}
+
+func DataToDashboardView(dData *pb.DashboardData, feed, activity, 
+	saved []*pb.ContentRule) *DashboardView {
+	recycleSet := []RecycleType{
+		RecycleType{
+			Label: "Recycle your feed",
+			Link: "/recyclefeed",
+		},
+		RecycleType{
+			Label: "Recycle your activity",
+			Link: "/recycleactivity",
+		},
+		RecycleType{
+			Label: "Recycle your saved threads",
+			Link: "/recyclesaved",
+		},
+	}
+	// set user header data
+	hd := setHeaderData(dData.UserHeaderData, recycleSet)
+	// convert each user activity into an OverviewRenderer set
+	activitySet := contentsToOvwRendererSet(activity, dData.UserId)
+	// convert each saved content into an OverviewRenderer set
+	savedContentSet := contentsToOvwRendererSet(saved, dData.UserId)
+	// convert each feed activity into an OverviewRenderer set
+	feedSet := contentsToOvwRendererSet(feed, dData.UserId)
+	return &DashboardView{
+		HeaderData:   hd,
+		Followers:    len(dData.FollowersIds),
+		Following:    len(dData.FollowingIds),
+		Activity:     activitySet,
+		SavedContent: savedContentSet,
+		Feed:         feedSet,
 	}
 }
 
@@ -89,23 +123,23 @@ func setProfileData(userData *pb.BasicUserData) ProfileData {
 	}
 }
 
-// activityToOvwRendererSet converts a slice of *pb.ContentsRule into a slice of
+// contentsToOvwRendererSet converts a slice of *pb.ContentRule into a slice of
 // OverviewRenderer. userId is used to check whether the user has saved the content
-func activityToOvwRendererSet(activitySet []*pb.ContentsRule, userId string) 
+func contentsToOvwRendererSet(pbRuleSet []*pb.ContentRule, userId string) 
 	[]OverviewRenderer {
 	var ovwRendererSet []OverviewRenderer
 
-	for activity := range activitySet {
+	for pbRule := range pbRuleSet {
 		var ovwRenderer OverviewRenderer
 
-		bc := setBasicContent(activity, userId)
-		metadata := activity.Data.Metadata
+		bc := setBasicContent(pbRule, userId)
+		metadata := pbRule.Data.Metadata
 
 		threadId := metadata.Id
-		sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "-", -1)
+		sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
 		threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
 
-		switch ctx := activity.ContentContext.(type) {
+		switch ctx := pbRule.ContentContext.(type) {
 		// it's a THREAD
 		case *pb.ActivityRule_ThreadCtx:
 			saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
@@ -142,14 +176,15 @@ func activityToOvwRendererSet(activitySet []*pb.ContentsRule, userId string)
 
 		ovwRendererSet = append(ovwRendererSet, ovwRenderer)
 	}
+	return ovwRendererSet
 }
 
 // setBasicContent returns a *BasicContent object filled with data retrieved from a
-// *pb.ContentsRule. userId is used to checkh whether the user has upvoted the content.
-func setBasicContent(activity *pb.ContentsRule, userId string) *BasicContent {
-	author := activity.Data.Author
-	content := activity.Data.Content
-	metadata := activity.Data.Metadata
+// *pb.ContentRule. userId is used to check whether the user has upvoted the content.
+func setBasicContent(pbRule *pb.ContentRule, userId string) *BasicContent {
+	author := pbRule.Data.Author
+	content := pbRule.Data.Content
+	metadata := pbRule.Data.Metadata
 
 	sectionLowercased := strings.ToLower(metadata.Section)
 	sectionLink := strings.Replace(fmt.Sprintf("/%s", sectionLowercased), " ", "-", -1)
@@ -171,7 +206,7 @@ func setBasicContent(activity *pb.ContentsRule, userId string) *BasicContent {
 
 	return &BasicContent{
 		Title:       content.Title,
-		Status:      activity.Status,
+		Status:      pbRule.Status,
 		Thumbnail:   content.FtFile,
 		Permalink:   metadata.Permalink,
 		Content:     content.Content,
