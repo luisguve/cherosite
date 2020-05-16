@@ -16,9 +16,9 @@ type DiscardIds struct {
 	// to ids of these kinds of content that compose the feed of the current user
 	// that she has already seen
 	FeedActivity   map[string]Activity
-	// ThreadsSaved maps section names to the threads the user has already seen in its
+	// SavedThreads maps section names to the threads the user has already seen in its
 	// saved area
-	ThreadsSaved   map[string][]string
+	SavedThreads   map[string][]string
 	// SectionThreads maps section names to the threads the user has already seen
 	// in the section
 	SectionThreads map[string][]string
