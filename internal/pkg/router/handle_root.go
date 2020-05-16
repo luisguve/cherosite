@@ -239,12 +239,15 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 			for userId, content := range pActivity {
 				tc := d.FeedActivity[userId].ThreadsCreated
 				tc = append(tc, content.ThreadsCreated...)
+				d.FeedActivity[userId].ThreadsCreated = tc
 
 				c := d.FeedActivity[userId].Comments
 				c = append(c, content.Comments...)
+				d.FeedActivity[userId].Comments = c
 
 				sc := d.FeedActivity[userId].Subcomments
 				sc = append(sc, content.Subcomments...)
+				d.FeedActivity[userId].Subcomments = sc
 			}
 		})
 	}

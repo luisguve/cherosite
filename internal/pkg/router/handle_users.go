@@ -411,12 +411,15 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 				pActivity := cf.GetPaginationActivity()
 				tc := d.UserActivity[userId].ThreadsCreated
 				tc = append(tc, pActivity[userId].ThreadsCreated...)
+				d.UserActivity[userId].ThreadsCreated = tc
 
 				c := d.UserActivity[userId].Comments
 				c = append(c, pActivity[userId].Comments...)
+				d.UserActivity[userId].Comments = c
 
 				sc := d.UserActivity[userId].Subcomments
 				sc = append(sc, pActivity[userId].Subcomments...)
+				d.UserActivity[userId].Subcomments = sc
 			})
 	}
 	// Encode and send response
