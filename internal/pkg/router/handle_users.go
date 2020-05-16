@@ -281,8 +281,8 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 }
 
 // View User Profile "/profile/{username}" handler. It returns a page containing
-// a user's basic data, followers, following and threads created. It may return an
-// error in case of the following:
+// a user's basic data, followers, following and its recent activity. It may return
+// an error in case of the following:
 // - username not found -> 404 NOT_FOUND
 // - network failure ----> INTERNAL_FAILURE
 // - template rendering -> TEMPLATE_ERROR
@@ -341,14 +341,13 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	}
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
-		pActivity := feed.GetPaginationActivity()
-		r.updateDiscardIdsSession(req, w, pActivity, 
-			func(discard *pagination.DiscardIds, ids interface{}){
-				content := ids.(pagination.Activity)
+		r.updateDiscardIdsSession(req, w, feed, 
+			func(d *pagination.DiscardIds, cf templates.ContentsFeed){
+				pActivity := cf.GetPaginationActivity()
 				id := userData.UserId
-				discard.UserActivity[id].ThreadsCreated = content.ThreadsCreated
-				discard.UserActivity[id].Comments = content.Comments
-				discard.UserActivity[id].Subcomments = content.Subcomments
+				d.UserActivity[id].ThreadsCreated = pActivity[id].ThreadsCreated
+				d.UserActivity[id].Comments = pActivity[id].Comments
+				d.UserActivity[id].Subcomments = pActivity[id].Subcomments
 			})
 	}
 	profileView := templates.DataToProfileView(userData, userHeader, feed.Contents, userId)
@@ -360,20 +359,23 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	}
 }
 
-// Recycle user activity "/profile/recycle?userid={userid}" handler
+// Recycle user activity "/profile/recycle?userid={userid}" handler. It returns a 
+// new feed of recent activity for the user in JSON format. It may return an error 
+// in case of the following:
+// - user not found ---------------> 404 NOT_FOUND
+// - network or encoding failures -> INTERNAL_FAILURE
 func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	userId := vars["userid"]
 
 	session, _ :=  r.store.Get(req, "session")
 	discardIds := getDiscardIds(session)
-	userActivity := discardIds.FormatUserActivity(userId)
 
 	activityPattern := &pb.ActivityPattern{
-		DiscardIds: userActivity,
+		DiscardIds: discardIds.FormatUserActivity(userId),
 		Pattern:    templates.CompactPattern,
 		Context:    &pb.ActivityPattern_UserId{
-			UserId: userData.UserId,
+			UserId: userId,
 		},
 	}
 	var feed templates.ContentsFeed
@@ -381,8 +383,20 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	// get user activity
 	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				http.NotFound(w, req)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
 		log.Printf("Could not send request: %v\n", err)
-		w.WriteHeader(http.StatusPartialContent)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	} else {
 		feed, err = getFeed(stream)
 		if err != nil {
@@ -392,18 +406,17 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	}
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
-		pActivity := feed.GetPaginationActivity()
-		r.updateDiscardIdsSession(req, w, pActivity, 
-			func(discard *pagination.DiscardIds, ids interface{}){
-				content := ids.(pagination.Activity)
-				tc := discard.UserActivity[userId].ThreadsCreated
-				append(tc, content.ThreadsCreated...)
+		r.updateDiscardIdsSession(req, w, feed, 
+			func(d *pagination.DiscardIds, cf templates.ContentsFeed){
+				pActivity := cf.GetPaginationActivity()
+				tc := d.UserActivity[userId].ThreadsCreated
+				tc = append(tc, pActivity[userId].ThreadsCreated...)
 
-				c := discard.UserActivity[userId].Comments
-				append(c, content.Comments...)
+				c := d.UserActivity[userId].Comments
+				c = append(c, pActivity[userId].Comments...)
 
-				sc := discard.UserActivity[userId].Subcomments
-				append(sc, content.Subcomments...)
+				sc := d.UserActivity[userId].Subcomments
+				sc = append(sc, pActivity[userId].Subcomments...)
 			})
 	}
 	// Encode and send response
