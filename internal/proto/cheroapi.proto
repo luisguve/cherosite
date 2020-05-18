@@ -485,8 +485,10 @@ service CrudCheropatilla {
 	rpc RecycleGeneral(GeneralPattern) returns (stream ContentRule) {}
 	// Get new activity from either multiple users or a single user.
 	rpc RecycleActivity(ActivityPattern) returns (stream ContentRule) {}
-	// Post upvote on thread, comment or subcomment
+	// Get new feed of saved threads of a user
+	rpc RecycleSaved(SavedPattern) returns (stream ContentRule) {}
 
+	// Post upvote on thread, comment or subcomment
 	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
 	// Post comment on a thread or in a comment
 	rpc Comment(CommentRequest) returns (stream NotifyUser) {}
