@@ -80,7 +80,7 @@ message FullUserData {
 	// ids of unactive content this user has created.
 	Activity old_activity = 8;
 	// ids of threads that this user has saved to read later.
-	repeated Context.Thread threads_saved = 9;
+	repeated Context.Thread saved_threads = 9;
 }
 
 // Activity holds the threads created, comments and subcomments of a given user
@@ -447,7 +447,7 @@ message DashboardData {
 	repeated string followers_ids = 2;
 	// ids of users that this user is following.
 	repeated string following_ids = 3;
-	uint32 threads_saved = 4;
+	uint32 saved_threads = 4;
 	string user_id = 5;
 }
 
