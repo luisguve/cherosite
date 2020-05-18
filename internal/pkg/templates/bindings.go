@@ -32,7 +32,7 @@ func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData,
 	// set user profile data
 	pd := setProfileData(userData)
 	// convert each activity into an OverviewRenderer set
-	activitySet := contentsToOvwRendererSet(activity, currentUserId)
+	activitySet := contentsToOverviewRendererSet(activity, currentUserId)
 	// check whether the current user is a follower of the user viewing
 	var isF bool
 	if currentUserId == "" {
@@ -67,12 +67,12 @@ func DataToDashboardView(dData *pb.DashboardData, feed, activity,
 	}
 	// set user header data
 	hd := setHeaderData(dData.UserHeaderData, recycleSet)
-	// convert each user activity into an OverviewRenderer set
-	activitySet := contentsToOvwRendererSet(activity, dData.UserId)
-	// convert each saved content into an OverviewRenderer set
-	savedContentSet := contentsToOvwRendererSet(saved, dData.UserId)
-	// convert each feed activity into an OverviewRenderer set
-	feedSet := contentsToOvwRendererSet(feed, dData.UserId)
+	// convert user activity set into an OverviewRenderer set
+	activitySet := contentsToOverviewRendererSet(activity, dData.UserId)
+	// convert saved content set into an OverviewRenderer set
+	savedContentSet := contentsToOverviewRendererSet(saved, dData.UserId)
+	// convert feed activity into an OverviewRenderer set
+	feedSet := contentsToOverviewRendererSet(feed, dData.UserId)
 	return &DashboardView{
 		HeaderData:   hd,
 		Followers:    len(dData.FollowersIds),
@@ -123,9 +123,9 @@ func setProfileData(userData *pb.BasicUserData) ProfileData {
 	}
 }
 
-// contentsToOvwRendererSet converts a slice of *pb.ContentRule into a slice of
+// contentsToOverviewRendererSet converts a slice of *pb.ContentRule into a slice of
 // OverviewRenderer. userId is used to check whether the user has saved the content
-func contentsToOvwRendererSet(pbRuleSet []*pb.ContentRule, userId string) 
+func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string) 
 	[]OverviewRenderer {
 	var ovwRendererSet []OverviewRenderer
 
