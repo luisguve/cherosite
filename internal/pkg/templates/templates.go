@@ -23,7 +23,7 @@ type ContentsFeed struct {
 func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
 	pActivity := make(map[string]p.Activity)
 
-	for activity := range cf.Contents {
+	for _, activity := range cf.Contents {
 		userId := activity.Data.Author.Id
 
 		switch ctx := activity.ContentContext.(type) {
@@ -66,7 +66,7 @@ func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
 func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 	result := make(map[string][]string)
 
-	for content := range cf.Contents {
+	for _, content := range cf.Contents {
 		metadata := content.Data.Metadata
 		section := metadata.Section
 		id := metadata.Id
@@ -79,7 +79,7 @@ func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 func (cf ContentsFeed) GetPaginationComments() map[string][]string {
 	result := make(map[string][]string)
 
-	for content := range cf.Contents {
+	for _, content := range cf.Contents {
 		ctx, ok := content.ContentContext.(*pb.ContentRule_CommentCtx)
 		if !ok {
 			continue
