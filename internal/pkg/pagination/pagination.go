@@ -29,6 +29,18 @@ type DiscardIds struct {
 	GeneralThreads map[string][]string
 }
 
+// FormatSavedThreads converts the field SavedThreads into a map[string]*pb.IdList
+// to be used in a request to recycle saved threads of a user.
+func (d *DiscardIds) FormatSavedThreads() map[string]*pb.IdList {
+	result := make(map[string]*pb.IdList)
+	for section, threadIds := range d.SavedThreads {
+		result[section] = &pb.IdList{
+			Ids: threadIds,
+		}
+	}
+	return result
+}
+
 // FormatUserActivity converts the field UserActivity into a 
 // map[string]*pb.Activity to be used in a request to recycle activity, formatting
 // the threads created, comments and subcomments in the given Activity object of 
