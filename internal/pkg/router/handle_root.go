@@ -103,16 +103,14 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	}
 
 	var savedThreads templates.ContentsFeed
-	// Load threads saved only if this user has saved some threads.
-	if dData.ThreadsSaved > 0 {
-		savedPattern := &pb.ContentPattern{
-			Pattern:        templates.CompactPattern,
-			ContentContext: &pb.ContentPattern_UserId{
-				UserId: dData.UserId,
-			},
+	// Load saved threads only if this user has saved some threads.
+	if dData.SavedThreads > 0 {
+		savedPattern := &pb.SavedPattern{
+			Pattern: templates.CompactPattern,
+			UserId:  dData.UserId,
 			// ignore DiscardIds; do not discard any thread
 		}
-		stream, err = r.crudClient.RecycleContent(context.Background(), savedPattern)
+		stream, err = r.crudClient.RecycleSaved(context.Background(), savedPattern)
 		if err != nil {
 			log.Printf("Could not send request: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
@@ -148,6 +146,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	case len(savedThreads.Contents) > 0:
 		r.updateDiscardIdsSession(req, w, savedThreads, 
 			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			// TODO: remove argument of callback, cf
 			pThreads := savedThreads.GetPaginationThreads()
 			for section, threadIds := range pThreads {
 				d.SavedThreads[section] = threadIds
@@ -353,15 +352,13 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 
 	var userActivity templates.ContentsFeed
 
-	savedPattern := &pb.ContentPattern{
-		Pattern: templates.CompactPattern,
-		ContentContext: &pb.ContentPattern_UserId{
-			UserId: userId,
-		},
-		DiscardIds: discard.SavedThreads
+	savedPattern := &pb.SavedPattern{
+		Pattern:    templates.CompactPattern,
+		UserId:     userId,
+		DiscardIds: discard.FormatSavedThreads(),
 	}
 
-	stream, err := r.crudClient.RecycleActivity(context.Background(), savedPattern)
+	stream, err := r.crudClient.RecycleSaved(context.Background(), savedPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
