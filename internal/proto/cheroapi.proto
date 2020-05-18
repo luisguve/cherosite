@@ -136,8 +136,8 @@ enum ContentStatus {
 }
 
 // ContentPattern holds an array of ContentStatus, composing up a pattern of content 
-// that's expected to get back. It is intended for recycling content in a section, 
-// thread or user saved threads context.
+// that's expected to get back. It is intended for recycling content of a specific
+// type: either threads in a section, or comments in a thread.
 message ContentPattern {
 	repeated ContentStatus pattern = 1;
 	// discard_ids is an array of content ids that must not be returned back, since it's
@@ -160,10 +160,24 @@ message GeneralPattern {
 	repeated ContentStatus pattern = 1;
 	// discard_ids is a map of section names mapped to content ids that must not be 
 	// returned back, since it's content the user has already seen.
-	map<string, Ids> discard_ids = 2;
-	message Ids {
-		repeated string ids = 1;
-	}
+	map<string, IdList> discard_ids = 2;
+}
+
+// SavedPattern holds an array of ContentStatus, composing up a pattern of content 
+// that's expected to get back. It is intended for recycling content in the context
+// of a user viewing his saved threads.
+message SavedPattern {
+	repeated ContentStatus pattern = 1;
+	// discard_ids is a map of section names mapped to content ids that must not be 
+	// returned back, since it's content the user has already seen.
+	map<string, IdList> discard_ids = 2;
+	// the user
+	string user_id = 3;
+}
+
+// IdList holds a list of ids of content
+message IdList {
+	repeated string ids = 1;
 }
 
 // ActivityPattern holds an array of ContentStatus, composing up a pattern of content 
