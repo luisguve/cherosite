@@ -83,6 +83,24 @@ func DataToDashboardView(dData *pb.DashboardData, feed, activity,
 	}
 }
 
+func DataToExploreView(feed []*pb.ContentRule, uhd *pb.UserHeaderData,
+currentUserId string) *ExploreView {
+	recycleSet := []RecycleType{
+		RecycleType{
+			Label: "Recycle explorer",
+			Link:  "/explore/recycle",
+		},
+	}
+	// set user header data
+	hd := setHeaderData(uhd, recycleSet)
+	// convert feed content into an OverviewRenderer set
+	feedSet := contentsToOverviewRendererSet(feed, currentUserId)
+	return &ExploreView{
+		HeaderData: hd,
+		Feed:       feedSet,
+	}
+}
+
 func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData {
 	hd := HeaderData{RecycleTypes: recycleSet}
 	if uhd == nil {
