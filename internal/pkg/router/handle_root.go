@@ -409,55 +409,44 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 // the following:
 // - template rendering failure -> TEMPLATE_ERROR
 func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
-	contentPattern := &pb.GeneralPattern{
-		Pattern:    templates.FeedPattern,
-		// Do not discard any thread
-		DiscardIds: map[string]*pb.GeneralPattern_Ids{},
+	generalPattern := &pb.GeneralPattern{
+		Pattern: templates.FeedPattern,
+		// ignore DiscardIds; do not discard any thread
 	}
-	feed, err := r.recycleGeneral(contentPattern)
+	var feed templates.ContentsFeed
+	stream, err := r.crudClient.RecycleGeneral(context.Background(), generalPattern)
 	if err != nil {
-		log.Printf("An error occurred while getting feed: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	data := &templates.SectionView{Feed: feed}
-	// Get user and set username
-	userId := currentUser(req)
-	if userId != "" {
-		// A user is logged in. Get its data.
-		userData, err := r.crudClient.GetFullUserData(context.Background(), 
-			&pb.GetFullUserDataRequest{UserId: userId})
+		log.Printf("Could not send request: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	} else {
+		feed, err = getFeed(stream)
 		if err != nil {
-			if resErr, ok := status.FromError(err); ok {
-				switch resErr.Code() {
-				case codes.NotFound:
-					log.Printf("User %s unregistered\n", userId)
-					w.WriteHeader(http.StatusUnauthorized)
-				case codes.Internal:
-					log.Printf("Internal error: %v\n", resErr.Message())
-					w.WriteHeader(http.StatusInternalServerError)
-				default:
-					log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-					resErr.Message())
-					w.WriteHeader(http.StatusInternalServerError)
-				}
-			} else {
-				log.Printf("Could not get full user data: %v\n", err)
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-		} else {
-			data.Username = userData.BasicUserData.Username
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
 		}
 	}
+	// get current user data for header section
+	userId := currentUser(req)
+	var userHeader *pb.UserHeaderData
+	if userId != "" {
+		// A user is logged in. Get its data.
+		userHeader = r.getUserHeaderData(w, userId)
+	}
+
+	exploreView := templates.DataToExploreView(feed, userHeader, userId)
+
 	// Update session only if there is feed
-	if len(feed.ContentIds) > 0 {
-		r.updateDiscardIdsSession(req, w, feed.ContentIds, 
-			func(discard *pagination.DiscardIds, ids map[string][]string) {
-			// replace all the ids
-			discard.GeneralThreads = ids
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, feed, 
+		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pThreads := cf.GetPaginationThreads()
+			for section, threadIds := range pThreads {
+				d.GeneralThreads[section] = threadIds
+			}
 		})
 	}
 	// render explore page
-	if err = r.templates.ExecuteTemplate(w, "explore.html", data); err != nil {
+	if err = r.templates.ExecuteTemplate(w, "explore.html", exploreView); err != nil {
 		log.Printf("Could not execute template explore.html: %v\n", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}
@@ -466,40 +455,39 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 // Explore Recycle "/explore/recycle" handler. It returns a new feed of explore
 // in JSON format, excluding threads previously sent. It may return an error in case
 // of the following:
-// - encoding failure -> INTERNAL_FAILURE
+// - encoding failure or network error -> INTERNAL_FAILURE
 func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	discard := getDiscardIds(session)
-	generalIds := make(map[string]*pb.GeneralPattern_Ids)
 
-	// discard.GeneralThreads holds a map[string][]string, but pb.GeneralPattern
-	// requires a map[string]*pb.GeneralPattern.
-	// pb.GeneralPattern holds the []string in its Ids field.
-	for section, ids := range discard.GeneralThreads {
-		generalIds[section] = &pb.GeneralPattern_Ids {
-			Ids: ids,
+	generalPattern := &pb.GeneralPattern{
+		Pattern:    templates.FeedPattern,
+		DiscardIds: discard.FormatGeneralThreads(),
+	}
+
+	var feed templates.ContentsFeed
+	stream, err := r.crudClient.RecycleGeneral(generalPattern)
+	if err != nil {
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	} else {
+		feed, err = getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
 		}
 	}
-	contentPattern := &pb.GeneralPattern{
-		Pattern:    templates.FeedPattern,
-		// Discard threads previously seen
-		DiscardIds: generalIds,
-	}
-	feed, err := r.recycleGeneral(contentPattern)
-	if err != nil {
-		log.Printf("An error occurred while getting feed: %v\n", err)
-		w.WriteHeader(http.StatusPartialContent)
-	}
 	// update session only if there is new feed.
-	if len(feed.ContentIds) > 0 {
-		r.updateDiscardIdsSession(req, w, feed.ContentIds, 
-			func(discard *pagination.DiscardIds, ids map[string][]string) {
-				// append new feed from every section
-				for section, threads := range ids {
-					discard.GeneralThreads[section] = append(discard.GeneralThreads[section], 
-						threads...)
-				}
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, feed, 
+		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
+			pThreads := cf.GetPaginationThreads()
+			for section, threadIds := range pThreads {
+				d.GeneralThreads[section] = append(d.GeneralThreads[section], 
+					threadIds...)
+			}
 		})
 	}		
 	// encode and send new feed
