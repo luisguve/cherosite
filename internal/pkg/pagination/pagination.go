@@ -71,7 +71,7 @@ func (d *DiscardIds) FormatUserActivity(userId string) map[string]*pb.Activity {
 // It uses the given userIds as the keys to the activity of the given users.
 func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pb.Activity {
 	pbActivity := make(map[string]*pb.Activity)
-	for userId := range userIds {
+	for _, userId := range userIds {
 		pbActivity[userId] = formatActivity(d.FeedActivity[userId])
 	}
 	return pbActivity
@@ -82,7 +82,7 @@ func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pb.Activit
 func formatActivity(activity Activity) *pb.Activity {
 	var pbActivity *pb.Activity
 	// Set threads
-	for t := range activity.ThreadsCreated {
+	for _, t := range activity.ThreadsCreated {
 		pbThread := &pb.Context_Thread{
 			Id:         t.Id,
 			SectionCtx: &pb.Context_section{
@@ -92,7 +92,7 @@ func formatActivity(activity Activity) *pb.Activity {
 		pbActivity.ThreadsCreated = append(pbActivity.ThreadsCreated, pbThread)
 	}
 	// Set comments
-	for c := range activity.Comments {
+	for _, c := range activity.Comments {
 		pbComment := &pb.Context_Comment{
 			Id:        c.Id,
 			ThreadCtx: &pb.Context_Thread{
@@ -105,7 +105,7 @@ func formatActivity(activity Activity) *pb.Activity {
 		pbActivity.Comments = append(pbActivity.Comments, pbComment)
 	}
 	// Set subcomments
-	for sc := range activity.Subcomments {
+	for _, sc := range activity.Subcomments {
 		pbSubcomment := &pb.Context_Subcomment{
 			Id:         sc.Id,
 			CommentCtx: &pb.Context_Comment{

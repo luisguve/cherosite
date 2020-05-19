@@ -107,7 +107,7 @@ func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData 
 		return hd
 	}
 	// set read notifs
-	for pbNotif := range uhd.ReadNotifs {
+	for _, pbNotif := range uhd.ReadNotifs {
 		notif := &Notif{
 			Permalink: pbNotif.Permalink,
 			Title:     pbNotif.Subject,
@@ -117,7 +117,7 @@ func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData 
 		hd.ReadNotifs = append(hd.ReadNotifs, notif)
 	}
 	// set unread notifs
-	for pbNotif := range uhd.UnreadNotifs {
+	for _, pbNotif := range uhd.UnreadNotifs {
 		notif := &Notif{
 			Permalink: pbNotif.Permalink,
 			Title:     pbNotif.Subject,
@@ -147,7 +147,7 @@ func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string)
 	[]OverviewRenderer {
 	var ovwRendererSet []OverviewRenderer
 
-	for pbRule := range pbRuleSet {
+	for _, pbRule := range pbRuleSet {
 		var ovwRenderer OverviewRenderer
 
 		bc := setBasicContent(pbRule, userId)
