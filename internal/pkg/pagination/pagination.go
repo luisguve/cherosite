@@ -29,6 +29,18 @@ type DiscardIds struct {
 	GeneralThreads map[string][]string
 }
 
+// FormatGeneralThreads converts the field GeneralThreads into a 
+// map[string]*pb.IdList to be used in a request to recycle general threads.
+func (d *DiscardIds) FormatGeneralThreads() map[string]*pb.IdList {
+	result := make(map[string]*pb.IdList)
+	for section, threadIds := range d.GeneralThreads {
+		result[section] = &pb.IdList{
+			Ids: threadIds,
+		}
+	}
+	return result
+}
+
 // FormatSavedThreads converts the field SavedThreads into a map[string]*pb.IdList
 // to be used in a request to recycle saved threads of a user.
 func (d *DiscardIds) FormatSavedThreads() map[string]*pb.IdList {
