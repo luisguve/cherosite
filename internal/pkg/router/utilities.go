@@ -89,14 +89,13 @@ func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
 // updateDiscardIdsSession replaces ids of contents already set in the session 
 // with the provided templates.ContentsFeed and saves the cookie.
 func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWriter, 
-	cf templates.ContentsFeed, 
-	setDiscardIds func(*pagination.DiscardIds, templates.ContentsFeed)) {
+	setDiscardIds func(*pagination.DiscardIds)) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	// Get id of contents to be discarded
 	discard := getDiscardIds(session)
 	// Replace content already seen by the user with the new feed
-	setDiscardIds(discard, cf)
+	setDiscardIds(discard)
 	session.Values["discard_ids"] = discard
 	if err = session.Save(req, w); err != nil {
 		log.Printf("Could not save session because... %v\n", err)

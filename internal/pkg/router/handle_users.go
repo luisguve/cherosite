@@ -341,9 +341,8 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	}
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, feed, 
-			func(d *pagination.DiscardIds, cf templates.ContentsFeed){
-				pActivity := cf.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds){
+				pActivity := feed.GetPaginationActivity()
 				id := userData.UserId
 				d.UserActivity[id].ThreadsCreated = pActivity[id].ThreadsCreated
 				d.UserActivity[id].Comments = pActivity[id].Comments
@@ -406,9 +405,9 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	}
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, feed, 
-			func(d *pagination.DiscardIds, cf templates.ContentsFeed){
-				pActivity := cf.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds){
+				pActivity := feed.GetPaginationActivity()
+				
 				tc := d.UserActivity[userId].ThreadsCreated
 				tc = append(tc, pActivity[userId].ThreadsCreated...)
 				d.UserActivity[userId].ThreadsCreated = tc

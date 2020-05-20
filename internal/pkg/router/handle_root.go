@@ -125,9 +125,9 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	// update session only if there is content.
 	switch {
 	case len(feed.Contents) > 0:
-		r.updateDiscardIdsSession(req, w, feed, 
-			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pActivity := cf.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pActivity := feed.GetPaginationActivity()
+
 			for userId, content := range pActivity {
 				d.FeedActivity[userId].ThreadsCreated = content.ThreadsCreated
 				d.FeedActivity[userId].Comments = content.Comments
@@ -135,19 +135,21 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 			}
 		})
 	case len(userActivity.Contents) > 0:
-		r.updateDiscardIdsSession(req, w, userActivity, 
-			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pActivity := cf.GetPaginationActivity()
-			id := dData.UserId
-			d.UserActivity[id].ThreadsCreated = pActivity[id].ThreadsCreated
-			d.UserActivity[id].Comments = pActivity[id].Comments
-			d.UserActivity[id].Subcomments = pActivity[id].Subcomments
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pActivity := userActivity.GetPaginationActivity()
+
+			// avoid conflict with profile view by adding a preffix dashboard-
+			id := "dashboard-" + dData.UserId
+			// assign to new variable for name shortness
+			dataId := dData.UserId
+			d.UserActivity[id].ThreadsCreated = pActivity[dataId].ThreadsCreated
+			d.UserActivity[id].Comments = pActivity[dataId].Comments
+			d.UserActivity[id].Subcomments = pActivity[dataId].Subcomments
 		})
 	case len(savedThreads.Contents) > 0:
-		r.updateDiscardIdsSession(req, w, savedThreads, 
-			func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			// TODO: remove argument of callback, cf
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
 			pThreads := savedThreads.GetPaginationThreads()
+
 			for section, threadIds := range pThreads {
 				d.SavedThreads[section] = threadIds
 			}
@@ -213,7 +215,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 				Ids: following.Ids,
 			},
 		},
-		DiscardIds: discard.FormatFeedActivity(following.Ids)
+		DiscardIds: discard.FormatFeedActivity(following.Ids),
 	}
 
 	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
@@ -234,9 +236,9 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	}
 	// Update session only if there is content.
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, feed, 
-		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pActivity := cf.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pActivity := feed.GetPaginationActivity()
+
 			for userId, content := range pActivity {
 				tc := d.FeedActivity[userId].ThreadsCreated
 				tc = append(tc, content.ThreadsCreated...)
@@ -279,7 +281,7 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 		Context: &pb.ActivityPattern_UserId{
 			UserId: userId,
 		},
-		DiscardIds: discard.FormatUserActivity(userId)
+		DiscardIds: discard.FormatUserActivity("dashboard-" + userId),
 	}
 
 	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
@@ -313,22 +315,24 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 	}
 	// Update session only if there is content.
 	if len(userActivity.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, userActivity, 
-		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pActivity := cf.GetPaginationActivity()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pActivity := userActivity.GetPaginationActivity()
 
-			tc := d.UserActivity[userId].ThreadsCreated
+			// avoid conflict with view profile by adding a preffix dashboard-
+			id := "dashboard-" + userId
+
+			tc := d.UserActivity[id].ThreadsCreated
 			tc = append(tc, pActivity[userId].ThreadsCreated...)
-			d.UserActivity[userId].ThreadsCreated = tc
+			d.UserActivity[id].ThreadsCreated = tc
 
-			c := d.UserActivity[userId].Comments
+			c := d.UserActivity[id].Comments
 			c = append(c, pActivity[userId].Comments...)
-			d.UserActivity[userId].Comments = c
+			d.UserActivity[id].Comments = c
 
-			sc := d.UserActivity[userId].Subcomments
+			sc := d.UserActivity[id].Subcomments
 			sc = append(sc, pActivity[userId].Subcomments...)
-			d.UserActivity[userId].Subcomments = sc
-	})
+			d.UserActivity[id].Subcomments = sc
+		})
 	}
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(userActivity.Contents); err != nil {
@@ -389,9 +393,8 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 	}
 	// Update session only if there is content.
 	if len(savedThreads.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, savedThreads, 
-		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pThreads := cf.GetPaginationThreads()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pThreads := savedThreads.GetPaginationThreads()
 			for section, threadIds := range pThreads {
 				d.SavedThreads[section] = append(d.SavedThreads[section], threadIds...)
 			}
@@ -437,9 +440,8 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 
 	// Update session only if there is feed
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, feed, 
-		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pThreads := cf.GetPaginationThreads()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pThreads := feed.GetPaginationThreads()
 			for section, threadIds := range pThreads {
 				d.GeneralThreads[section] = threadIds
 			}
@@ -481,15 +483,14 @@ func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) 
 	}
 	// update session only if there is new feed.
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, feed, 
-		func(d *pagination.DiscardIds, cf templates.ContentsFeed) {
-			pThreads := cf.GetPaginationThreads()
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pThreads := feed.GetPaginationThreads()
 			for section, threadIds := range pThreads {
 				d.GeneralThreads[section] = append(d.GeneralThreads[section], 
 					threadIds...)
 			}
 		})
-	}		
+	}
 	// encode and send new feed
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
 		log.Printf("Could not encode feed: %v\n", err)
