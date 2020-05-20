@@ -136,15 +136,13 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		})
 	case len(userActivity.Contents) > 0:
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
-			pActivity := userActivity.GetPaginationActivity()
+			pActivity := userActivity.GetUserPaginationActivity()
 
 			// avoid conflict with profile view by adding a preffix dashboard-
 			id := "dashboard-" + dData.UserId
-			// assign to new variable for name shortness
-			dataId := dData.UserId
-			d.UserActivity[id].ThreadsCreated = pActivity[dataId].ThreadsCreated
-			d.UserActivity[id].Comments = pActivity[dataId].Comments
-			d.UserActivity[id].Subcomments = pActivity[dataId].Subcomments
+			d.UserActivity[id].ThreadsCreated = pActivity.ThreadsCreated
+			d.UserActivity[id].Comments = pActivity.Comments
+			d.UserActivity[id].Subcomments = pActivity.Subcomments
 		})
 	case len(savedThreads.Contents) > 0:
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -316,21 +314,21 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 	// Update session only if there is content.
 	if len(userActivity.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
-			pActivity := userActivity.GetPaginationActivity()
+			pActivity := userActivity.GetUserPaginationActivity()
 
 			// avoid conflict with view profile by adding a preffix dashboard-
 			id := "dashboard-" + userId
 
 			tc := d.UserActivity[id].ThreadsCreated
-			tc = append(tc, pActivity[userId].ThreadsCreated...)
+			tc = append(tc, pActivity.ThreadsCreated...)
 			d.UserActivity[id].ThreadsCreated = tc
 
 			c := d.UserActivity[id].Comments
-			c = append(c, pActivity[userId].Comments...)
+			c = append(c, pActivity.Comments...)
 			d.UserActivity[id].Comments = c
 
 			sc := d.UserActivity[id].Subcomments
-			sc = append(sc, pActivity[userId].Subcomments...)
+			sc = append(sc, pActivity.Subcomments...)
 			d.UserActivity[id].Subcomments = sc
 		})
 	}

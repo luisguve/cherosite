@@ -18,8 +18,69 @@ type ContentsFeed struct {
 	Contents []*pb.ContentRule
 }
 
-// GetPaginationActivity formats a ContentsFeed object into a map of UserIds,
-// i.e. the authors of each content to pagination.Activity, i.e. their contents.
+// (boilerplate) formatComment converts a *pb.ContentRule_CommentCtx into a
+// pagination.Comment object.
+func formatComment(comment *pb.ContentRule_CommentCtx) p.Comment {
+	return p.Comment{
+		Id:     comment.Id,
+		Thread: p.Thread{
+			SectionName: comment.TheadCtx.SectionCtx.Name,
+			Id:          comment.TheadCtx.Id,
+		},
+	}
+}
+
+// (boilerplate) formatSubcomment converts a *pb.ContentRule_SubcommentCtx
+// into a pagination.Subcomment object.
+func formatSubcomment(sc *pb.ContentRule_SubcommentCtx) p.Subcomment {
+	return p.Subcomment{
+		Id:      sc.Id,
+		Comment: p.Comment{
+			Id:     sc.CommentCtx.Id,
+			Thread: p.Thread{
+				SectionName: sc.CommentCtx.ThreadCtx.SectionCtx.Name,
+				Id:          sc.CommentCtx.ThreadCtx.Id,
+			},
+		},
+	}
+}
+
+// (boilerplate) formatThread converts a *pb.ContentRule_ThreadCtx into a
+// pagination.Thread object.
+func formatThread(thread *pb.ContentRule_ThreadCtx) p.Thread {
+	return p.Thread{
+		Id:          thread.Id,
+		SectionName: thread.SectionCtx.Name,
+	}
+}
+
+// GetUserPaginationActivity formats a ContentsFeed object holding contents
+// from a single user to a pagination.Activity object.
+func (cf ContentsFeed) GetUserPaginationActivity() p.Activity {
+	var pActivity p.Activity
+
+	for _, activity := range cf.Contents {
+		switch ctx := activity.ContentContext.(type) {
+		case *pb.ContentRule_ThreadCtx:
+			// content type: THREAD
+			thread := formatThread(ctx)
+			pActivity.ThreadsCreated = append(pActivity.ThreadsCreated, thread)
+		case *pb.ContentRule_CommentCtx:
+			// content type: COMMENT
+			comment := formatComment(ctx)
+			pActivity.Comments = append(pActivity.Comments, comment)
+		case *pb.ContentRule_SubcommentCtx:
+			// content type: SUBCOMMENT
+			sc := formatSubcomment(ctx)
+			pActivity.Subcomments = append(pActivity.Subcomments, sc)
+		}
+	}
+	return pActivity
+}
+
+// GetPaginationActivity formats a ContentsFeed object holding contents from
+// different users into a map of UserIds, i.e. the authors of each content to
+// pagination.Activity, i.e. their contents.
 func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
 	pActivity := make(map[string]p.Activity)
 
@@ -29,40 +90,23 @@ func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
 		switch ctx := activity.ContentContext.(type) {
 		case *pb.ContentRule_ThreadCtx:
 			// content type: THREAD
-			thread := p.Thread{
-				Id:          ctx.Id,
-				SectionName: ctx.SectionCtx.Name,
-			}
+			thread := formatThread(ctx)
 			pActivity[userId].ThreadsCreated = append(pActivity[userId].ThreadsCreated, thread)
 		case *pb.ContentRule_CommentCtx:
 			// content type: COMMENT
-			comment := p.Comment{
-				Id:     ctx.Id,
-				Thread: p.Thread{
-					SectionName: ctx.TheadCtx.SectionCtx.Name,
-					Id:          ctx.TheadCtx.Id,
-				},
-			}
+			comment := formatComment(ctx)
 			pActivity[userId].Comments = append(pActivity[userId].Comments, comment)
 		case *pb.ContentRule_SubcommentCtx:
 			// content type: SUBCOMMENT
-			subcomment := p.Subcomment{
-				Id:      ctx.Id,
-				Comment: p.Comment{
-					Id:     ctx.CommentCtx.Id,
-					Thread: p.Thread{
-						SectionName: ctx.CommentCtx.ThreadCtx.SectionCtx.Name,
-						Id:          ctx.CommentCtx.ThreadCtx.Id,
-					},
-				},
-			}
-			pActivity[userId].Subcomments = append(pActivity[userId].Subcomments, subcomment)
+			sc := formatSubcomment(ctx)
+			pActivity[userId].Subcomments = append(pActivity[userId].Subcomments, sc)
 		}
 	}
 	return pActivity
 }
 
-// GetPaginationThreads returns a map of section names to thread ids
+// GetPaginationThreads formats a ContentsFeed object holding threads from
+// different sections into a map of section names to thread ids.
 func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 	result := make(map[string][]string)
 
@@ -75,7 +119,8 @@ func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 	return result
 }
 
-// GetPaginationComments returns a map of thread ids to comment ids
+// GetPaginationComments formats a ContentsFeed object holding comments from
+// different threads into a map of thread ids to comment ids.
 func (cf ContentsFeed) GetPaginationComments() map[string][]string {
 	result := make(map[string][]string)
 
