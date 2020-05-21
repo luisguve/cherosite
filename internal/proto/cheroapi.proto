@@ -149,8 +149,6 @@ message ContentPattern {
 		Context.Section section_ctx = 3;
 		// get content (comments) from a thread
 		Context.Thread thread_ctx = 4;
-		// get content saved by the given user
-		string user_id = 5;
 	}
 }
 
