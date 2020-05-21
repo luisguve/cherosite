@@ -120,18 +120,17 @@ func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 }
 
 // GetPaginationComments formats a ContentsFeed object holding comments from
-// different threads into a map of thread ids to comment ids.
-func (cf ContentsFeed) GetPaginationComments() map[string][]string {
-	result := make(map[string][]string)
+// a single thread into a slice of comment ids.
+func (cf ContentsFeed) GetPaginationComments() []string {
+	var commentIds []string
 
 	for _, content := range cf.Contents {
 		ctx, ok := content.ContentContext.(*pb.ContentRule_CommentCtx)
 		if !ok {
 			continue
 		}
-		threadId := ctx.ThreadCtx.Id
 		commentId := ctx.Id
-		result[threadId] = append(result[threadId], commentId)
+		commentIds = append(commentIds, commentId)
 	}
-	return result
+	return commentIds
 }
