@@ -108,15 +108,15 @@ func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
 // GetPaginationThreads formats a ContentsFeed object holding threads from
 // different sections into a map of section names to thread ids.
 func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
-	result := make(map[string][]string)
+	ids := make(map[string][]string)
 
 	for _, content := range cf.Contents {
 		metadata := content.Data.Metadata
 		section := metadata.Section
 		id := metadata.Id
-		result[section] = append(result[section], id)
+		ids[section] = append(ids[section], id)
 	}
-	return result
+	return ids
 }
 
 // GetPaginationComments formats a ContentsFeed object holding comments from
