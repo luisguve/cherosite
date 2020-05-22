@@ -28,17 +28,22 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	section := vars["section"]
 	thread := vars["thread"]
 
+	request := &pb.GetThreadRequest{ 
+		Thread: &pb.Context_Thread{
+			Id:         thread,
+			SectionCtx: &pb.Context_Section{
+				Name: section,
+			},
+		},
+	}
 	// Load thread
-	content, err := r.crudClient.GetThread(context.Background(),
-		&pb.GetThreadRequest{ 
-			Thread: &pb.FullUserData_ThreadInfo{Id: thread, Section: section},
-		})
+	content, err := r.crudClient.GetThread(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// Section name or thread id are probably wrong. 
-				// Send 404 NOT_FOUND and return.
+				// Log for debugging.
 				log.Printf("Could not find thread (id: %s) on section %s\n",
 			 	thread, section)
 				http.NotFound(w, r)
@@ -55,58 +60,58 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 			 	return
 			}
 		}
-		log.Printf("Error while getting thread: %v\n", err)
+		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
 	}
-	// Request to load comments
-	contentPattern := &pb.ContentPattern{
-		Pattern:        templates.FeedPattern,
-		// Do not discard any comment
-		DiscardIds:     []string{},
-		ContentContext: &pb.Context_Thread{
-			ThreadId:   thread,
-			SectionCtx: &pb.Context_Section{
-				SectionName: section
-			},
-		},
-	}
-	feed := templates.FeedContent{}
+	var feed templates.ContentsFeed
 	// Load comments only if there are comments on this thread
-	if content.Thread.ExtraData.ThreadRelated.Replies > 0 {
-		feed, err = r.recycleContent(contentPattern)
+	if content.Metadata.Replies > 0 {
+		// Request to load comments
+		contentPattern := &pb.ContentPattern{
+			Pattern:        templates.FeedPattern,
+			ContentContext: &pb.Context_Thread{
+				Id:         thread,
+				SectionCtx: &pb.Context_Section{
+					Name: section,
+				},
+			},
+			// ignore DiscardIds; do not discard any comment
+		}
+		stream, err = r.crudClient.RecycleContent(context.Background(), 
+		contentPattern)
 		if err != nil {
-			log.Printf("An error occurred while getting comments: %v\n", err)
+			log.Printf("Could not send request: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
-		}
-	}
-	if len(feed.ContentIds) > 0 {
-		// Update session
-		updateDiscardIdsSession(req, w, feed.ContentIds, 
-			func(discard *pagination.DiscardIds, ids []string) {
-				discard.ThreadComments[thread] = feed.ContentIds
-			})
-	}
-	data := &templates.ThreadView{Content: content, Feed: feed}
-	userId := currentUser(req)
-	if userId != "" {
-		// User has logged in. Get user info.
-		userData, err := r.crudClient.GetFullUserData(context.Background(), 
-		&pb.GetFullUserDataRequest{UserId: userId})
-		if err != nil {
-			log.Println("Could not get user data")
-			if resErr, ok := status.FromError(err); ok {
-				if resErr.Code() == codes.Unauthenticated {
-					log.Printf("User %s is unregistered\n", userId)
-				}
-			}
 		} else {
-			data.Username = userData.BasicUserData.Username
+			feed, err = getFeed(stream)
+			if err != nil {
+				log.Printf("An error occurred while getting feed: %v\n", err)
+				w.WriteHeader(http.StatusPartialContent)
+			}
 		}
+	}
+	// Update session only if there are comments.
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pComments := feed.GetPaginationComments()
+
+			d.ThreadComments[thread] = pComments
+		})
 	}
 
-	if err := r.templates.ExecuteTemplate(w, "thread.html", data); err != nil {
-		log.Printf("Could not execute template thread.html because... %v\n", err)
+	// get current user data for header section
+	userId := currentUser(req)
+	var userHeader *pb.UserHeaderData
+	if userId != "" {
+		// A user is logged in. Get its data.
+		userHeader = r.getUserHeaderData(w, userId)
+	}
+
+	threadView := templates.DataToThreadView(content, feed, userHeader, userId)
+
+	if err := r.templates.ExecuteTemplate(w, "thread.html", threadView); err != nil {
+		log.Printf("Could not execute template thread.html: %v\n", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}
 }

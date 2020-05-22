@@ -101,6 +101,28 @@ currentUserId string) *ExploreView {
 	}
 }
 
+func DataToThreadView(content *pb.ContentRule, feed []*pb.ContentRule, 
+uhd *pb.UserHeaderData, currentUserId string) *ThreadView{
+	metadata := content.Metadata
+	section := strings.ToLower(strings.Replace(metadata.Section, " ", "", -1))
+	recycleSet := []RecycleType{
+		RecycleType{
+			Label: "Recycle comments",
+			Link:  fmt.Sprintf("/%s/%s/recycle", section, metadata.Id),
+		},
+	}
+	// set user header data
+	hd := setHeaderData(uhd, recycleSet)
+	threadContent := contentToOverviewRendererSet(content, currentUserId)
+	threadComments := contentsToOverviewRendererSet(feed, currentUserId)
+
+	return &ThreadView{
+		HeaderData: hd,
+		Content:    threadContent,
+		Comments:   threadComments,
+	}
+}
+
 func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData {
 	hd := HeaderData{RecycleTypes: recycleSet}
 	if uhd == nil {
@@ -141,6 +163,55 @@ func setProfileData(userData *pb.BasicUserData) ProfileData {
 	}
 }
 
+func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string) 
+	OverviewRenderer {
+
+	var ovwRenderer OverviewRenderer
+
+	bc := setBasicContent(pbRule, userId)
+	metadata := pbRule.Data.Metadata
+
+	threadId := metadata.Id
+	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
+	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
+
+	switch ctx := pbRule.ContentContext.(type) {
+	// it's a THREAD
+	case *pb.ActivityRule_ThreadCtx:
+		saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
+		replyLink := fmt.Sprintf("%s/comment", threadLink)
+		var saved bool
+		if userId == "" {
+			saved = false
+		} else {
+			saved = strings.Contains(strings.Join(metadata.UsersWhoSaved, "|"), userId)
+		}
+
+		ovwRenderer = &Thread{
+			BasicContent: bc,
+			Replies:      metadata.Replies,
+			SaveLink:     saveLink,
+			Saved:        saved,
+			ReplyLink:    replyLink,
+		}
+	// it's a COMMENT
+	case *pb.ActivityRule_CommentCtx:
+		ovwRenderer = &CommentView{
+			BasicContent: bc,
+			Id:           ctx.Id,
+			Replies:      metadata.Replies,
+		}
+	// it's a SUBCOMMENT
+	case *pb.ActivityRule_SubcommentCtx:
+		ovwRenderer = &SubcommentView{
+			BasicContent: bc,
+			CommentId:    ctx.CommentCtx.Id,
+			Id:           ctx.Id,
+		}
+	}
+	return ovwRenderer
+}
+
 // contentsToOverviewRendererSet converts a slice of *pb.ContentRule into a slice of
 // OverviewRenderer. userId is used to check whether the user has saved the content
 func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string) 
@@ -148,51 +219,8 @@ func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string)
 	var ovwRendererSet []OverviewRenderer
 
 	for _, pbRule := range pbRuleSet {
-		var ovwRenderer OverviewRenderer
-
-		bc := setBasicContent(pbRule, userId)
-		metadata := pbRule.Data.Metadata
-
-		threadId := metadata.Id
-		sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
-		threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
-
-		switch ctx := pbRule.ContentContext.(type) {
-		// it's a THREAD
-		case *pb.ActivityRule_ThreadCtx:
-			saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
-			replyLink := fmt.Sprintf("%s/comment", threadLink)
-			var saved bool
-			if userId == "" {
-				saved = false
-			} else {
-				saved = strings.Contains(strings.Join(metadata.UsersWhoSaved, "|"), userId)
-			}
-
-			ovwRenderer = &Thread{
-				BasicContent: bc,
-				Replies:      metadata.Replies,
-				SaveLink:     saveLink,
-				Saved:        saved,
-				ReplyLink:    replyLink,
-			}
-		// it's a COMMENT
-		case *pb.ActivityRule_CommentCtx:
-			ovwRenderer = &CommentView{
-				BasicContent: bc,
-				Id:           ctx.Id,
-				Replies:      metadata.Replies,
-			}
-		// it's a SUBCOMMENT
-		case *pb.ActivityRule_SubcommentCtx:
-			ovwRenderer = &SubcommentView{
-				BasicContent: bc,
-				CommentId:    ctx.CommentCtx.Id,
-				Id:           ctx.Id,
-			}
-		}
-
-		ovwRendererSet = append(ovwRendererSet, ovwRenderer)
+		ovwRenderer := contentToOverviewRendererSet(pbRule, userId)
+		ovwRendererset = append(ovwRendererset, ovwRenderer)
 	}
 	return ovwRendererSet
 }
