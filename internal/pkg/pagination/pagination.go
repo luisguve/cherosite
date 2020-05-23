@@ -29,6 +29,14 @@ type DiscardIds struct {
 	GeneralThreads map[string][]string
 }
 
+// FormatSectionThreads is an utility function to get and return the thread
+// ids on a given section name (SectionThreads). Alternatively, you can access
+// SectionThreads on a DiscardIds instance and get the threads by using
+// the section name as the key.
+func(d *DiscardIds) FormatSectionThreads(sectionName string) []string {
+	return d.SectionThreads[sectionName]
+}
+
 // FormatThreadComments is an utility function to get and return the comment
 // ids on a given thread id (ThreadComments). Alternatively, you can access
 // ThreadComments on a DiscardIds instance and get the comments by using
