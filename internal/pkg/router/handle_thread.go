@@ -121,7 +121,6 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 // It may return an error in the following cases:
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - no more comments are available ----> OUT_OF_RANGE
-// - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network or encoding failures ------> INTERNAL_FAILURE
 func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
@@ -187,6 +186,55 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 		log.Printf("Could not encode feed: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
+}
+
+// Save thread "/{section}/{thread}/save" handler. It adds the thread id
+// to the list of saved threads of the given user, whose id is provided.
+// It returns OK on success or an error in case of the following:
+// - invalid section name or thread id -> 404 NOT_FOUND
+// - section or thread are unavailable -> SECTION_UNAVAILABLE
+// - network failures ------------------> INTERNAL_FAILURE
+func (r *Router) handleSave(userId string, w http.ResponseWriter,
+	req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+
+	request := &pb.SaveThreadRequest{
+		UserId: userId,
+		Thread: &pb.Context_Thread{
+			Id: thread,
+			SectionCtx: &pb.Context_Section{
+				Name: section,
+			},
+		},
+	}
+	_, err := r.crudClient.SaveThread(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// log for debugging
+				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
+				http.NotFound(w, r)
+				return
+			case codes.Unavailable:
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			log.Printf("Could not send request: %v\n", err)
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+	return
 }
 
 // Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of 
