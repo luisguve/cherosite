@@ -170,7 +170,8 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 // - user has already posted today -----------> USER_UNABLE_TO_POST
 // - user unathenticated ---------------------> USER_UNREGISTERED
 // - network failures ------------------------> INTERNAL_FAILURE
-func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http.Request) {
+func (r *Router) handleNewThread(userId string, w http.ResponseWriter, 
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	// Get ft_file and save it to the disk with a unique, random name.
@@ -190,29 +191,29 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 		http.Error(w, "NO_TITLE", http.StatusBadRequest)
 		return
 	}
-	createRequest := &pb.CreateContentRequest{
-		Data:       &pb.BasicContentData{
-			PublishDate: time.Now().Unix(),
+	createRequest := &pb.CreateThreadRequest{
+		UserId:     userId,
+		Content:    &pb.Content{
 			Title:       title,
 			Content:     content,
 			FtFile:      filePath,
-			AuthorId:    userId,
+			PublishDate: time.Now().Unix(),
 		},
 		SectionCtx: &pb.Context_Section{
-			SectionName: section,
+			Name: section,
 		},
 	}
 	res, err := r.crudClient.CreateThread(context.Background(), createRequest)
 	if err != nil {
 		resErr, ok := status.FromError(err)
 		if ok {
-			// actual error from gRPC (user error)
 			switch resErr.Code() {
 			case codes.NotFound:
-				// section not found.
-				http.NotFound(w, r)
+				// the section name is probably wrong; log message.
+				log.Printf("Section %s not found\n", section)
+				http.NotFound(w, req)
 				return
-			// Check whether the user can create thread at this time.
+			// A user can create a limited number of threads daily.
 			case codes.FailedPrecondition:
 				log.Println("This user has already posted a thread today")
 				http.Error(w, "USER_UNABLE_TO_POST", http.StatusPreconditionFailed)
@@ -226,11 +227,10 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
-		} else {
-			log.Printf("Could not create thread: %v\n", err)
-			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-			return
 		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(res.Permalink))
