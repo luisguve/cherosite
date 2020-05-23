@@ -123,6 +123,33 @@ uhd *pb.UserHeaderData, currentUserId string) *ThreadView{
 	}
 }
 
+func DataToSectionView(feed []*pb.ContentRule, uhd *pb.UserHeaderData,
+currentUserId string) *SectionView {
+	var section string
+	// just making sure the program doesn't crash in case of a nil feed
+	if len(feed) > 0 {
+		// get section name from 1st thread in feed
+		section = feed[0].Metadata.Section
+	}
+	sectionId := strings.Replace(strings.ToLower(section), " ", "", -1)
+
+	recycleSet := []RecycleType{
+		RecycleType{
+			Label: "Recycle threads",
+			Link:  fmt.Sprintf("/%s/recycle", sectionId),
+		},
+	}
+	// set user header data
+	hd := setHeaderData(uhd, recycleSet)
+	sectionThreads := contentsToOverviewRendererSet(feed, currentUserId)
+
+	return &SectionView{
+		HeaderData:  hd,
+		Feed:        sectionThreads,
+		SectionName: section,
+	}
+}
+
 func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData {
 	hd := HeaderData{RecycleTypes: recycleSet}
 	if uhd == nil {
