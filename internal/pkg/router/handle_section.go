@@ -22,7 +22,7 @@ import(
 // views. It may return an error in case of the following:
 // - wrong section name ------------------> 404 NOT FOUND
 // - valid section name, but unavailable -> SECTION_UNAVAILABLE
-// - network failures ----------------------> INTERNAL_FAILURE
+// - network failures --------------------> INTERNAL_FAILURE
 func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -86,6 +86,73 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	if err := r.templates.ExecuteTemplate(w, "section.html", sectionView); err != nil {
 		log.Printf("Could not execute template section.html: %v\n", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
+	}
+}
+
+// Recycle section "/{section}/recycle" handler. It returns a new feed for the
+// section in JSON format. It may return an error in case of the following:
+// - wrong section name ------------------> 404 NOT FOUND
+// - valid section name, but unavailable -> SECTION_UNAVAILABLE
+// - network or encoding failure ---------> INTERNAL_FAILURE
+func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+
+	// Get always returns a session, even if empty
+	session, _ := r.store.Get(req, "session")
+	// Get id of contents to be discarded
+	discardIds := getDiscardIds(session)
+
+	contentPattern := &pb.ContentPattern{
+		DiscardIds:     discardIds.FormatSectionThreads(section),
+		Pattern:        templates.FeedPattern,
+		ContentContext: &pb.Context_Section{
+			SectionName: section,
+		},
+	}
+
+	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// The section name is probably wrong.
+				// log for debugging.
+				log.Printf("Section %s not found\n", section)
+				http.NotFound(w, req)
+				return
+			case codes.Unavailable:
+				log.Printf("Section %s temporarily unavailable\n", section)
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				return
+			default:
+				log.Printf("Unknown code: %v - %s\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	feed, err := getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
+	// update session only if there is content.
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pThreads := feed.GetSectionPaginationThreads()
+
+			d.SectionThreads[section] = append(d.SectionThreads[section], pThreads...)
+		})
+	}
+	// Encode and send response
+	if err = json.NewEncoder(w).Encode(feed); err != nil {
+		log.Printf("Could not encode feed: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
 }
 
@@ -167,44 +234,4 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter, req *http
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(res.Permalink))
-}
-
-// Recycle section "/{section}/recycle" handler. It returns a new feed for the section 
-// in JSON format. It may return an error in case of the following:
-// - there are no more threads in this section -> NO_NEW_FEED
-// - server error encoding feed ----------------> COULD_NOT_ENCODE_FEED
-func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	section := vars["section"]
-
-	// Get always returns a session, even if empty
-	session, _ := r.store.Get(req, "session")
-	// Get id of contents to be discarded
-	discard := getDiscardIds(session)
-	contentPattern := &pb.ContentPattern{
-		Pattern:        templates.FeedPattern,
-		DiscardIds:     discard.SectionThreads[section],
-		ContentContext: &pb.Context_Section{
-			SectionName: section,
-		},
-	}
-	feed, err := r.recycleContent(contentPattern)
-	if err != nil {
-		log.Printf("An error occurred while getting feed: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	// Couldn't it find new feed?
-	if len(feed.ContentIds) == 0 {
-		w.Write([]byte("NO_NEW_FEED"))
-		return
-	}
-	// Update session
-	r.updateDiscardIdsSession(req, w, feed.ContentIds, func(discard *pagination.DiscardIds, ids []string){
-		discard.SectionThreads[section] = append(discard.SectionThreads[section], ids...)
-	})
-	// Encode and send response
-	if err = json.NewEncoder(w).Encode(feed); err != nil {
-		log.Printf("Could not encode feed: %v\n", err)
-		http.Error(w, "COULD_NOT_ENCODE_FEED", http.StatusInternalServerError)
-	}
 }
