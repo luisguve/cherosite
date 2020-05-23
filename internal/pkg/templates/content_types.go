@@ -45,7 +45,8 @@ type BasicContent struct {
 	SectionLink string // Section URL
 }
 
-// type for displaying content of a thread in section level page
+// type for displaying content of a thread in section page level and single
+// page level.
 type Thread struct {
 	*BasicContent
 	Replies   uint32
@@ -54,8 +55,8 @@ type Thread struct {
 	ReplyLink string // URL to post reply
 }
 
-func (t *Thread) RenderContent(idx int) template.HTML {
-	t.BasicContent.ClassName = fmt.Sprintf("%s-%d", t.BasicContent.Status, idx)
+func (t *Thread) RenderContent() template.HTML {
+	t.BasicContent.ClassName = fmt.Sprintf("%s", t.BasicContent.Status)
 	t.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/", t.BasicContent.ThreadLink)
 	tplName := "thread_content.html"
 	result := new(strings.Builder)
