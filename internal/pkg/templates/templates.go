@@ -105,6 +105,18 @@ func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
 	return pActivity
 }
 
+// GetSectionPaginationThreads formats a ContentsFeed object holding threads
+// from a single section into a slice of thread ids.
+func (cf ContentsFeed) GetSectionPaginationThreads() []string {
+	var threadIds []string
+	
+	for _, content := range cf.Contents {
+		metadata := content.Data.Metadata
+		threadIds = append(threadIds, metadata.Id)
+	}
+	return threadIds
+}
+
 // GetPaginationThreads formats a ContentsFeed object holding threads from
 // different sections into a map of section names to thread ids.
 func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
