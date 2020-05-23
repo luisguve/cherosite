@@ -37,13 +37,13 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	section := vard["section"]
 
 	subcommentsReq := &pb.GetSubcommentsRequest{
-		Offset: uint32(offset),
+		Offset:     uint32(offset),
 		CommentCtx: &pb.Context_Comment{
-			CommentId: commentId, 
+			Id:        commentId, 
 			ThreadCtx: &pb.Context_Thread{
-				ThreadId: thread,
+				Id:         thread,
 				SectionCtx: &pb.Context_Section{
-					SectionName: section,
+					Name: section,
 				},
 			},
 		},
@@ -51,47 +51,33 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	// Send request
 	stream, err := r.crudClient.GetComments(context.Background(), subcommentsReq)
 	if err != nil {
-		log.Printf("Failed to communicate to server: %v\n", err)
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				log.Printf("Could not find content: %v", resErr.Message())
+				http.NotFound(w, req)
+				return
+			case codes.OutOfRange:
+				log.Printf("Offset is out of range: %v\n", resErr.Message())
+				http.Error(w, "OFFSET_OOR", http.StatusBadRequest)
+				return
+			default:
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
+				resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
 	}
-
-	var feed templates.FeedSubcomments
-
-	// Continuously receive responses
-	for {
-		subcomment, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			// check for server failures or bad request
-			if resErr, ok := status.FromError(err); ok {
-				switch resErr.Code() {
-				case codes.NotFound:
-					log.Printf("Could not find resource: %v", resErr.Message())
-					http.NotFound(w, r)
-					return
-				case codes.OutOfRange:
-					log.Printf("Offset is out of range: %v\n", resErr.Message())
-					http.Error(w, "OFFSET_OOR", http.StatusBadRequest)
-					return
-				case codes.Internal:
-					log.Printf("Internal server failure: %v", resErr.Message())
-				default:
-					log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-					resErr.Message())
-				}
-			} else {
-				errMsg := fmt.Sprintf("Error receiving response from stream: %v\n", err)
-				log.Printf("%v", errMsg)
-				feed.ErrorMsg = errMsg
-			}
-			w.WriteHeader(http.StatusInternalServerError)
-			break
-		}
-		feed.Subcomments = append(feed.Subcomments, subcomment)
+	feed, err := getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
 	}
+
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
 		log.Printf("Could not encode feed: %v\n", err)
