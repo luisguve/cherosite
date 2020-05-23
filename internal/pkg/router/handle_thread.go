@@ -211,5 +211,5 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 		},
 	}
 
-	r.handleUpvote(w, r, request)
+	r.handleUpvote(w, req, request)
 }
