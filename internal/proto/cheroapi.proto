@@ -510,7 +510,7 @@ service CrudCheropatilla {
 	// Get a single thread
 	rpc GetThread(GetThreadRequest) returns (GetThreadResponse) {}
 	// Get a comment's comments
-	rpc GetSubcomments(GetSubcommentsRequest) returns (stream Subcomment) {}
+	rpc GetSubcomments(GetSubcommentsRequest) returns (stream ContentRule) {}
 
 	// Mark unread notifications as read
 	rpc MarkAllAsRead(ReadNotifsRequest) returns (ReadNotifsResponse) {}
