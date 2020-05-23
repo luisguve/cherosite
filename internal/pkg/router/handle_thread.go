@@ -117,25 +117,24 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 }
 
 // Recycle thread comments "/{section}/{thread}/recycle" handler.
-// It returns a new feed for the thread in JSON format. It may return an error
-// in the case of the following:
+// It returns a new feed of comments for the thread in JSON format.
+// It may return an error in the following cases:
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - no more comments are available ----> OUT_OF_RANGE
 // - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network or encoding failures ------> INTERNAL_FAILURE
-func (r *Router) handleRecycleComments (w http.ResponseWriter, req *http.Request){
+func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
-	// Get id of contents to be discarded
-	discard := getDiscardIds(session)
+	discardIds := getDiscardIds(session)
+
 	contentPattern := &pb.ContentPattern{
+		DiscardIds:     discardIds.FormatThreadComments(thread),
 		Pattern:        templates.FeedPattern,
-		// Discard previous comments
-		DiscardIds:     discard.ThreadComments[thread],
 		ContentContext: &pb.Context_Thread{
 			ThreadId:   thread,
 			SectionCtx: &pb.Context_Section{
@@ -143,11 +142,14 @@ func (r *Router) handleRecycleComments (w http.ResponseWriter, req *http.Request
 			},
 		},
 	}
-	feed, err := r.recycleContent(contentPattern)
+	var feed templates.ContentsFeed
+
+	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
+				// log for debugging
 				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
 				http.NotFound(w, r)
 				return
@@ -155,34 +157,31 @@ func (r *Router) handleRecycleComments (w http.ResponseWriter, req *http.Request
 				log.Println("OOR: no more comments on this thread are available")
 				http.Error(w, "OUT_OF_RANGE", http.StatusNoContent)
 				return
-			case codes.Internal:
-				log.Printf("Internal error: %s\n", resErr.Message())
-				// only return an error if there were no comments found.
-				if len(feed.ContentIds) == 0 {
-					http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
-					return
-				}
-				// if it could fetch some comments, return these.
-				log.Println("Could not get all the comments requested.")
-				w.WriteHeader(http.StatusPartialContent)
 			default:
 				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
 		} else {
-			log.Printf("Could not recycle comments: %v\n", err)
-			if len(feed.ContentIds) == 0 {
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
-			}
+			log.Printf("Could not send request: %v\n", err)
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		feed, err := getFeed(stream)
+		if err != nil {
+			log.Printf("An error occurred while getting feed: %v\n", err)
+			w.WriteHeader(http.StatusPartialContent)
 		}
 	}
-	// Update session
-	r.updateDiscardIdsSession(req, w, feed.ContentIds, 
-		func(discard *pagination.DiscardIds, ids []string){
-		discard.ThreadComments[thread] = append(discard.ThreadComments[thread], ids...)
-	})
+	// update session only if there is content.
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pComments := feed.GetPaginationComments()
+
+			d.ThreadComments[thread] = append(d.ThreadComments[thread], pComments...)
+		})
+	}
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
 		log.Printf("Could not encode feed: %v\n", err)
