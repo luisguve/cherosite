@@ -29,25 +29,24 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 
 	contentPattern := &pb.ContentPattern{
 		Pattern:        templates.FeedPattern,
-		// Do not discard any thread
-		DiscardIds:     []string{},
 		ContentContext: &pb.Context_Section{
-			SectionName: section,
+			Name: section,
 		},
+		// ignore DiscardIds, do not discard any thread
 	}
 
-	feed := templates.FeedContent{}
-	feed, err := r.recycleContent(contentPattern)
+	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code(){
 			case codes.NotFound:
-				// The section name is probably wrong. Send 404 not found and return.
-				log.Printf("Could not get any thread on section %s\n", section)
-				http.NotFound(w, r)
+				// The section name is probably wrong.
+				// log for debugging.
+				log.Printf("Section %s not found\n", section)
+				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
-				log.Printf("The section %s is temporarily unavailable\n", section)
+				log.Printf("Section %s temporarily unavailable\n", section)
 				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
 				return
 			default:
@@ -56,35 +55,36 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 		}
-		log.Printf("An error occurred while getting feed: %v\n", err)
-		if len(feed.ContentIds) == 0 {
-			log.Printf("Could not get any thread on section %s: %v\n", section, err)
-			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusPartialContent)
-		log.Printf("Could not get some threads on section %s\n", section)
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	}
 
-	data := &templates.SectionView{Feed: feed}
+	feed, err := getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
+	var userHeader *pb.UserHeaderData
 	userId := currentUser(req)
 	if userId != "" {
 		// A user is logged in. Get its data.
-		userData, err := r.crudClient.GetFullUserData(context.Background(), 
-		&pb.GetFullUserDataRequest{UserId: userId})
-		if err != nil {
-			log.Printf("Could not get full user data because... %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
-		data.Username = userData.BasicUserData.Username
+		userHeader = r.getUserHeaderData(w, userId)
 	}
-	// Update session
-	updateDiscardIdsSession(req, w, feed.ContentIds, func(discard *pagination.DiscardIds, ids []string) {
-		discard.SectionThreads[section] = feed.ContentIds
-	})
 
-	if err := r.templates.ExecuteTemplate(w, "section.html", data); err != nil {
-		log.Printf("Could not execute template section.html because... %v\n", err)
+	sectionView := templates.DataToSectionView(feed, userHeader, userId)
+	// update session only if there is content.
+	if len(feed.Contents) > 0 {
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pThreads := feed.GetSectionPaginationThreads()
+
+			d.SectionThreads[section] = pThreads
+		})
+	}
+
+	if err := r.templates.ExecuteTemplate(w, "section.html", sectionView); err != nil {
+		log.Printf("Could not execute template section.html: %v\n", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}
 }
