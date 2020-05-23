@@ -287,11 +287,12 @@ message DeleteContentRequest {
 
 message DeleteContentResponse {}
 
-// CreateThreadRequest holds the content itself and the section at which the content
-// is being created.
+// CreateThreadRequest holds the content of the thread, the section at which the content
+// is being created and the id of the author.
 message CreateThreadRequest {
-	Content data = 1;
+	Content content = 1;
 	Context.Section section_ctx = 2;
+	string user_id = 3;
 }
 
 // CreateThreadResponse holds the relative URL of the thread just created
