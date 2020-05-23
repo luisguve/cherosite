@@ -113,7 +113,7 @@ uhd *pb.UserHeaderData, currentUserId string) *ThreadView{
 	}
 	// set user header data
 	hd := setHeaderData(uhd, recycleSet)
-	threadContent := contentToOverviewRendererSet(content, currentUserId)
+	threadContent := contentToContentRenderer(content, currentUserId)
 	threadComments := contentsToOverviewRendererSet(feed, currentUserId)
 
 	return &ThreadView{
@@ -187,6 +187,35 @@ func setProfileData(userData *pb.BasicUserData) ProfileData {
 		Followers:    len(userData.FollowersIds),
 		Following:    len(userData.FollowingIds),
 		Description:  userData.About,
+	}
+}
+
+func contentToContentRenderer(pbRule *pb.ContentRule, userId string) 
+	ContentRenderer {
+	bc := setBasicContent(pbRule, userId)
+
+	metadata := pbRule.Data.Metadata
+
+	threadId := metadata.Id
+	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
+
+	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
+	saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
+	replyLink := fmt.Sprintf("%s/comment", threadLink)
+	
+	var saved bool
+	if userId == "" {
+		saved = false
+	} else {
+		saved = strings.Contains(strings.Join(metadata.UsersWhoSaved, "|"), userId)
+	}
+
+	return &Thread{
+		BasicContent: bc,
+		Replies:      metadata.Replies,
+		SaveLink:     saveLink,
+		Saved:        saved,
+		ReplyLink:    replyLink,
 	}
 }
 
