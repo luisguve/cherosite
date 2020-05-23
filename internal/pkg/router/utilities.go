@@ -290,19 +290,19 @@ func (r *Router) currentUser(req *http.Request) string {
 // onlyUsers middleware displays the login page if the user has not logged in yet,
 // otherwise it executes the next handler passing it the current user id, the
 // ResponseWriter and the Request.
-func (r *Router) onlyUsers(next func(userId string, w http.ResponseWriter, r *http.Request)) 
+func (r *Router) onlyUsers(next func(string, http.ResponseWriter, *http.Request))
 http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userId := currentUser(r)
+	return func(w http.ResponseWriter, req *http.Request) {
+		userId := r.currentUser(req)
 		if userId == "" {
 			// user has not logged in.
 			if err := r.templates.ExecuteTemplate(w, "login.html", nil); err != nil {
-				log.Printf("Error: %v\n", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Printf("Could not execute template login.html: %v\n", err)
+				http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 			}
 			return
 		}
-		next(userId, w, r)
+		next(userId, w, req)
 	}
 }
 
