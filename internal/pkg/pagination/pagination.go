@@ -29,6 +29,14 @@ type DiscardIds struct {
 	GeneralThreads map[string][]string
 }
 
+// FormatThreadComments is an utility function to get and return the comment
+// ids on a given thread id (ThreadComments). Alternatively, you can access
+// ThreadComments on a DiscardIds instance and get the comments by using
+// the threadId as the key.
+func (d *DiscardIds) FormatThreadComments(threadId string) []string {
+	return d.ThreadComments[threadId]
+}
+
 // FormatGeneralThreads converts the field GeneralThreads into a 
 // map[string]*pb.IdList to be used in a request to recycle general threads.
 func (d *DiscardIds) FormatGeneralThreads() map[string]*pb.IdList {
