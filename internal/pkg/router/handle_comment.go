@@ -85,7 +85,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
-// Post Comment "/{section}/{thread}/comment/" handler. It handles the creation
+// Post Comment "/{section}/{thread}/comment/" handler. It handles the posting
 // of a comment in a given thread in a given section through POSTing a form.
 // As opposed to creating a thread, when posting a comment it is optional to submit
 // a ft_file, and a title isn't submitted. Also note that a user is allowed to create
@@ -97,7 +97,6 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 // - file type other than image and gif -> INVALID_FILE_TYPE
 // - file creation/write failure --------> CANT_WRITE_FILE
 // - missing content (empty input) ------> NO_CONTENT
-// - user unathenticated ----------------> USER_UNREGISTERED
 // - network failures -------------------> INTERNAL_FAILURE
 func (r *Router) handlePostComment(userId string, w http.ResponseWriter, 
 	req *http.Request) {
@@ -121,43 +120,18 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		return
 	}
 	postCommentRequest := &pb.CommentRequest{
-		Data:       &pb.BasicContentData{
-			PublishDate: time.Now().Unix(),
-			Content:     content,
-			FtFile:      filePath,
-			AuthorId:    userId,
-		},
+		Content:     content,
+		FtFile:      filePath,
+		UserId:      userId,
+		PublishDate: time.Now().Unix(),
 		ContentContext: &pb.Context_Thread{
-			ThreadId: thread,
+			Id:         thread,
 			SectionCtx: &pb.Context_Section{
-				SectionName: section,
+				Name: section,
 			},
 		},
 	}
-	err = r.postComment(postCommentRequest)
-	if err != nil {
-		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code() {
-			case codes.NotFound:
-				// section or thread not found
-				http.NotFound(w, r)
-				return
-			case codes.Unauthenticated:
-				log.Println("This user is unregistered")
-				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
-				return
-			default:
-				log.Printf("Unknown code: %v - %s\n", resErr.Code(), resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
-			}
-		}
-		log.Printf("Could not send request to Comment: %v\n", err)
-		http.Error(w, errInternalFailure.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	r.handleComment(w, req, postCommentRequest)
 }
 
 // Post Subcomment "/{section}/{thread}/comment/?c_id={c_id}" handler. It handles the
@@ -173,7 +147,6 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 // - file type other than image and gif -> INVALID_FILE_TYPE
 // - file creation/write failure --------> CANT_WRITE_FILE
 // - missing content (empty input) ------> NO_CONTENT
-// - user unathenticated ----------------> USER_UNREGISTERED
 // - network failures -------------------> INTERNAL_FAILURE
 func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter, 
 	req *http.Request) {
@@ -191,70 +164,28 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 			return
 		}
 	}
+	// Get the rest of the content parts
+	content := req.FormValue("content")
+	if content == "" {
+		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
+		return
+	}
 	postCommentRequest := &pb.CommentRequest{
-		Data:           &pb.BasicContentData{
-			PublishDate: time.Now().Unix(),
-			Content:     content,
-			FtFile:      filePath,
-			AuthorId:    userId,
-		},
+		Content:     content,
+		FtFile:      filePath,
+		PublishDate: time.Now().Unix(),
+		UserId:      userId,
 		ContentContext: &pb.Context_Comment{
-			CommentId: comment,
+			Id:        comment,
 			ThreadCtx: &pb.Context_Thread{
-				ThreadId: thread,
+				Id:         thread,
 				SectionCtx: &pb.Context_Section{
-					SectionName: section,
+					Name: section,
 				},
 			},
 		},
 	}
-	err = r.postComment(postCommentRequest)
-	if err != nil {
-		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code() {
-			case codes.NotFound:
-				// section, thread or comment not found
-				http.NotFound(w, r)
-				return
-			case codes.Unauthenticated:
-				log.Println("This user is unregistered")
-				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
-				return
-			default:
-				log.Printf("Unknown code: %v - %s\n", resErr.Code(), resErr.Message())
-				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-				return
-			}
-		}
-		log.Printf("Could not send request to Comment: %v\n", err)
-		http.Error(w, errInternalFailure.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
-}
-
-func (r *Router) postComment (postCommentRequest *pb.CommentRequest) error {
-	stream, err := r.crudClient.Comment(context.Background(), postCommentRequest)
-	if err != nil {
-		return err
-	}
-	// Continuously receive notifications and the user ids they are for.
-	for {
-		notifyUser, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Printf("Error receiving response from stream: %v\n", err)
-			break
-		}
-		userId := notifyUser.userId
-		notification := notifyUser.Notification
-		// send notification
-		go r.hub.Broadcast(userId, notification)
-	}
-	return nil
+	r.handleComment(w, req, postCommentRequest)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. 
@@ -271,19 +202,18 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 	comment := vars["c_id"]
 
 	request := &pb.UpvoteRequest{
-		UserId: userId,
+		UserId:         userId,
 		ContentContext: &pb.Context_Comment{
-			CommentId: comment,
+			Id:        comment,
 			ThreadCtx: &pb.Context_Thread{
-				ThreadId: thread,
+				Id:         thread,
 				SectionCtx: &pb.Context_Section{
-					SectionName: section,
+					Name: section,
 				},
 			},
 		},
 	}
-
-	r.handleUpvote(w, r, request)
+	r.handleUpvote(w, req, request)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}" handler.
@@ -300,21 +230,20 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	comment := vars["c_id"]
 	subcomment := vars["sc_id"]
 
-	request := &pb.Request{
-		UserId: userId,
+	request := &pb.UpvoteRequest{
+		UserId:         userId,
 		ContentContext: &pb.Context_Subcomment{
-			SubcommentId: subcomment,
+			Id:         subcomment,
 			CommentCtx: &pb.Context_Comment{
-				CommentId: comment,
+				Id:     comment,
 				ThreadCtx: &pb.Context_Thread{
-					ThreadId: thread,
+					Id:         thread,
 					SectionCtx: &pb.Context_Section{
-						SectionName: section,
+						Name: section,
 					},
 				},
 			},
 		},
 	}
-
-	r.handleUpvote(w, r, request)
+	r.handleUpvote(w, req, request)
 }
