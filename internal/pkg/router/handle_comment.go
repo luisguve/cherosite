@@ -310,3 +310,65 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	}
 	r.handleUpvote(w, req, request)
 }
+
+// Post Un-upvote "/{section}/{thread}/unupvote/?c_id={c_id}" handler.
+// It leverages the operation of submitting the un-upvote to the method
+// handleUpvote, which returns OK on success or an error in case of the
+// following:
+// - invalid section name or thread id ------> 404 NOT_FOUND
+// - user did not upvote the content before -> NOT_UPVOTED
+// - network failures -----------------------> INTERNAL_FAILURE
+func (r *Router) handleUnupvoteComment(userId string, w http.ResponseWriter,
+req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+
+	request := &pb.UnupvoteRequest{
+		UserId:         userId,
+		ContentContext: &pb.Context_Comment{
+			Id:        comment,
+			ThreadCtx: &pb.Context_Thread{
+				Id:         thread,
+				SectionCtx: &pb.Context_Section{
+					Name: section,
+				},
+			},
+		},
+	}
+	r.handleUnupvote(w, req, request)
+}
+
+// Post Un-upvote "/{section}/{thread}/unupvote/?c_id={c_id}&sc_id={sc_id}"
+// handler. It leverages the operation of submitting the un-upvote to the
+// method handleUpvote, which returns OK on success or an error in case of
+// the following:
+// - invalid section name or thread id ------> 404 NOT_FOUND
+// - user did not upvote the content before -> NOT_UPVOTED
+// - network failures -----------------------> INTERNAL_FAILURE
+func (r *Router) handleUnupvoteComment(userId string, w http.ResponseWriter,
+req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+	subcomment := vars["sc_id"]
+
+	request := &pb.UnupvoteRequest{
+		UserId:         userId,
+		ContentContext: &pb.Context_Subcomment{
+			Id:         subcomment,
+			CommentCtx: &pb.Context_Comment{
+				Id:     comment,
+				ThreadCtx: &pb.Context_Thread{
+					Id:         thread,
+					SectionCtx: &pb.Context_Section{
+						Name: section,
+					},
+				},
+			},
+		},
+	}
+	r.handleUnupvote(w, req, request)
+}

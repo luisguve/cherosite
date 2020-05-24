@@ -311,7 +311,7 @@ func (r *Router) broadcastNotifs(stream streamNotifs) {
 // other handlers that perform the same operation, in this case, a content deletion, since
 // all the handlers that are called in a delete event share the same delete request
 // object. The duties of returning a response to the client are also delegated to
-// postDelete, which returns OK on success or an error in case of the following:
+// handleDelete, which returns OK on success or an error in case of the following:
 // - invalid section name or thread id ---> 404 NOT_FOUND
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
@@ -329,6 +329,44 @@ request *pb.DeleteRequest) {
 			case codes.Unauthenticated:
 				log.Println(resErr.Message())
 				http.Error(w, "USER_UNAUTHORIZED", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown error code %v: %v", resErr.Code(), 
+				resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+// handleUnupvote is an utility method to help reduce the repetition of similar code in 
+// other handlers that perform the same operation, in this case, a content unupvote, since
+// all the handlers that are called in an unupvote event share the same unupvote request
+// object. The duties of returning a response to the client are also delegated to
+// handleUnupvote, which returns OK on success or an error in case of the following:
+// - invalid section name or thread id ------> 404 NOT_FOUND
+// - user did not upvote the content before -> NOT_UPVOTED
+// - network failures -----------------------> INTERNAL_FAILURE
+func (r *Router) handleUnupvote(w http.ResponseWriter, req *http.Request,
+request *pb.UnupvoteRequest) {
+	_, err := r.crudClient.Unupvote(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// log for debugging
+				log.Printf("Could not find resource: %v\n", resErr.Message())
+				http.NotFound(w, req)
+				return
+			case codes.FailedPrecondition:
+				log.Println(resErr.Message())
+				http.Error(w, "NOT_UPVOTED", http.StatusBadRequest)
 				return
 			default:
 				log.Printf("Unknown error code %v: %v", resErr.Code(), 

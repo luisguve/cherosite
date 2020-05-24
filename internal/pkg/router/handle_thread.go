@@ -329,3 +329,28 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 
 	r.handleUpvote(w, req, request)
 }
+
+// Post Un-upvote "/{section}/{thread}/unupvote/" handler. It leverages the
+// operation of submitting the un-upvote to the method handleUpvote, which
+// returns OK on success or an error in case of the following:
+// - invalid section name or thread id ------> 404 NOT_FOUND
+// - user did not upvote the content before -> NOT_UPVOTED
+// - network failures -----------------------> INTERNAL_FAILURE
+func (r *Router) handleUnupvoteThread(userId string, w http.ResponseWriter,
+req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+
+	request := &pb.UnupvoteRequest{
+		UserId: userId,
+		ContentContext: &pb.Context_Thread{
+			ThreadId: thread,
+			SectionCtx: &pb.Context_Section{
+				SectionName: section,
+			},
+		},
+	}
+
+	r.handleUnupvote(w, req, request)
+}
