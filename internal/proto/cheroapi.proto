@@ -250,12 +250,13 @@ message UpvoteRequest {
 message CommentRequest {
 	// A comment has the same basic structure as regular content but doesn't have a title.
 	string content = 1;
-	string pic_url = 2;
-	google.protobuf.Timestamp publish_date = 3;
+	string ft_file = 2;
+	string user_id = 3;
+	google.protobuf.Timestamp publish_date = 4;
 	// The comment event occurs either in a thread or in a comment.
 	oneof content_context {
-		Context.Thread thread_ctx = 4;
-		Context.Comment comment_ctx = 5;
+		Context.Thread thread_ctx = 5;
+		Context.Comment comment_ctx = 6;
 	}
 }
 
