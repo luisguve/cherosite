@@ -232,13 +232,48 @@ func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
 			switch resErr.Code() {
 			case codes.NotFound:
 				// section or thread not found
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
 				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
 				return
 			default:
 				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	// Call broadcastNotifs in a separate goroutine to collect the garbage in this
+	// handler
+	go r.broadcastNotifs(stream)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+// handleComment is an utility method to help reduce the repetition of similar code in 
+// other handlers that perform the same operation, in this case, a comment post, since
+// all the handlers that are called in a comment event share the same comment request
+// object. The duties of returning a response to the client are also delegated to
+// postComment, which returns OK on success or an error in case of the following:
+// - invalid section name, thread id or comment -> 404 NOT_FOUND
+// - network failures ---------------------------> INTERNAL_FAILURE
+func (r *Router) handleComment(w http.ResponseWriter, req *http.Request,
+	commentRequest *pb.CommentRequest) {
+	stream, err := r.crudClient.Comment(context.Background(), commentRequest)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// section, thread or comment not found
+				log.Printf("Could not find content: %v", resErr.Message())
+				http.NotFound(w, req)
+				return
+			default:
+				log.Printf("Unknown code %v: %s\n", resErr.Code(), resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
