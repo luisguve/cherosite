@@ -12,8 +12,6 @@ func (app *App) Run() error {
 }
 
 func New(h http.Handler) *App {
-	// Register pagination
-	pagination.RegisterSessionTypes()
 	return &App{
 		srv: &http.Server{
 			Handler: h,	

@@ -4,7 +4,7 @@ import(
 	"encoding/gob"
 )
 
-func RegisterSessionTypes() {
+func init() {
 	gob.Register(&DiscardIds{})
 }
 
