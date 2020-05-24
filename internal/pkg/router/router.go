@@ -131,6 +131,8 @@ func (r *Router) SetupRoutes() {
 	thread.HandleFunc("/save", r.onlyUsers(r.handleSave)).Methods("POST")
 	// unsave thread "/{section}/{thread}/unsave"
 	thread.HandleFunc("/unsave", r.onlyUsers(r.handleUnsave)).Methods("POST")
+	// delete thread "/{section}/{thread}/delete"
+	thread.HandleFunc("/delete", r.onlyUsers(r.handleDeleteThread)).Methods("DELETE")
 
 	// handlers for comments
 	comments := thread.PathPrefix("/comment").Subrouter()
@@ -140,9 +142,17 @@ func (r *Router) SetupRoutes() {
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "offset", "{offset:[0-9]+}")
 	// post a comment
 	comments.HandleFunc("/", r.onlyUsers(r.handlePostComment)).Methods("POST")
+	// delete a comment "/{section}/{thread}/comment/delete?c_id={c_id}"
+	comments.HandleFunc("/delete", r.onlyUsers(r.handleDeleteComment))
+	.Methods("DELETE").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 	// post a subcomment
 	comments.HandleFunc("/", r.onlyUsers(r.handlePostSubcomment)).Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
+	// delete a subcomment
+	// "/{section}/{thread}/comment/delete?c_id={c_id}&sc_id={sc_id}"
+	comments.HandleFunc("/delete", r.onlyUsers(r.handleDeleteSubcomment))
+	.Methods("DELETE").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", 
+		"{sc_id:[a-zA-Z0-9]+}")
 
 	// handlers for upvotes
 	upvotes := thread.PathPrefix("/upvote").Subrouter()
@@ -153,5 +163,16 @@ func (r *Router) SetupRoutes() {
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 	// upvote a subcomment
 	upvotes.HandleFunc("/", r.onlyUsers(r.handleUpvoteSubcomment)).Methods("POST")
+	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
+
+	// handlers for un-upvotes
+	unupvotes := thread.PathPrefix("/unupvote").Subrouter()
+	// un-upvote a thread
+	unupvotes.HandleFunc("/", r.onlyUsers(r.handleUnupvoteThread)).Methods("POST")
+	// un-upvote a comment
+	unupvotes.HandleFunc("/", r.onlyUsers(r.handleUnupvoteComment)).Methods("POST")
+	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
+	// un-upvote a subcomment
+	unupvotes.HandleFunc("/", r.onlyUsers(r.handleUnupvoteSubcomment)).Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 }
