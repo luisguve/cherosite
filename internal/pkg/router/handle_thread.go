@@ -46,7 +46,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 				// Log for debugging.
 				log.Printf("Could not find thread (id: %s) on section %s\n",
 			 	thread, section)
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			 case codes.Unavailable:
 			 	// Section unavailable
@@ -150,7 +150,7 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 			case codes.NotFound:
 				// log for debugging
 				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			case codes.OutOfRange:
 				log.Println("OOR: no more comments on this thread are available")
@@ -216,7 +216,7 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter,
 			case codes.NotFound:
 				// log for debugging
 				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
 				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
@@ -263,7 +263,7 @@ func (r *Router) handleUnsave(userId string, w http.ResponseWriter,
 			case codes.NotFound:
 				// log for debugging
 				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
-				http.NotFound(w, r)
+				http.NotFound(w, req)
 				return
 			default:
 				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
@@ -278,6 +278,31 @@ func (r *Router) handleUnsave(userId string, w http.ResponseWriter,
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+// Delete Thread "/{section}/{thread}/delete/" handler. It deletes the thread
+// and all the content related to it (i.e. comments, subcomments and any link
+// pointing to the thread) from the database and returns OK on success or an
+// error in case of the following:
+// - invalid section name or thread id ---> 404 NOT_FOUND
+// - user id and author id are not equal -> UNAUTHORIZED
+// - network failures --------------------> INTERNAL_FAILURE
+func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+
+	request := &pb.DeleteRequest{
+		UserId:         userId,
+		ContentContext: &pb.Context_Thread{
+			Id:         thread,
+			SectionCtx: &pb.Context_Section{
+				Name: section,
+			},
+		},
+	}
+	r.handleDelete(w, req, request)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of 

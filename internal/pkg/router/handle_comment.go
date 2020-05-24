@@ -134,6 +134,35 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 	r.handleComment(w, req, postCommentRequest)
 }
 
+// Delete Comment "/{section}/{thread}/comment/delete/?c_id={c_id}" handler.
+// It deletes the comment and all the content associated to it (i.e. 
+// replies and any link pointing to the comment) from the database and
+// returns OK on success or an error in case of the following:
+// - invalid section name or thread id ---> 404 NOT_FOUND
+// - user id and author id are not equal -> UNAUTHORIZED
+// - network failures --------------------> INTERNAL_FAILURE
+func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+
+	request := &pb.DeleteRequest{
+		UserId:         userId,
+		ContentContext: &pb.Context_Comment{
+			Id:        comment,
+			ThreadCtx: &pb.Context_Thread{
+				Id:         thread,
+				SectionCtx: &pb.Context_Section{
+					Name: section,
+				},
+			},
+		},
+	}
+	r.handleDelete(w, req, request)
+}
+
 // Post Subcomment "/{section}/{thread}/comment/?c_id={c_id}" handler. It handles the
 // submit of a subcomment on a given comment on a given thread on a given section
 // through POSTing a form.
@@ -186,6 +215,40 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 		},
 	}
 	r.handleComment(w, req, postCommentRequest)
+}
+
+// Delete Subcomment
+// "/{section}/{thread}/comment/delete/?c_id={c_id}&sc_id={sc_id}" handler.
+// It deletes the subcomment and all the content associated to it (i.e. any
+// link pointing to the subcomment) from the database and returns OK on
+// success or an error in case of the following:
+// - invalid section name or thread id ---> 404 NOT_FOUND
+// - user id and author id are not equal -> UNAUTHORIZED
+// - network failures --------------------> INTERNAL_FAILURE
+func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter, 
+	req *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+	comment := vars["c_id"]
+	subcomment := vars["sc_id"]
+
+	request := &pb.DeleteRequest{
+		UserId:         userId,
+		ContentContext: &pb.Context_Subcomment{
+			Id:         sc_id,
+			CommentCtx: &pb.Context_Comment{
+				Id:        comment,
+				ThreadCtx: &pb.Context_Thread{
+					Id:         thread,
+					SectionCtx: &pb.Context_Section{
+						Name: section,
+					},
+				},
+			},
+		},
+	}
+	r.handleDelete(w, req, request)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. 

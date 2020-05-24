@@ -307,6 +307,44 @@ func (r *Router) broadcastNotifs(stream streamNotifs) {
 	}
 }
 
+// handleDelete is an utility method to help reduce the repetition of similar code in 
+// other handlers that perform the same operation, in this case, a content deletion, since
+// all the handlers that are called in a delete event share the same delete request
+// object. The duties of returning a response to the client are also delegated to
+// postDelete, which returns OK on success or an error in case of the following:
+// - invalid section name or thread id ---> 404 NOT_FOUND
+// - user id and author id are not equal -> UNAUTHORIZED
+// - network failures --------------------> INTERNAL_FAILURE
+func (r *Router) handleDelete(w http.ResponseWriter, req *http.Request, 
+request *pb.DeleteRequest) {
+	_, err := r.crudClient.Delete(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// log for debugging
+				log.Printf("Could not find resource: %v\n", resErr.Message())
+				http.NotFound(w, req)
+				return
+			case codes.Unauthenticated:
+				log.Println(resErr.Message())
+				http.Error(w, "USER_UNAUTHORIZED", http.StatusUnauthorized)
+				return
+			default:
+				log.Printf("Unknown error code %v: %v", resErr.Code(), 
+				resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 // currentUser returns a string containing the current user id or an empty 
 // string if the user is not logged in.
 func (r *Router) currentUser(req *http.Request) string {
