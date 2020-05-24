@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// Get new template engine
-	tpl := templates.New()
+	tpl := templates.Setup()
 
 	// Establish connection with gRPC server
 	conn, err := grpc.Dial(os.Getenv("GRPC_ADDR"))
