@@ -27,14 +27,10 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	request := &pb.GetThreadRequest{ 
-		Thread: &pb.Context_Thread{
-			Id:         thread,
-			SectionCtx: &pb.Context_Section{
-				Name: section,
-			},
-		},
+		Thread: threadCtx,
 	}
 	// Load thread
 	content, err := r.crudClient.GetThread(context.Background(), request)
@@ -70,12 +66,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 		// Request to load comments
 		contentPattern := &pb.ContentPattern{
 			Pattern:        templates.FeedPattern,
-			ContentContext: &pb.Context_Thread{
-				Id:         thread,
-				SectionCtx: &pb.Context_Section{
-					Name: section,
-				},
-			},
+			ContentContext: threadCtx,
 			// ignore DiscardIds; do not discard any comment
 		}
 		stream, err = r.crudClient.RecycleContent(context.Background(), 
@@ -126,6 +117,7 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -134,12 +126,7 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	contentPattern := &pb.ContentPattern{
 		DiscardIds:     discardIds.FormatThreadComments(thread),
 		Pattern:        templates.FeedPattern,
-		ContentContext: &pb.Context_Thread{
-			ThreadId:   thread,
-			SectionCtx: &pb.Context_Section{
-				SectionName: section,
-			},
-		},
+		ContentContext: threadCtx,
 	}
 	var feed templates.ContentsFeed
 
@@ -199,15 +186,11 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	request := &pb.SaveThreadRequest{
 		UserId: userId,
-		Thread: &pb.Context_Thread{
-			Id: thread,
-			SectionCtx: &pb.Context_Section{
-				Name: section,
-			},
-		},
+		Thread: threadCtx,
 	}
 	_, err := r.crudClient.SaveThread(context.Background(), request)
 	if err != nil {
@@ -246,15 +229,11 @@ func (r *Router) handleUnsave(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	request := &pb.UnsaveThreadRequest{
 		UserId: userId,
-		Thread: &pb.Context_Thread{
-			Id: thread,
-			SectionCtx: &pb.Context_Section{
-				Name: section,
-			},
-		},
+		Thread: threadCtx,
 	}
 	_, err := r.crudClient.UnsaveThread(context.Background(), request)
 	if err != nil {
@@ -292,15 +271,11 @@ func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	request := &pb.DeleteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Thread{
-			Id:         thread,
-			SectionCtx: &pb.Context_Section{
-				Name: section,
-			},
-		},
+		ContentContext: threadCtx,
 	}
 	r.handleDelete(w, req, request)
 }
@@ -316,15 +291,11 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	request := &pb.UpvoteRequest{
-		UserId: userId,
-		ContentContext: &pb.Context_Thread{
-			ThreadId: thread,
-			SectionCtx: &pb.Context_Section{
-				SectionName: section,
-			},
-		},
+		UserId:         userId,
+		ContentContext: threadCtx,
 	}
 
 	r.handleUpvote(w, req, request)
@@ -341,15 +312,11 @@ req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	threadCtx := formatContextThread(section, thread)
 
 	request := &pb.UnupvoteRequest{
-		UserId: userId,
-		ContentContext: &pb.Context_Thread{
-			ThreadId: thread,
-			SectionCtx: &pb.Context_Section{
-				SectionName: section,
-			},
-		},
+		UserId:         userId,
+		ContentContext: threadCtx,
 	}
 
 	r.handleUnupvote(w, req, request)

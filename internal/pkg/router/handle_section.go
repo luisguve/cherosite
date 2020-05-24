@@ -26,12 +26,11 @@ import(
 func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
+	sectionCtx := formatContextSection(section)
 
 	contentPattern := &pb.ContentPattern{
 		Pattern:        templates.FeedPattern,
-		ContentContext: &pb.Context_Section{
-			Name: section,
-		},
+		ContentContext: sectionCtx,
 		// ignore DiscardIds, do not discard any thread
 	}
 
@@ -97,6 +96,7 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
+	sectionCtx := formatContextSection(section)
 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -106,9 +106,7 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 	contentPattern := &pb.ContentPattern{
 		DiscardIds:     discardIds.FormatSectionThreads(section),
 		Pattern:        templates.FeedPattern,
-		ContentContext: &pb.Context_Section{
-			SectionName: section,
-		},
+		ContentContext: sectionCtx,
 	}
 
 	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
@@ -174,6 +172,8 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
+	sectionCtx := formatContextSection(section)
+
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, status := getAndSaveFile(req, "ft_file")
 	if err != nil {
@@ -199,9 +199,7 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 			FtFile:      filePath,
 			PublishDate: time.Now().Unix(),
 		},
-		SectionCtx: &pb.Context_Section{
-			Name: section,
-		},
+		SectionCtx: sectionCtx,
 	}
 	res, err := r.crudClient.CreateThread(context.Background(), createRequest)
 	if err != nil {

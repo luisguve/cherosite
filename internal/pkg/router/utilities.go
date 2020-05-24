@@ -423,3 +423,36 @@ func randToken(len int) string {
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }
+
+// formatContextSection, formatContextThread, formatContextComment and
+// formatContextSubcomment are utility functions that return different
+// ContentContext objects.
+func formatContextSection(section string) *pb.Context_Section {
+	return &pb.Context_Section{
+		Name: section,
+	}
+}
+
+func formatContextThread(section, id) *pb.Context_Thread {
+	sectionCtx := formatContextSection(section)
+	return &pb.Context_Thread{
+		Id:         id,
+		SectionCtx: sectionCtx,
+	}
+}
+
+func formatContextComment(section, thread, id) *pb.Context_Comment {
+	threadCtx := formatContextThread(section, thread)
+	return &pb.Context_Comment{
+		Id:        id,
+		ThreadCtx: threadCtx,
+	}
+}
+
+func formatContextSubcomment(section, thread, comment, id) *pb.Context_Subcomment {
+	commentCtx := formatContextComment(section, thread, comment)
+	return &pb.Context_Subcomment{
+		Id:         id,
+		CommentCtx: commentCtx,
+	}
+}

@@ -32,24 +32,17 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 		http.Error(w, "INVALID_OFFSET", http.StatusBadRequest)
 		return
 	}
-	commentId := vars["c_id"]
-	thread := vars["thread"]
 	section := vard["section"]
+	thread := vars["thread"]
+	commentId := vars["c_id"]
+	commentCtx := formatContextComment(section, thread, commentId)
 
-	subcommentsReq := &pb.GetSubcommentsRequest{
+	request := &pb.GetSubcommentsRequest{
 		Offset:     uint32(offset),
-		CommentCtx: &pb.Context_Comment{
-			Id:        commentId, 
-			ThreadCtx: &pb.Context_Thread{
-				Id:         thread,
-				SectionCtx: &pb.Context_Section{
-					Name: section,
-				},
-			},
-		},
+		CommentCtx: commentCtx,
 	}
-	// Send request
-	stream, err := r.crudClient.GetComments(context.Background(), subcommentsReq)
+
+	stream, err := r.crudClient.GetComments(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -119,17 +112,13 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
 		return
 	}
+	threadCtx := formatContextThread(section, thread)
 	postCommentRequest := &pb.CommentRequest{
-		Content:     content,
-		FtFile:      filePath,
-		UserId:      userId,
-		PublishDate: time.Now().Unix(),
-		ContentContext: &pb.Context_Thread{
-			Id:         thread,
-			SectionCtx: &pb.Context_Section{
-				Name: section,
-			},
-		},
+		Content:        content,
+		FtFile:         filePath,
+		UserId:         userId,
+		PublishDate:    time.Now().Unix(),
+		ContentContext: threadCtx,
 	}
 	r.handleComment(w, req, postCommentRequest)
 }
@@ -146,19 +135,12 @@ func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
+	commentId := vars["c_id"]
 
+	comment := formatContextComment(section, thread, commentId)
 	request := &pb.DeleteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Comment{
-			Id:        comment,
-			ThreadCtx: &pb.Context_Thread{
-				Id:         thread,
-				SectionCtx: &pb.Context_Section{
-					Name: section,
-				},
-			},
-		},
+		ContentContext: comment,
 	}
 	r.handleDelete(w, req, request)
 }
@@ -182,7 +164,7 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
+	commentId := vars["c_id"]
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, status := getAndSaveFile(req, "ft_file")
 	if err != nil {
@@ -199,20 +181,13 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
 		return
 	}
+	comment := formatContextComment(section, thread, commentId)
 	postCommentRequest := &pb.CommentRequest{
-		Content:     content,
-		FtFile:      filePath,
-		PublishDate: time.Now().Unix(),
-		UserId:      userId,
-		ContentContext: &pb.Context_Comment{
-			Id:        comment,
-			ThreadCtx: &pb.Context_Thread{
-				Id:         thread,
-				SectionCtx: &pb.Context_Section{
-					Name: section,
-				},
-			},
-		},
+		Content:        content,
+		FtFile:         filePath,
+		PublishDate:    time.Now().Unix(),
+		UserId:         userId,
+		ContentContext: comment,
 	}
 	r.handleComment(w, req, postCommentRequest)
 }
@@ -230,23 +205,14 @@ func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
-	subcomment := vars["sc_id"]
+	commentId := vars["c_id"]
+	subcommentId := vars["sc_id"]
 
+	subcomment := formatContextSubcomment(section, thread, commentId,
+		subcommentId)
 	request := &pb.DeleteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Subcomment{
-			Id:         sc_id,
-			CommentCtx: &pb.Context_Comment{
-				Id:        comment,
-				ThreadCtx: &pb.Context_Thread{
-					Id:         thread,
-					SectionCtx: &pb.Context_Section{
-						Name: section,
-					},
-				},
-			},
-		},
+		ContentContext: subcomment,
 	}
 	r.handleDelete(w, req, request)
 }
@@ -262,19 +228,12 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
+	commentId := vars["c_id"]
 
+	comment := formatContextComment(section, thread, commentId)
 	request := &pb.UpvoteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Comment{
-			Id:        comment,
-			ThreadCtx: &pb.Context_Thread{
-				Id:         thread,
-				SectionCtx: &pb.Context_Section{
-					Name: section,
-				},
-			},
-		},
+		ContentContext: comment,
 	}
 	r.handleUpvote(w, req, request)
 }
@@ -290,23 +249,14 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
-	subcomment := vars["sc_id"]
+	commentId := vars["c_id"]
+	subcommentId := vars["sc_id"]
 
+	subcomment := formatContextSubcomment(section, thread, commentId,
+		subcommentId)
 	request := &pb.UpvoteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Subcomment{
-			Id:         subcomment,
-			CommentCtx: &pb.Context_Comment{
-				Id:     comment,
-				ThreadCtx: &pb.Context_Thread{
-					Id:         thread,
-					SectionCtx: &pb.Context_Section{
-						Name: section,
-					},
-				},
-			},
-		},
+		ContentContext: subcomment,
 	}
 	r.handleUpvote(w, req, request)
 }
@@ -323,19 +273,12 @@ req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
+	commentId := vars["c_id"]
 
+	comment := formatContextComment(section, thread, commentId)
 	request := &pb.UnupvoteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Comment{
-			Id:        comment,
-			ThreadCtx: &pb.Context_Thread{
-				Id:         thread,
-				SectionCtx: &pb.Context_Section{
-					Name: section,
-				},
-			},
-		},
+		ContentContext: comment,
 	}
 	r.handleUnupvote(w, req, request)
 }
@@ -352,23 +295,14 @@ req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
-	subcomment := vars["sc_id"]
+	commentId := vars["c_id"]
+	subcommentId := vars["sc_id"]
 
+	subcomment := formatContextSubcomment(section, thread, commentId,
+		subcommentId)
 	request := &pb.UnupvoteRequest{
 		UserId:         userId,
-		ContentContext: &pb.Context_Subcomment{
-			Id:         subcomment,
-			CommentCtx: &pb.Context_Comment{
-				Id:     comment,
-				ThreadCtx: &pb.Context_Thread{
-					Id:         thread,
-					SectionCtx: &pb.Context_Section{
-						Name: section,
-					},
-				},
-			},
-		},
+		ContentContext: subcomment,
 	}
 	r.handleUnupvote(w, req, request)
 }
