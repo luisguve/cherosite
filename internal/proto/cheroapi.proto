@@ -246,6 +246,17 @@ message UpvoteRequest {
 	}
 }
 
+// UnupvoteRequest holds information about the un-upvote event.
+message UnupvoteRequest {
+	string user_id = 1; // Who is submitting the un-upvote
+	// The upvote event occurs either in a thread, in a comment or in a subcomment.
+	oneof content_context {
+		Context.Thread thread_ctx = 2;
+		Context.Comment comment_ctx = 3;
+		Context.Subcomment subcomment_ctx = 4;
+	}
+}
+
 // CommentRequest holds information about the comment event.
 message CommentRequest {
 	// A comment has the same basic structure as regular content but doesn't have a title.
@@ -490,6 +501,8 @@ service CrudCheropatilla {
 
 	// Post upvote on thread, comment or subcomment
 	rpc Upvote(UpvoteRequest) returns (stream NotifyUser) {}
+	// Post un-upvote on thread, comment or subcomment
+	rpc Unupvote(UnupvoteRequest) returns (UnupvoteResponse) {}
 	// Post comment on a thread or in a comment
 	rpc Comment(CommentRequest) returns (stream NotifyUser) {}
 	// Update a thread, comment or subcomment
