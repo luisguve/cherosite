@@ -1,9 +1,10 @@
 {{ $class := .BasicContent.ClassName }}
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
 {{ $saveLink := .SaveLink }}
+{{ $unsaveLink := .UnsaveLink }}
 {{ $replyLink := .ReplyLink }}
 
-<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-save-link="{{$saveLink}}" data-reply-link="{{$replyLink}}">
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-save-link="{{$saveLink}}" data-unsave-link="{{$unsaveLink}}" data-reply-link="{{$replyLink}}">
 	<header>
 	{{ with .BasicContent }}
 	<div class="thread-info">

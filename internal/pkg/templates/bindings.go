@@ -200,7 +200,8 @@ func contentToContentRenderer(pbRule *pb.ContentRule, userId string)
 	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
 
 	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
-	saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
+	saveLink := fmt.Sprintf("%s/save", threadLink)
+	unsaveLink := fmt.Sprintf("%s/unsave", threadLink)
 	replyLink := fmt.Sprintf("%s/comment", threadLink)
 	
 	var saved bool
@@ -214,6 +215,7 @@ func contentToContentRenderer(pbRule *pb.ContentRule, userId string)
 		BasicContent: bc,
 		Replies:      metadata.Replies,
 		SaveLink:     saveLink,
+		UnsaveLink:   unsaveLink,
 		Saved:        saved,
 		ReplyLink:    replyLink,
 	}
@@ -234,7 +236,8 @@ func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string)
 	switch ctx := pbRule.ContentContext.(type) {
 	// it's a THREAD
 	case *pb.ActivityRule_ThreadCtx:
-		saveLink := fmt.Sprintf("/save?thread=%s&section=%s", threadId, sectionId)
+		saveLink := fmt.Sprintf("%s/save", threadLink)
+		unsaveLink := fmt.Sprintf("%s/unsave", threadLink)
 		replyLink := fmt.Sprintf("%s/comment", threadLink)
 		var saved bool
 		if userId == "" {
@@ -247,6 +250,7 @@ func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string)
 			BasicContent: bc,
 			Replies:      metadata.Replies,
 			SaveLink:     saveLink,
+			UnsaveLink:   unsaveLink,
 			Saved:        saved,
 			ReplyLink:    replyLink,
 		}
