@@ -239,6 +239,7 @@ func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string)
 		saveLink := fmt.Sprintf("%s/save", threadLink)
 		unsaveLink := fmt.Sprintf("%s/unsave", threadLink)
 		replyLink := fmt.Sprintf("%s/comment", threadLink)
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote", threadLink)
 		var saved bool
 		if userId == "" {
 			saved = false
@@ -256,6 +257,7 @@ func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string)
 		}
 	// it's a COMMENT
 	case *pb.ActivityRule_CommentCtx:
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, ctx.Id)
 		ovwRenderer = &CommentView{
 			BasicContent: bc,
 			Id:           ctx.Id,
@@ -263,6 +265,8 @@ func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string)
 		}
 	// it's a SUBCOMMENT
 	case *pb.ActivityRule_SubcommentCtx:
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s&sc_id=%s", threadLink, 
+			ctx.CommentCtx.Id, ctx.Id)
 		ovwRenderer = &SubcommentView{
 			BasicContent: bc,
 			CommentId:    ctx.CommentCtx.Id,

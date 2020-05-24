@@ -58,7 +58,7 @@ type Thread struct {
 
 func (t *Thread) RenderContent() template.HTML {
 	t.BasicContent.ClassName = fmt.Sprintf("%s", t.BasicContent.Status)
-	t.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/", t.BasicContent.ThreadLink)
+
 	tplName := "thread_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, t); err != nil {
@@ -71,7 +71,7 @@ func (t *Thread) RenderContent() template.HTML {
 func (t *Thread) RenderOverview(idx int) template.HTML {
 	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%d", t.BasicContent.Status, 
 		idx)
-	t.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/", t.BasicContent.ThreadLink)
+
 	var tplName string
 	switch t.BasicContent.Status {
 	case "NEW":
@@ -99,8 +99,7 @@ type CommentContent struct {
 
 func (c *CommentContent) RenderOverview(idx int) template.HTML {
 	c.BasicContent.ClassName = fmt.Sprintf("%s-%d", c.BasicContent.Status, idx)
-	c.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", 
-		c.BasicContent.ThreadLink, c.Id)
+
 	tplName := "comment_content.html"
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, c); err != nil {
@@ -120,8 +119,7 @@ type CommentView struct {
 func (c *CommentView) RenderOverview(idx int) template.HTML {
 	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%d",	c.BasicContent.Status, 
 		idx)
-	c.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", 
-		c.BasicContent.ThreadLink, c.Id)
+
 	var tplName string
 	switch c.BasicContent.Status {
 	case "NEW":
@@ -149,8 +147,7 @@ type SubcommentView struct {
 func (sc *SubcommentView) RenderOverview(idx int) template.HTML {
 	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%d",	sc.BasicContent.Status,
 		idx)
-	sc.BasicContent.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s&sc_id=%s", 
-		sc.BasicContent.ThreadLink, sc.CommentId, sc.Id)
+	
 	var tplName string
 	switch sc.BasicContent.Status {
 	case "NEW":
