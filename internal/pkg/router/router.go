@@ -129,6 +129,8 @@ func (r *Router) SetupRoutes() {
 	thread.HandleFunc("/recycle", r.handleRecycleComments).Methods("GET")
 	// save thread "/{section}/{thread}/save"
 	thread.HandleFunc("/save", r.onlyUsers(r.handleSave)).Methods("POST")
+	// unsave thread "/{section}/{thread}/unsave"
+	thread.HandleFunc("/unsave", r.onlyUsers(r.handleUnsave)).Methods("POST")
 
 	// handlers for comments
 	comments := thread.PathPrefix("/comment").Subrouter()

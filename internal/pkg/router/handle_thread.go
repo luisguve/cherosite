@@ -234,7 +234,50 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter,
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
-	return
+}
+
+// Unsave thread "/{section}/{thread}/unsave" handler. It removes the thread
+// id from the list of saved threads of the given user, whose id is provided.
+// It returns OK on success or an error in case of the following:
+// - invalid section name or thread id -> 404 NOT_FOUND
+// - network failures ------------------> INTERNAL_FAILURE
+func (r *Router) handleUnsave(userId string, w http.ResponseWriter, 
+	r *http.Request) {
+	vars := mux.Vars(req)
+	section := vars["section"]
+	thread := vars["thread"]
+
+	request := &pb.UnsaveThreadRequest{
+		UserId: userId,
+		Thread: &pb.Context_Thread{
+			Id: thread,
+			SectionCtx: &pb.Context_Section{
+				Name: section,
+			},
+		},
+	}
+	_, err := r.crudClient.UnsaveThread(context.Background(), request)
+	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.NotFound:
+				// log for debugging
+				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
+				http.NotFound(w, r)
+				return
+			default:
+				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			log.Printf("Could not send request: %v\n", err)
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of 
