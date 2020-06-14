@@ -221,7 +221,7 @@ func contentToContentRenderer(pbRule *pb.ContentRule, userId string)
 	}
 }
 
-func contentToOverviewRendererSet(pbRule *pb.ContentRule, userId string) 
+func contentToOverviewRenderer(pbRule *pb.ContentRule, userId string) 
 	OverviewRenderer {
 
 	var ovwRenderer OverviewRenderer
@@ -283,7 +283,7 @@ func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string)
 	var ovwRendererSet []OverviewRenderer
 
 	for _, pbRule := range pbRuleSet {
-		ovwRenderer := contentToOverviewRendererSet(pbRule, userId)
+		ovwRenderer := contentToOverviewRenderer(pbRule, userId)
 		ovwRendererset = append(ovwRendererset, ovwRenderer)
 	}
 	return ovwRendererSet
