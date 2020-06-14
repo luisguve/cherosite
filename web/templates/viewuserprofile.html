@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-	{{ with .ProfileData }}
+	{{ with .ProfileData.BasicUserData }}
 	<title>Patilla profile - {{.Alias}} (@{{.Username}})</title>
 	{{ end }}
 </head>
 <body>
 	{{ template "header" .HeaderData }}
+	
 	{{ $isFollowing := .IsFollowing }}
-	{{ $userAlias := .ProfileData.Alias }}
-	{{ with .ProfileData }}
+	{{ $userAlias := .ProfileData.BasicUserData.Alias }}
+	{{ $followers := .ProfileData.Followers }}
+	{{ $following := .ProfileData.Following }}
+
+	{{ with .ProfileData.BasicUserData }}
 	<!-- User data section -->
 	<section class="profile-info">
 		<div class="profile-pic">
@@ -18,8 +22,8 @@
 			<h5>@{{.Username}}</h5>
 		</div>
 		<div class="follow">
-			<p>Following: {{.Following}}</p>
-			<p>Followers: {{.Followers}}</p>
+			<p>Following: {{$following}}</p>
+			<p>Followers: {{$followers}}</p>
 			{{ if $isFollowing }}
 			<a href="{{ printf "/unfollow?username=%s" .Username }}">Unfollow</a>
 			{{ else }}

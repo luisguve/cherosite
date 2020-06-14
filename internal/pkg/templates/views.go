@@ -1,12 +1,16 @@
 package templates
 
-type ProfileData struct {
+type BasicUserData struct {
 	Patillavatar string // URL to user profile pic
 	Alias        string
 	Username     string
-	Followers    int
-	Following    int
 	Description  string
+}
+
+type ProfileData struct {
+	BasicUserData
+	Followers int
+	Following int
 }
 
 type Notif struct {
@@ -77,5 +81,5 @@ type ThreadView struct {
 
 type MyProfileView struct {
 	HeaderData
-	ProfileData
+	BasicUserData
 }

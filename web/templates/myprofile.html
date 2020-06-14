@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-	{{ with .ProfileData }}
-	<title>My Patilla profile - {{.Alias}} (@{{.Username}})</title>
+	{{ with .BasicUserData }}
+	<title>My Patilla Profile - {{.Alias}} (@{{.Username}})</title>
 	{{ end }}
 </head>
 <body>
 	{{ template "header" .HeaderData }}
-	{{ with .ProfileData }}
+	{{ with .BasicUserData }}
 	<!-- User data section -->
 	<section class="profile-info">
 		<div class="profile-pic">
