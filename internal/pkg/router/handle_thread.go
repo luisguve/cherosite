@@ -9,7 +9,7 @@ import(
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
-	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	"github.com/luisguve/cheropatilla/internal/pkg/templates"
 	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
 )
@@ -64,9 +64,9 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	// Load comments only if there are comments on this thread
 	if content.Metadata.Replies > 0 {
 		// Request to load comments
-		contentPattern := &pb.ContentPattern{
+		contentPattern := &pbApi.ContentPattern{
 			Pattern:        templates.FeedPattern,
-			ContentContext: threadCtx,
+			ContentContext: &pbApi.ContentPattern_ThreadCtx{threadCtx},
 			// ignore DiscardIds; do not discard any comment
 		}
 		stream, err = r.crudClient.RecycleContent(context.Background(), 

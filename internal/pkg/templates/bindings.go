@@ -4,23 +4,24 @@ import(
 	"strings"
 	"fmt"
 
-	pb "github.com/luisguve/cheropatilla/internal/cheropatillapb"
+	pbAbi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
-func DataToMyProfileView(userData *pb.BasicUserData, uhd *pb.UserHeaderData)
+func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHeaderData)
 	*MyProfileView {
 	// set user header data
 	hd := setHeaderData(uhd, nil)
 	// set user profile data
-	pd := setProfileData(userData)
+	bud := setBasicUserData(userData)
 	return &MyProfileView{
-		HeaderData:  hd,
-		ProfileData: profileData,
+		HeaderData:    hd,
+		BasicUserData: bud,
 	}
 }
 
-func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData, 
-	activity []*pb.ContentRule, currentUserId string) *ProfileView {
+func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderData, 
+	activity []*pbApi.ContentRule, currentUserId string) *ProfileView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
@@ -49,8 +50,8 @@ func DataToProfileView(userData *pb.ViewUserResponse, uhd *pb.UserHeaderData,
 	}
 }
 
-func DataToDashboardView(dData *pb.DashboardData, feed, activity, 
-	saved []*pb.ContentRule) *DashboardView {
+func DataToDashboardView(dData *pbApi.DashboardData, feed, activity, 
+	saved []*pbApi.ContentRule) *DashboardView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: "Recycle your feed",
@@ -83,7 +84,7 @@ func DataToDashboardView(dData *pb.DashboardData, feed, activity,
 	}
 }
 
-func DataToExploreView(feed []*pb.ContentRule, uhd *pb.UserHeaderData,
+func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 currentUserId string) *ExploreView {
 	recycleSet := []RecycleType{
 		RecycleType{
@@ -101,8 +102,8 @@ currentUserId string) *ExploreView {
 	}
 }
 
-func DataToThreadView(content *pb.ContentRule, feed []*pb.ContentRule, 
-uhd *pb.UserHeaderData, currentUserId string) *ThreadView{
+func DataToThreadView(content *pbApi.ContentRule, feed []*pbApi.ContentRule, 
+uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 	metadata := content.Metadata
 	section := strings.ToLower(strings.Replace(metadata.Section, " ", "", -1))
 	recycleSet := []RecycleType{
@@ -114,7 +115,7 @@ uhd *pb.UserHeaderData, currentUserId string) *ThreadView{
 	// set user header data
 	hd := setHeaderData(uhd, recycleSet)
 	threadContent := contentToContentRenderer(content, currentUserId)
-	threadComments := contentsToOverviewRendererSet(feed, currentUserId)
+	threadComments := commentsToOverviewRendererSet(feed, currentUserId)
 
 	return &ThreadView{
 		HeaderData: hd,
@@ -123,7 +124,7 @@ uhd *pb.UserHeaderData, currentUserId string) *ThreadView{
 	}
 }
 
-func DataToSectionView(feed []*pb.ContentRule, uhd *pb.UserHeaderData,
+func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 currentUserId string) *SectionView {
 	var section string
 	// just making sure the program doesn't crash in case of a nil feed
@@ -150,7 +151,7 @@ currentUserId string) *SectionView {
 	}
 }
 
-func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData {
+func setHeaderData(uhd *pbApi.UserHeaderData, recycleSet []RecycleType) HeaderData {
 	hd := HeaderData{RecycleTypes: recycleSet}
 	if uhd == nil {
 		return hd
@@ -179,19 +180,35 @@ func setHeaderData(uhd *pb.UserHeaderData, recycleSet []RecycleType) HeaderData 
 	return hd
 }
 
-func setProfileData(userData *pb.BasicUserData) ProfileData {
-	return ProfileData{
-		Patillavatar: userData.PicUrl,
-		Alias:        userData.Alias,
-		Username:     userData.Username,
-		Followers:    len(userData.FollowersIds),
-		Following:    len(userData.FollowingIds),
-		Description:  userData.About,
+func setProfileData(userData *pbApi.ViewUserResponse) ProfileData {
+	var pd ProfileData
+	if userData != nil {
+		pd = ProfileData{
+			Patillavatar: userData.PicUrl,
+			Alias:        userData.Alias,
+			Username:     userData.Username,
+			Followers:    len(userData.FollowersIds),
+			Following:    len(userData.FollowingIds),
+			Description:  userData.About,
+		}
 	}
+	return pd
 }
 
-func contentToContentRenderer(pbRule *pb.ContentRule, userId string) 
-	ContentRenderer {
+func setBasicUserData(userData *pbDataFormat.BasicUserData) BasicUserData {
+	var bud BasicUserData
+	if userData != nil {
+		bud = BasicUserData{
+			Patillavatar: userData.PicUrl,
+			Alias:        userData.Alias,
+			Username:     userData.Username,
+			Description:  userData.About,
+		}
+	}
+	return bud
+}
+
+func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentRenderer {
 	bc := setBasicContent(pbRule, userId)
 
 	metadata := pbRule.Data.Metadata
@@ -221,7 +238,53 @@ func contentToContentRenderer(pbRule *pb.ContentRule, userId string)
 	}
 }
 
-func contentToOverviewRenderer(pbRule *pb.ContentRule, userId string) 
+// formatCommentContent converts a *pbApi.ContentRule into a *CommentContent and
+// returns it along with an error indicating whether or not the content context was
+// not a *pbApi.ContentRule_CommentCtx. userId is used to setBasicContent.
+func formatCommentContent(pbRule *pbApi.1ContentRule, userId string) 
+(*CommentContent, error) {
+	ctx, ok := pbRule.ContentContext.(*pbApi.ContentRule_CommentCtx)
+	if !ok {
+		return nil, fmt.Errorf("Failed type assertion to *pbApi.ContentRule_CommentCtx")
+	}
+	bc := setBasicContent(pbRule, userId)
+	metadata := pbRule.Data.Metadata
+
+	threadId := metadata.Id
+	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
+	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
+
+	// comment context
+	comCtx := ctx.CommentCtx
+
+	replyLink := fmt.Sprintf("%s/comment/?c_id=%s", threadLink, comCtx.Id)
+	bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
+
+	comContent := &CommentContent{
+		BasicContent: bc,
+		Id:           comCtx.Id,
+		Replies:      metadata.Replies,
+		ReplyLink:    replyLink,
+	}
+	return comContent, nil
+}
+
+func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string)
+	[]OverviewRenderer {
+	var ovwRendererSet []OverviewRenderer
+
+	for _, pbRule := range pbRuleSet {
+		ovwRenderer, err := formatCommentContent(pbRule, userId)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		ovwRendererset = append(ovwRendererset, ovwRenderer)
+	}
+	return ovwRendererSet
+}
+
+func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) 
 	OverviewRenderer {
 
 	var ovwRenderer OverviewRenderer
@@ -235,7 +298,7 @@ func contentToOverviewRenderer(pbRule *pb.ContentRule, userId string)
 
 	switch ctx := pbRule.ContentContext.(type) {
 	// it's a THREAD
-	case *pb.ActivityRule_ThreadCtx:
+	case *pbApi.ContentRule_ThreadCtx:
 		saveLink := fmt.Sprintf("%s/save", threadLink)
 		unsaveLink := fmt.Sprintf("%s/unsave", threadLink)
 		replyLink := fmt.Sprintf("%s/comment", threadLink)
@@ -256,29 +319,35 @@ func contentToOverviewRenderer(pbRule *pb.ContentRule, userId string)
 			ReplyLink:    replyLink,
 		}
 	// it's a COMMENT
-	case *pb.ActivityRule_CommentCtx:
-		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, ctx.Id)
+	case *pbApi.ContentRule_CommentCtx:
+		// comment context
+		comCtx := ctx.CommentCtx
+
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
 		ovwRenderer = &CommentView{
 			BasicContent: bc,
-			Id:           ctx.Id,
+			Id:           comCtx.Id,
 			Replies:      metadata.Replies,
 		}
 	// it's a SUBCOMMENT
-	case *pb.ActivityRule_SubcommentCtx:
+	case *pbApi.ContentRule_SubcommentCtx:
+		// subcomment context
+		subcCtx := ctx.SubcommentCtx
+
 		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s&sc_id=%s", threadLink, 
-			ctx.CommentCtx.Id, ctx.Id)
+			subcCtx.CommentCtx.Id, subcCtx.Id)
 		ovwRenderer = &SubcommentView{
 			BasicContent: bc,
-			CommentId:    ctx.CommentCtx.Id,
-			Id:           ctx.Id,
+			CommentId:    subcCtx.CommentCtx.Id,
+			Id:           subcCtx.Id,
 		}
 	}
 	return ovwRenderer
 }
 
-// contentsToOverviewRendererSet converts a slice of *pb.ContentRule into a slice of
+// contentsToOverviewRendererSet converts a slice of *pbApi.ContentRule into a slice of
 // OverviewRenderer. userId is used to check whether the user has saved the content
-func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string) 
+func contentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string) 
 	[]OverviewRenderer {
 	var ovwRendererSet []OverviewRenderer
 
@@ -290,8 +359,8 @@ func contentsToOverviewRendererSet(pbRuleSet []*pb.ContentRule, userId string)
 }
 
 // setBasicContent returns a *BasicContent object filled with data retrieved from a
-// *pb.ContentRule. userId is used to check whether the user has upvoted the content.
-func setBasicContent(pbRule *pb.ContentRule, userId string) *BasicContent {
+// *pbApi.ContentRule. userId is used to check whether the user has upvoted the content.
+func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 	author := pbRule.Data.Author
 	content := pbRule.Data.Content
 	metadata := pbRule.Data.Metadata
@@ -311,7 +380,7 @@ func setBasicContent(pbRule *pb.ContentRule, userId string) *BasicContent {
 	if userId == "" {
 		upvoted = false
 	} else {
-		upvoted = strings.Contains(strings.Join(metadata.VotersIds, "|"), userId)
+		upvoted = strings.Contains(strings.Join(metadata.VoterIds, "|"), userId)
 	}
 
 	return &BasicContent{
