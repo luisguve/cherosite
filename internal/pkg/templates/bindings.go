@@ -115,7 +115,7 @@ uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 	// set user header data
 	hd := setHeaderData(uhd, recycleSet)
 	threadContent := contentToContentRenderer(content, currentUserId)
-	threadComments := contentsToOverviewRendererSet(feed, currentUserId)
+	threadComments := commentsToOverviewRendererSet(feed, currentUserId)
 
 	return &ThreadView{
 		HeaderData: hd,
@@ -236,6 +236,52 @@ func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentR
 		Saved:        saved,
 		ReplyLink:    replyLink,
 	}
+}
+
+// formatCommentContent converts a *pbApi.ContentRule into a *CommentContent and
+// returns it along with an error indicating whether or not the content context was
+// not a *pbApi.ContentRule_CommentCtx. userId is used to setBasicContent.
+func formatCommentContent(pbRule *pbApi.1ContentRule, userId string) 
+(*CommentContent, error) {
+	ctx, ok := pbRule.ContentContext.(*pbApi.ContentRule_CommentCtx)
+	if !ok {
+		return nil, fmt.Errorf("Failed type assertion to *pbApi.ContentRule_CommentCtx")
+	}
+	bc := setBasicContent(pbRule, userId)
+	metadata := pbRule.Data.Metadata
+
+	threadId := metadata.Id
+	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
+	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
+
+	// comment context
+	comCtx := ctx.CommentCtx
+
+	replyLink := fmt.Sprintf("%s/comment/?c_id=%s", threadLink, comCtx.Id)
+	bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
+
+	comContent := &CommentContent{
+		BasicContent: bc,
+		Id:           comCtx.Id,
+		Replies:      metadata.Replies,
+		ReplyLink:    replyLink,
+	}
+	return comContent, nil
+}
+
+func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string)
+	[]OverviewRenderer {
+	var ovwRendererSet []OverviewRenderer
+
+	for _, pbRule := range pbRuleSet {
+		ovwRenderer, err := formatCommentContent(pbRule, userId)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		ovwRendererset = append(ovwRendererset, ovwRenderer)
+	}
+	return ovwRendererSet
 }
 
 func contentToOverviewRendererSet(pbRule *pbApi.ContentRule, userId string) 
