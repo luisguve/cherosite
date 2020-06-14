@@ -6,7 +6,7 @@ import(
 	"net/http"
 	"time"
 
-	pb "github.com/luisguve/cheropatilla/internal/pkg/CrudCheropatillapb"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 	"github.com/gorilla/websocket"
 )
 
@@ -18,7 +18,7 @@ type Client struct {
 
 type User struct {
 	Id        string
-	SendNotif chan *pb.Notif
+	SendNotif chan *pbDataFormat.Notif
 	SendOk    chan bool
 }
 
@@ -119,20 +119,24 @@ func (c *Client) WritePump {
 	}
 }
 
-func mergeNotifs(send chan *pb.Notif) (notifsJSON [][]byte) {
-	n := len(send)
-	notifs := []*pb.Notif{}
+// mergeNotifs receives notifications from the buffered channel and discards all
+// the notifications (type *pbDataFormat.Notif) with the same ID but the last
+// notification, then marshals the resulting notifications into JSON []byte, using
+// Marshal from encoding/json and returns a []byte for each notification.
+func mergeNotifs(receive chan *pbDataFormat.Notif) (notifsJSON [][]byte) {
+	n := len(receive)
+	notifs := []*pbDataFormat.Notif{}
 	// fill notifs slice
 	for i := 0; i < n; i++ {
-		notifs = append(notifs, <-send)
+		notifs = append(notifs, <-receive)
 	}
 	// merged will contain only the last duplicate notif, if there are duplicates
-	merged := make(map[string]*pb.Notif)
+	merged := make(map[string]*pbDataFormat.Notif)
 	for notif := range notifs {
 		merged[notif.Id] = notif
 	}
 	// empty notifs slice
-	notifs = []*pb.Notif{}
+	notifs = []*pbDataFormat.Notif{}
 	// fill again notifs slice
 	for _, notif := range merged {
 		notifs = append(notifs, notif)
@@ -141,7 +145,8 @@ func mergeNotifs(send chan *pb.Notif) (notifsJSON [][]byte) {
 	for notif := range notifs {
 		notifJSON, err := json.Marshal(notif)
 		if err != nil {
-			log.Printf("Error: %v\n", err)
+			log.Printf("Could not marshal notif: %v\n", err)
+			continue
 		}
 		notifsJSON = append(notifsJSON, notifJSON)
 	}
