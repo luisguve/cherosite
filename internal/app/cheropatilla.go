@@ -3,8 +3,6 @@ package app
 import (
 	"net/http"
 	"time"
-
-	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
 )
 
 func (app *App) Run() error {
