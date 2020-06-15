@@ -129,8 +129,8 @@ func (r *Router) SetupRoutes() {
 	thread.HandleFunc("/recycle", r.handleRecycleComments).Methods("GET")
 	// save thread "/{section}/{thread}/save"
 	thread.HandleFunc("/save", r.onlyUsers(r.handleSave)).Methods("POST")
-	// unsave thread "/{section}/{thread}/unsave"
-	thread.HandleFunc("/unsave", r.onlyUsers(r.handleUnsave)).Methods("POST")
+	// undo save thread "/{section}/{thread}/undosave"
+	thread.HandleFunc("/undosave", r.onlyUsers(r.handleUndoSave)).Methods("POST")
 	// delete thread "/{section}/{thread}/delete"
 	thread.HandleFunc("/delete", r.onlyUsers(r.handleDeleteThread)).Methods("DELETE")
 
@@ -165,14 +165,14 @@ func (r *Router) SetupRoutes() {
 	upvotes.HandleFunc("/", r.onlyUsers(r.handleUpvoteSubcomment)).Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 
-	// handlers for un-upvotes
-	unupvotes := thread.PathPrefix("/unupvote").Subrouter()
-	// un-upvote a thread
-	unupvotes.HandleFunc("/", r.onlyUsers(r.handleUnupvoteThread)).Methods("POST")
-	// un-upvote a comment
-	unupvotes.HandleFunc("/", r.onlyUsers(r.handleUnupvoteComment)).Methods("POST")
+	// handlers for upvote undoings
+	undoUpvotes := thread.PathPrefix("/undoupvote").Subrouter()
+	// undo upvote on a thread
+	undoUpvotes.HandleFunc("/", r.onlyUsers(r.handleUndoUpvoteThread)).Methods("POST")
+	// undo upvote on a comment
+	undoUpvotes.HandleFunc("/", r.onlyUsers(r.handleUndoUpvoteComment)).Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
-	// un-upvote a subcomment
-	unupvotes.HandleFunc("/", r.onlyUsers(r.handleUnupvoteSubcomment)).Methods("POST")
+	// undo upvote on a subcomment
+	undoUpvotes.HandleFunc("/", r.onlyUsers(r.handleUndoUpvoteSubcomment)).Methods("POST")
 	.Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 }

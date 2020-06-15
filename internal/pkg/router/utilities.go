@@ -12,7 +12,9 @@ import(
 	"net/http"
 	"context"
 
-	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbContext "github.com/luisguve/cheroproto-go/context"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 	"github.com/luisguve/cheropatilla/internal/pkg/livedata"
 	"github.com/luisguve/cheropatilla/internal/pkg/templates"
 	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
@@ -34,16 +36,16 @@ var(
 	errUnregistered     = errors.New("USER_UNREGISTERED")
 )
 
-// wrapper interface to be used instead of the generated interfaces in pb, for streams
+// wrapper interface to be used instead of the generated interfaces in pbApi, for streams
 // that return a NotifyUser object
 type streamNotifs interface {
-	Recv() (*pb.NotifyUser, error)
+	Recv() (*pbApi.NotifyUser, error)
 }
 
-// wrapper interface to be used instead of the generated interfaces in pb, for streams
+// wrapper interface to be used instead of the generated interfaces in pbApi, for streams
 // that return a ContentRule object
 type streamFeed interface {
-	Recv() (*pb.ContentRule, error)
+	Recv() (*pbApi.ContentRule, error)
 }
 
 // getFeed continuously receive content rules from the given stream and returns a 
@@ -77,7 +79,7 @@ func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
 		discard = &pagination.DiscardIds{
 			UserActivity:   make(map[string]pagination.Activity),
 			FeedActivity:   make(map[string]pagination.Activity),
-			ThreadsSaved:   make(map[string][]string),
+			SavedThreads:   make(map[string][]string),
 			SectionThreads: make(map[string][]string),
 			ThreadComments: make(map[string][]string),
 			GeneralThreads: make(map[string][]string),
@@ -167,9 +169,9 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 // user. It sets the corresponding error header given any error while getting user
 // header data.
 func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) 
-	*pb.UserHeaderData {
+	*pbApi.UserHeaderData {
 	userData, err := r.crudClient.GetUserHeaderData(context.Background(), 
-			&pb.GetUserHeaderDataRequest{UserId: userId})
+			&pbApi.GetUserHeaderDataRequest{UserId: userId})
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -194,8 +196,8 @@ func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string)
 
 // getBasicUserData returns a user's basic data: alias, username, pic_url and 
 // description, along with a status code and any error encountered.
-func (r *Router) getBasicUserData(userId string) (*pb.BasicUserData, int, error) {
-	request := &pb.GetBasicUserDataRequest{
+func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, int, error) {
+	request := &pbApi.GetBasicUserDataRequest{
 		UserId: userId,
 	}
 	userData, err := r.crudClient.GetBasicUserData(context.Background(), request)
@@ -225,8 +227,8 @@ func (r *Router) getBasicUserData(userId string) (*pb.BasicUserData, int, error)
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request, 
-	upvoteRequest *pb.UpvoteRequest) {
-	stream, err := r.crudClient.Upvote(context.Background(), request)
+	upvoteRequest *pbApi.UpvoteRequest) {
+	stream, err := r.crudClient.Upvote(context.Background(), upvoteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -262,7 +264,7 @@ func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleComment(w http.ResponseWriter, req *http.Request,
-	commentRequest *pb.CommentRequest) {
+	commentRequest *pbApi.CommentRequest) {
 	stream, err := r.crudClient.Comment(context.Background(), commentRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
@@ -316,8 +318,8 @@ func (r *Router) broadcastNotifs(stream streamNotifs) {
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
 func (r *Router) handleDelete(w http.ResponseWriter, req *http.Request, 
-request *pb.DeleteRequest) {
-	_, err := r.crudClient.Delete(context.Background(), request)
+deleteRequest *pbApi.DeleteContentRequest) {
+	_, err := r.crudClient.DeleteContent(context.Background(), deleteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -345,17 +347,17 @@ request *pb.DeleteRequest) {
 	w.Write([]byte("OK"))
 }
 
-// handleUnupvote is an utility method to help reduce the repetition of similar code in 
-// other handlers that perform the same operation, in this case, a content unupvote, since
-// all the handlers that are called in an unupvote event share the same unupvote request
-// object. The duties of returning a response to the client are also delegated to
+// handleUndoUpvote is an utility method to help reduce the repetition of similar code in 
+// other handlers that perform the same operation, in this case, a content upvote undoing,
+// since all the handlers that are called in an unupvote event share the same unupvote
+// request object. The duties of returning a response to the client are also delegated to
 // handleUnupvote, which returns OK on success or an error in case of the following:
 // - invalid section name or thread id ------> 404 NOT_FOUND
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
-func (r *Router) handleUnupvote(w http.ResponseWriter, req *http.Request,
-request *pb.UnupvoteRequest) {
-	_, err := r.crudClient.Unupvote(context.Background(), request)
+func (r *Router) handleUndoUpvote(w http.ResponseWriter, req *http.Request,
+undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
+	_, err := r.crudClient.UndoUpvote(context.Background(), undoUpvoteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -386,11 +388,7 @@ request *pb.UnupvoteRequest) {
 // currentUser returns a string containing the current user id or an empty 
 // string if the user is not logged in.
 func (r *Router) currentUser(req *http.Request) string {
-	session, err := r.store.Get(req, "session")
-	if err != nil {
-		log.Printf("Could not get session because...%v\n", err)
-		return ""
-	}
+	session, _ := r.store.Get(req, "session")
 	if userId, ok := session.Values["user_id"].(string); !ok {
 		// User not logged in
 		return ""
@@ -426,32 +424,32 @@ func randToken(len int) string {
 
 // formatContextSection, formatContextThread, formatContextComment and
 // formatContextSubcomment are utility functions that return different
-// ContentContext objects.
-func formatContextSection(section string) *pb.Context_Section {
-	return &pb.Context_Section{
-		Name: section,
+// pbContext objects.
+func formatContextSection(id string) *pbContext.Section {
+	return &pbContext.Section{
+		Id: id,
 	}
 }
 
-func formatContextThread(section, id) *pb.Context_Thread {
+func formatContextThread(section, id string) *pbContext.Thread {
 	sectionCtx := formatContextSection(section)
-	return &pb.Context_Thread{
+	return &pbContext.Thread{
 		Id:         id,
 		SectionCtx: sectionCtx,
 	}
 }
 
-func formatContextComment(section, thread, id) *pb.Context_Comment {
+func formatContextComment(section, thread, id string) *pbContext.Comment {
 	threadCtx := formatContextThread(section, thread)
-	return &pb.Context_Comment{
+	return &pbContext.Comment{
 		Id:        id,
 		ThreadCtx: threadCtx,
 	}
 }
 
-func formatContextSubcomment(section, thread, comment, id) *pb.Context_Subcomment {
+func formatContextSubcomment(section, thread, comment, id string) *pbContext.Subcomment {
 	commentCtx := formatContextComment(section, thread, comment)
-	return &pb.Context_Subcomment{
+	return &pbContext.Subcomment{
 		Id:         id,
 		CommentCtx: commentCtx,
 	}
