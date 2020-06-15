@@ -10,7 +10,7 @@ import(
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
-	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	"github.com/luisguve/cheropatilla/internal/pkg/templates"
 	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
 )
@@ -28,9 +28,9 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	section := vars["section"]
 	sectionCtx := formatContextSection(section)
 
-	contentPattern := &pb.ContentPattern{
+	contentPattern := &pbApi.ContentPattern{
 		Pattern:        templates.FeedPattern,
-		ContentContext: sectionCtx,
+		ContentContext: &pbApi.ContentPattern_SectionCtx{sectionCtx},
 		// ignore DiscardIds, do not discard any thread
 	}
 
@@ -101,12 +101,12 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	// Get id of contents to be discarded
-	discardIds := getDiscardIds(session)
+	discard := getDiscardIds(session)
 
-	contentPattern := &pb.ContentPattern{
-		DiscardIds:     discardIds.FormatSectionThreads(section),
+	contentPattern := &pbApi.ContentPattern{
 		Pattern:        templates.FeedPattern,
-		ContentContext: sectionCtx,
+		ContentContext: &pbApi.ContentPattern_SectionCtx{sectionCtx},
+		DiscardIds:     discard.FormatSectionThreads(section),
 	}
 
 	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
@@ -172,7 +172,6 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
-	sectionCtx := formatContextSection(section)
 
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, status := getAndSaveFile(req, "ft_file")
@@ -191,9 +190,10 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_TITLE", http.StatusBadRequest)
 		return
 	}
-	createRequest := &pb.CreateThreadRequest{
+	sectionCtx := formatContextSection(section)
+	createRequest := &pbApi.CreateThreadRequest{
 		UserId:     userId,
-		Content:    &pb.Content{
+		Content:    &pbApi.Content{
 			Title:       title,
 			Content:     content,
 			FtFile:      filePath,

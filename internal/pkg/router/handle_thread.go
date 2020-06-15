@@ -27,9 +27,10 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pb.GetThreadRequest{ 
+	request := &pbApi.GetThreadRequest{ 
 		Thread: threadCtx,
 	}
 	// Load thread
@@ -117,16 +118,17 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+
 	threadCtx := formatContextThread(section, thread)
 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
 	discardIds := getDiscardIds(session)
 
-	contentPattern := &pb.ContentPattern{
-		DiscardIds:     discardIds.FormatThreadComments(thread),
+	contentPattern := &pbApi.ContentPattern{
 		Pattern:        templates.FeedPattern,
-		ContentContext: threadCtx,
+		ContentContext: &pbApi.ContentPattern_ThreadCtx{threadCtx},
+		DiscardIds:     discardIds.FormatThreadComments(thread),
 	}
 	var feed templates.ContentsFeed
 
@@ -186,9 +188,10 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pb.SaveThreadRequest{
+	request := &pbApi.SaveThreadRequest{
 		UserId: userId,
 		Thread: threadCtx,
 	}
@@ -219,23 +222,24 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter,
 	w.Write([]byte("OK"))
 }
 
-// Unsave thread "/{section}/{thread}/unsave" handler. It removes the thread
+// Undo save thread "/{section}/{thread}/undosave" handler. It removes the thread
 // id from the list of saved threads of the given user, whose id is provided.
 // It returns OK on success or an error in case of the following:
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - network failures ------------------> INTERNAL_FAILURE
-func (r *Router) handleUnsave(userId string, w http.ResponseWriter, 
+func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, 
 	r *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pb.UnsaveThreadRequest{
+	undoSaveRequest := &pbApi.UndoSaveThreadRequest{
 		UserId: userId,
 		Thread: threadCtx,
 	}
-	_, err := r.crudClient.UnsaveThread(context.Background(), request)
+	_, err := r.crudClient.UndoSaveThread(context.Background(), undoSaveRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -271,13 +275,14 @@ func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pb.DeleteRequest{
+	deleteRequest := &pbApi.DeleteContentRequest{
 		UserId:         userId,
-		ContentContext: threadCtx,
+		ContentContext: &pbApi.DeleteContentRequest_ThreadCtx{threadCtx},
 	}
-	r.handleDelete(w, req, request)
+	r.handleDelete(w, req, deleteRequest)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of 
@@ -293,31 +298,32 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 	thread := vars["thread"]
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pb.UpvoteRequest{
+	upvoteRequest := &pbApi.UpvoteRequest{
 		UserId:         userId,
-		ContentContext: threadCtx,
+		ContentContext: &pbApi.UpvoteRequest_ThreadCtx{threadCtx},
 	}
 
-	r.handleUpvote(w, req, request)
+	r.handleUpvote(w, req, upvoteRequest)
 }
 
-// Post Un-upvote "/{section}/{thread}/unupvote/" handler. It leverages the
-// operation of submitting the un-upvote to the method handleUpvote, which
+// Post upvote undoing "/{section}/{thread}/undoupvote/" handler. It leverages
+// the operation of submitting the un-upvote to the method handleUpvote, which
 // returns OK on success or an error in case of the following:
 // - invalid section name or thread id ------> 404 NOT_FOUND
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
-func (r *Router) handleUnupvoteThread(userId string, w http.ResponseWriter,
+func (r *Router) handleUndoUpvoteThread(userId string, w http.ResponseWriter,
 req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pb.UnupvoteRequest{
+	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
 		UserId:         userId,
-		ContentContext: threadCtx,
+		ContentContext: &pbApi.UndoUpvoteRequest_ThreadCtx{threadCtx},
 	}
 
-	r.handleUnupvote(w, req, request)
+	r.handleUndoUpvote(w, req, undoUpvoteRequest)
 }

@@ -11,7 +11,7 @@ import(
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
-	pb "github.com/luisguve/cheropatilla/internal/pkg/cheropatillapb"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	"github.com/luisguve/cheropatilla/internal/pkg/templates"
 )
 
@@ -37,7 +37,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	commentId := vars["c_id"]
 	commentCtx := formatContextComment(section, thread, commentId)
 
-	request := &pb.GetSubcommentsRequest{
+	request := &pbApi.GetSubcommentsRequest{
 		Offset:     uint32(offset),
 		CommentCtx: commentCtx,
 	}
@@ -95,7 +95,7 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
-	thread := vars["thread"]
+	threadId := vars["thread"]
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, status := getAndSaveFile(req, "ft_file")
 	if err != nil {
@@ -112,13 +112,13 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
 		return
 	}
-	threadCtx := formatContextThread(section, thread)
-	postCommentRequest := &pb.CommentRequest{
+	thread := formatContextThread(section, threadId)
+	postCommentRequest := &pbApi.CommentRequest{
 		Content:        content,
 		FtFile:         filePath,
 		UserId:         userId,
 		PublishDate:    time.Now().Unix(),
-		ContentContext: threadCtx,
+		ContentContext: &pbApi.CommentRequest_ThreadCtx{thread},
 	}
 	r.handleComment(w, req, postCommentRequest)
 }
@@ -138,11 +138,11 @@ func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 	commentId := vars["c_id"]
 
 	comment := formatContextComment(section, thread, commentId)
-	request := &pb.DeleteRequest{
+	deleteContentRequest := &pbApi.DeleteContentRequest{
 		UserId:         userId,
-		ContentContext: comment,
+		ContentContext: &pbApi.DeleteContentRequest_CommentCtx{comment},
 	}
-	r.handleDelete(w, req, request)
+	r.handleDelete(w, req, deleteContentRequest)
 }
 
 // Post Subcomment "/{section}/{thread}/comment/?c_id={c_id}" handler. It handles the
@@ -182,12 +182,12 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 		return
 	}
 	comment := formatContextComment(section, thread, commentId)
-	postCommentRequest := &pb.CommentRequest{
+	postCommentRequest := &pbApi.CommentRequest{
 		Content:        content,
 		FtFile:         filePath,
 		PublishDate:    time.Now().Unix(),
 		UserId:         userId,
-		ContentContext: comment,
+		ContentContext: &pbApi.CommentRequest_CommentCtx{comment},
 	}
 	r.handleComment(w, req, postCommentRequest)
 }
@@ -205,16 +205,15 @@ func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	commentId := vars["c_id"]
+	comment := vars["c_id"]
 	subcommentId := vars["sc_id"]
 
-	subcomment := formatContextSubcomment(section, thread, commentId,
-		subcommentId)
-	request := &pb.DeleteRequest{
+	subcomment := formatContextSubcomment(section, thread, comment, subcommentId)
+	deleteRequest := &pbApi.DeleteContentRequest{
 		UserId:         userId,
-		ContentContext: subcomment,
+		ContentContext: &pbApi.DeleteContentRequest_SubcommentCtx{subcomment},
 	}
-	r.handleDelete(w, req, request)
+	r.handleDelete(w, req, deleteRequest)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. 
@@ -231,11 +230,11 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 	commentId := vars["c_id"]
 
 	comment := formatContextComment(section, thread, commentId)
-	request := &pb.UpvoteRequest{
+	upvoteRequest := &pbApi.UpvoteRequest{
 		UserId:         userId,
-		ContentContext: comment,
+		ContentContext: &pbApi.UpvoteRequest_CommentCtx{comment},
 	}
-	r.handleUpvote(w, req, request)
+	r.handleUpvote(w, req, upvoteRequest)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}" handler.
@@ -252,23 +251,22 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	commentId := vars["c_id"]
 	subcommentId := vars["sc_id"]
 
-	subcomment := formatContextSubcomment(section, thread, commentId,
-		subcommentId)
-	request := &pb.UpvoteRequest{
+	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)
+	upvoteRequest := &pbApi.UpvoteRequest{
 		UserId:         userId,
-		ContentContext: subcomment,
+		ContentContext: &pbApi.UpvoteRequest_SubcommentCtx{subcomment},
 	}
-	r.handleUpvote(w, req, request)
+	r.handleUpvote(w, req, upvoteRequest)
 }
 
-// Post Un-upvote "/{section}/{thread}/unupvote/?c_id={c_id}" handler.
+// Post upvote undoing "/{section}/{thread}/unupvote/?c_id={c_id}" handler.
 // It leverages the operation of submitting the un-upvote to the method
 // handleUpvote, which returns OK on success or an error in case of the
 // following:
 // - invalid section name or thread id ------> 404 NOT_FOUND
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
-func (r *Router) handleUnupvoteComment(userId string, w http.ResponseWriter,
+func (r *Router) handleUndoUpvoteComment(userId string, w http.ResponseWriter,
 req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -276,33 +274,32 @@ req *http.Request) {
 	commentId := vars["c_id"]
 
 	comment := formatContextComment(section, thread, commentId)
-	request := &pb.UnupvoteRequest{
+	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
 		UserId:         userId,
-		ContentContext: comment,
+		ContentContext: &pbApi.UndoUpvoteRequest_CommentCtx{comment},
 	}
-	r.handleUnupvote(w, req, request)
+	r.handleUndoUpvote(w, req, undoUpvoteRequest)
 }
 
-// Post Un-upvote "/{section}/{thread}/unupvote/?c_id={c_id}&sc_id={sc_id}"
+// Post upvote undoing "/{section}/{thread}/unupvote/?c_id={c_id}&sc_id={sc_id}"
 // handler. It leverages the operation of submitting the un-upvote to the
 // method handleUpvote, which returns OK on success or an error in case of
 // the following:
 // - invalid section name or thread id ------> 404 NOT_FOUND
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
-func (r *Router) handleUnupvoteComment(userId string, w http.ResponseWriter,
+func (r *Router) handleUndoUpvoteSubcomment(userId string, w http.ResponseWriter,
 req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	commentId := vars["c_id"]
+	comment := vars["c_id"]
 	subcommentId := vars["sc_id"]
 
-	subcomment := formatContextSubcomment(section, thread, commentId,
-		subcommentId)
-	request := &pb.UnupvoteRequest{
+	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)
+	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
 		UserId:         userId,
-		ContentContext: subcomment,
+		ContentContext: &pbApi.UndoUpvoteRequest_SubcommentCtx{subcomment},
 	}
-	r.handleUnupvote(w, req, request)
+	r.handleUndoUpvote(w, req, undoUpvoteRequest)
 }
