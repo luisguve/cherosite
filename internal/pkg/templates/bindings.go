@@ -4,7 +4,7 @@ import(
 	"strings"
 	"fmt"
 
-	pbAbi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 

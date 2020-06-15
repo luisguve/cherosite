@@ -1,10 +1,22 @@
+// package templates defines the set of types to hold the data that will be
+// consumed by HTML templates, along with other types and helper functions to
+// bind objects from protobuf messages and types for template rendering, and
+// for holding page feeds and format them into values useful for pagination.
+//
+// It also defines the patterns of specified quality expected to get from the
+// server into feeds.
+//
+// The template engine used to render the templates is html/templates.
+//
+// The templates definitions are located in /web/.
+
 package templates
 
 import(
 	"html/template"
 
-	p "github.com/luisguve/cheropatilla/internal/pkg/pagination"
-	pb "github.com/luisguve/cheropatilla/internal/cheropatillapb"
+	pag "github.com/luisguve/cheropatilla/internal/pkg/pagination"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 )
 
 var tpl *template.Template
@@ -14,64 +26,30 @@ func Setup() *template.Template {
 	return template.Must(template.ParseGlob("/web/templates/*.html"))
 }
 
+// ContentsFeed holds a list of *pbApi.ContentRule, representing a page feed of
+// some kind.
 type ContentsFeed struct {
-	Contents []*pb.ContentRule
-}
-
-// (boilerplate) formatComment converts a *pb.ContentRule_CommentCtx into a
-// pagination.Comment object.
-func formatComment(comment *pb.ContentRule_CommentCtx) p.Comment {
-	return p.Comment{
-		Id:     comment.Id,
-		Thread: p.Thread{
-			SectionName: comment.TheadCtx.SectionCtx.Name,
-			Id:          comment.TheadCtx.Id,
-		},
-	}
-}
-
-// (boilerplate) formatSubcomment converts a *pb.ContentRule_SubcommentCtx
-// into a pagination.Subcomment object.
-func formatSubcomment(sc *pb.ContentRule_SubcommentCtx) p.Subcomment {
-	return p.Subcomment{
-		Id:      sc.Id,
-		Comment: p.Comment{
-			Id:     sc.CommentCtx.Id,
-			Thread: p.Thread{
-				SectionName: sc.CommentCtx.ThreadCtx.SectionCtx.Name,
-				Id:          sc.CommentCtx.ThreadCtx.Id,
-			},
-		},
-	}
-}
-
-// (boilerplate) formatThread converts a *pb.ContentRule_ThreadCtx into a
-// pagination.Thread object.
-func formatThread(thread *pb.ContentRule_ThreadCtx) p.Thread {
-	return p.Thread{
-		Id:          thread.Id,
-		SectionName: thread.SectionCtx.Name,
-	}
+	Contents []*pbApi.ContentRule
 }
 
 // GetUserPaginationActivity formats a ContentsFeed object holding contents
 // from a single user to a pagination.Activity object.
-func (cf ContentsFeed) GetUserPaginationActivity() p.Activity {
-	var pActivity p.Activity
+func (cf ContentsFeed) GetUserPaginationActivity() pag.Activity {
+	var pActivity pag.Activity
 
 	for _, activity := range cf.Contents {
 		switch ctx := activity.ContentContext.(type) {
-		case *pb.ContentRule_ThreadCtx:
+		case *pbApi.ContentRule_ThreadCtx:
 			// content type: THREAD
-			thread := formatThread(ctx)
+			thread := pag.FormatThread(ctx)
 			pActivity.ThreadsCreated = append(pActivity.ThreadsCreated, thread)
-		case *pb.ContentRule_CommentCtx:
+		case *pbApi.ContentRule_CommentCtx:
 			// content type: COMMENT
-			comment := formatComment(ctx)
+			comment := pag.FormatComment(ctx)
 			pActivity.Comments = append(pActivity.Comments, comment)
-		case *pb.ContentRule_SubcommentCtx:
+		case *pbApi.ContentRule_SubcommentCtx:
 			// content type: SUBCOMMENT
-			sc := formatSubcomment(ctx)
+			sc := pag.FormatSubcomment(ctx)
 			pActivity.Subcomments = append(pActivity.Subcomments, sc)
 		}
 	}
@@ -81,24 +59,24 @@ func (cf ContentsFeed) GetUserPaginationActivity() p.Activity {
 // GetPaginationActivity formats a ContentsFeed object holding contents from
 // different users into a map of UserIds, i.e. the authors of each content to
 // pagination.Activity, i.e. their contents.
-func (cf ContentsFeed) GetPaginationActivity() map[string]p.Activity {
-	pActivity := make(map[string]p.Activity)
+func (cf ContentsFeed) GetPaginationActivity() map[string]pag.Activity {
+	pActivity := make(map[string]pag.Activity)
 
 	for _, activity := range cf.Contents {
 		userId := activity.Data.Author.Id
 
 		switch ctx := activity.ContentContext.(type) {
-		case *pb.ContentRule_ThreadCtx:
+		case *pbApi.ContentRule_ThreadCtx:
 			// content type: THREAD
-			thread := formatThread(ctx)
+			thread := pag.FormatThread(ctx)
 			pActivity[userId].ThreadsCreated = append(pActivity[userId].ThreadsCreated, thread)
-		case *pb.ContentRule_CommentCtx:
+		case *pbApi.ContentRule_CommentCtx:
 			// content type: COMMENT
-			comment := formatComment(ctx)
+			comment := pag.FormatComment(ctx)
 			pActivity[userId].Comments = append(pActivity[userId].Comments, comment)
-		case *pb.ContentRule_SubcommentCtx:
+		case *pbApi.ContentRule_SubcommentCtx:
 			// content type: SUBCOMMENT
-			sc := formatSubcomment(ctx)
+			sc := pag.FormatSubcomment(ctx)
 			pActivity[userId].Subcomments = append(pActivity[userId].Subcomments, sc)
 		}
 	}
@@ -137,7 +115,7 @@ func (cf ContentsFeed) GetPaginationComments() []string {
 	var commentIds []string
 
 	for _, content := range cf.Contents {
-		ctx, ok := content.ContentContext.(*pb.ContentRule_CommentCtx)
+		ctx, ok := content.ContentContext.(*pbApi.ContentRule_CommentCtx)
 		if !ok {
 			continue
 		}
