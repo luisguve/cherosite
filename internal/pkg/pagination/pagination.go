@@ -2,6 +2,11 @@ package pagination
 
 import(
 	"encoding/gob"
+	"sync"
+	
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
+	pbContext "github.com/luisguve/cheroproto-go/context"
 )
 
 func init() {
@@ -46,47 +51,47 @@ func (d *DiscardIds) FormatThreadComments(threadId string) []string {
 }
 
 // FormatGeneralThreads converts the field GeneralThreads into a 
-// map[string]*pb.IdList to be used in a request to recycle general threads.
-func (d *DiscardIds) FormatGeneralThreads() map[string]*pb.IdList {
-	result := make(map[string]*pb.IdList)
+// map[string]*pbApi.IdList to be used in a request to recycle general threads.
+func (d *DiscardIds) FormatGeneralThreads() map[string]*pbApi.IdList {
+	result := make(map[string]*pbApi.IdList)
 	for section, threadIds := range d.GeneralThreads {
-		result[section] = &pb.IdList{
+		result[section] = &pbApi.IdList{
 			Ids: threadIds,
 		}
 	}
 	return result
 }
 
-// FormatSavedThreads converts the field SavedThreads into a map[string]*pb.IdList
+// FormatSavedThreads converts the field SavedThreads into a map[string]*pbApi.IdList
 // to be used in a request to recycle saved threads of a user.
-func (d *DiscardIds) FormatSavedThreads() map[string]*pb.IdList {
-	result := make(map[string]*pb.IdList)
+func (d *DiscardIds) FormatSavedThreads() map[string]*pbApi.IdList {
+	result := make(map[string]*pbApi.IdList)
 	for section, threadIds := range d.SavedThreads {
-		result[section] = &pb.IdList{
+		result[section] = &pbApi.IdList{
 			Ids: threadIds,
 		}
 	}
 	return result
 }
 
-// FormatUserActivity converts the field UserActivity into a 
-// map[string]*pb.Activity to be used in a request to recycle activity, formatting
-// the threads created, comments and subcomments in the given Activity object of 
-// the given key in UserActivity into a *pb.Activity.
+// FormatUserActivity converts the field UserActivity into a
+// map[string]*pbDataFormat.Activity to be used in a request to recycle activity,
+// formatting the threads created, comments and subcomments in the given Activity
+// object of the given key in UserActivity into a *pbDataFormat.Activity.
 // It uses the given userId as the key to the activity of the given user.
-func (d *DiscardIds) FormatUserActivity(userId string) map[string]*pb.Activity {
-	pbActivity := make(map[string]*pb.Activity)
+func (d *DiscardIds) FormatUserActivity(userId string) map[string]*pbDataFormat.Activity {
+	pbActivity := make(map[string]*pbDataFormat.Activity)
 	pbActivity[userId] = formatActivity(d.UserActivity[userId])
 	return pbActivity
 }
 
 // FormatFeedActivity converts the field FeedActivity into a 
-// map[string]*pb.Activity to be used in a request to recycle activity, formatting
-// the threads created, comments and subcomments in the given Activity object of 
-// each key in FeedActivity into a *pb.Activity.
+// map[string]*pbDataFormat.Activity to be used in a request to recycle activity,
+// formatting the threads created, comments and subcomments in the given Activity
+// object of  each key in FeedActivity into a *pbDataFormat.Activity.
 // It uses the given userIds as the keys to the activity of the given users.
-func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pb.Activity {
-	pbActivity := make(map[string]*pb.Activity)
+func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pbDataFormat.Activity {
+	pbActivity := make(map[string]*pbDataFormat.Activity)
 	for _, userId := range userIds {
 		pbActivity[userId] = formatActivity(d.FeedActivity[userId])
 	}
@@ -94,48 +99,62 @@ func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pb.Activit
 }
 
 // formatActivity formats the threads created, comments and subcomments in the
-// given Activity object into a *pb.Activity
-func formatActivity(activity Activity) *pb.Activity {
-	var pbActivity *pb.Activity
+// given Activity object into a *pbDataFormat.Activity
+func formatActivity(activity Activity) *pbDataFormat.Activity {
+	var pbActivity *pbDataFormat.Activity
+	var wg sync.WaitGroup
 	// Set threads
-	for _, t := range activity.ThreadsCreated {
-		pbThread := &pb.Context_Thread{
-			Id:         t.Id,
-			SectionCtx: &pb.Context_section{
-				Name: t.SectionName,
-			},
-		}
-		pbActivity.ThreadsCreated = append(pbActivity.ThreadsCreated, pbThread)
-	}
-	// Set comments
-	for _, c := range activity.Comments {
-		pbComment := &pb.Context_Comment{
-			Id:        c.Id,
-			ThreadCtx: &pb.Context_Thread{
-				Id:         c.Thread.Id,
-				SectionCtx: &pb.Context_section{
-					Name: c.Thread.SectionName,
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, t := range activity.ThreadsCreated {
+			pbThread := &pbContext.Thread{
+				Id:         t.Id,
+				SectionCtx: &pbContext.Section{
+					Id: t.SectionName,
 				},
-			},
+			}
+			pbActivity.ThreadsCreated = append(pbActivity.ThreadsCreated, pbThread)
 		}
-		pbActivity.Comments = append(pbActivity.Comments, pbComment)
-	}
-	// Set subcomments
-	for _, sc := range activity.Subcomments {
-		pbSubcomment := &pb.Context_Subcomment{
-			Id:         sc.Id,
-			CommentCtx: &pb.Context_Comment{
-				Id:        sc.Comment.Id,
-				ThreadCtx: &pb.Context_Thread{
-					Id: sc.Comment.Thread.Id,
-					SectionCtx: &pb.Context_section{
-						Name: sc.Comment.Thread.SectionName,
+	}()
+	// Set comments
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, c := range activity.Comments {
+			pbComment := &pbContext.Comment{
+				Id:        c.Id,
+				ThreadCtx: &pbContext.Thread{
+					Id:         c.Thread.Id,
+					SectionCtx: &pbContext.Section{
+						Id: c.Thread.SectionName,
 					},
 				},
-			},
+			}
+			pbActivity.Comments = append(pbActivity.Comments, pbComment)
 		}
-		pbActivity.Subcomments = append(pbActivity.Subcomments, pbSubcomment)
-	}
+	}()
+	// Set subcomments
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, sc := range activity.Subcomments {
+			pbSubcomment := &pbContext.Subcomment{
+				Id:         sc.Id,
+				CommentCtx: &pbContext.Comment{
+					Id:        sc.Comment.Id,
+					ThreadCtx: &pbContext.Thread{
+						Id: sc.Comment.Thread.Id,
+						SectionCtx: &pbContext.Section{
+							Id: sc.Comment.Thread.SectionName,
+						},
+					},
+				},
+			}
+			pbActivity.Subcomments = append(pbActivity.Subcomments, pbSubcomment)
+		}
+	}()
+	wg.Wait()
 	return pbActivity
 }
 
@@ -163,4 +182,41 @@ type Subcomment struct {
 	Id string
 }
 
-// thread ids are canonical
+// FormatComment converts a *pbApi.ContentRule_CommentCtx into a Comment object
+// for pagination.
+func FormatComment(comCtx *pbApi.ContentRule_CommentCtx) Comment {
+	comment := comCtx.CommentCtx
+	return Comment{
+		Id:     comment.Id,
+		Thread: Thread{
+			SectionName: comment.TheadCtx.SectionCtx.Id,
+			Id:          comment.TheadCtx.Id,
+		},
+	}
+}
+
+// FormatSubcomment converts a *pbApi.ContentRule_SubcommentCtx into a Subcomment
+// object for pagination.
+func FormatSubcomment(subcCtx *pbApi.ContentRule_SubcommentCtx) Subcomment {
+	sc := subcCtx.SubcommentCtx
+	return Subcomment{
+		Id:      sc.Id,
+		Comment: Comment{
+			Id:     sc.CommentCtx.Id,
+			Thread: Thread{
+				SectionName: sc.CommentCtx.ThreadCtx.SectionCtx.Id,
+				Id:          sc.CommentCtx.ThreadCtx.Id,
+			},
+		},
+	}
+}
+
+// FormatThread converts a *pbApi.ContentRule_ThreadCtx into a Thread object
+// for pagination.
+func FormatThread(threadCtx *pbApi.ContentRule_ThreadCtx) Thread {
+	thread := threadCtx.ThreadCtx
+	return Thread{
+		Id:          thread.Id,
+		SectionName: thread.SectionCtx.Id,
+	}
+}
