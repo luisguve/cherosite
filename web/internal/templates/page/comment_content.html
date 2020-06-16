@@ -1,8 +1,9 @@
 {{ $class := .BasicContent.ClassName }}
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
+{{ $undoUpvoteLink := .BasicContent.UndoUpvoteLink }}
 {{ $replyLink := .ReplyLink }}
 
-<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-reply-link="{{$replyLink}}">
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-reply-link="{{$replyLink}}">
 	<header>
 	{{ with .BasicContent }}
 		By <a href="/profile?{{.Username}}">{{.Author}}</a> on {{.PublishDate}}

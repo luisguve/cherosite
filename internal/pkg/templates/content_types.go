@@ -27,22 +27,23 @@ type ContentRenderer interface {
 // BasicContent is the set of fields that are shared by all the kinds of content:
 // threads, comments and subcomments
 type BasicContent struct {
-	Title       string
-	Status      string // NEW, RELEVANT or TOP
-	ClassName   string
-	UpvoteLink  string // URL to post upvote to content
-	Thumbnail   string // Thumbnail URL
-	Permalink   string // Content URL
-	Content     string
-	Summary     string
-	Upvotes     uint32
-	Upvoted     bool // Has the current user topvote'd this content?
-	SectionName string
-	Author      string // User alias
-	Username    string // Author's username
-	PublishDate string
-	ThreadLink  string // Thread URL. It includes SectionLink
-	SectionLink string // Section URL
+	Title          string
+	Status         string // NEW, RELEVANT or TOP
+	ClassName      string
+	UpvoteLink     string // URL to post upvote to content
+	UndoUpvoteLink string // URL to post undo content upvote
+	Thumbnail      string // Thumbnail URL
+	Permalink      string // Content URL
+	Content        string
+	Summary        string
+	Upvotes        uint32
+	Upvoted        bool // Has the current user topvote'd this content?
+	SectionName    string
+	Author         string // User alias
+	Username       string // Author's username
+	PublishDate    string
+	ThreadLink     string // Thread URL. It includes SectionLink
+	SectionLink    string // Section URL
 }
 
 // type for displaying content of a thread in section page level and single

@@ -259,6 +259,7 @@ func formatCommentContent(pbRule *pbApi.1ContentRule, userId string)
 
 	replyLink := fmt.Sprintf("%s/comment/?c_id=%s", threadLink, comCtx.Id)
 	bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
+	bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s", threadLink, comCtx.Id)
 
 	comContent := &CommentContent{
 		BasicContent: bc,
@@ -303,6 +304,7 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string)
 		undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
 		replyLink := fmt.Sprintf("%s/comment", threadLink)
 		bc.UpvoteLink = fmt.Sprintf("%s/upvote", threadLink)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote", threadLink)
 		var saved bool
 		if userId == "" {
 			saved = false
@@ -324,6 +326,7 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string)
 		comCtx := ctx.CommentCtx
 
 		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s", threadLink, comCtx.Id)
 		ovwRenderer = &CommentView{
 			BasicContent: bc,
 			Id:           comCtx.Id,
@@ -335,6 +338,8 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string)
 		subcCtx := ctx.SubcommentCtx
 
 		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s&sc_id=%s", threadLink, 
+			subcCtx.CommentCtx.Id, subcCtx.Id)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s&sc_id=%s", threadLink, 
 			subcCtx.CommentCtx.Id, subcCtx.Id)
 		ovwRenderer = &SubcommentView{
 			BasicContent: bc,
