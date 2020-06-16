@@ -218,7 +218,7 @@ func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentR
 
 	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
 	saveLink := fmt.Sprintf("%s/save", threadLink)
-	unsaveLink := fmt.Sprintf("%s/unsave", threadLink)
+	undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
 	replyLink := fmt.Sprintf("%s/comment", threadLink)
 	
 	var saved bool
@@ -232,7 +232,7 @@ func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentR
 		BasicContent: bc,
 		Replies:      metadata.Replies,
 		SaveLink:     saveLink,
-		UnsaveLink:   unsaveLink,
+		UndoSaveLink: undoSaveLink,
 		Saved:        saved,
 		ReplyLink:    replyLink,
 	}
@@ -300,7 +300,7 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string)
 	// it's a THREAD
 	case *pbApi.ContentRule_ThreadCtx:
 		saveLink := fmt.Sprintf("%s/save", threadLink)
-		unsaveLink := fmt.Sprintf("%s/unsave", threadLink)
+		undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
 		replyLink := fmt.Sprintf("%s/comment", threadLink)
 		bc.UpvoteLink = fmt.Sprintf("%s/upvote", threadLink)
 		var saved bool
@@ -314,7 +314,7 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string)
 			BasicContent: bc,
 			Replies:      metadata.Replies,
 			SaveLink:     saveLink,
-			UnsaveLink:   unsaveLink,
+			UndoSaveLink: undoSaveLink,
 			Saved:        saved,
 			ReplyLink:    replyLink,
 		}
