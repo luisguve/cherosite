@@ -1,8 +1,10 @@
 package templates
 
 import(
+	"sync"
 	"strings"
 	"fmt"
+	"log"
 
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
@@ -28,12 +30,30 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 			Link: fmt.Sprintf("/profile/recycle?userid=%s", userData.UserId),
 		}
 	}
+	var (
+		hd HeaderData
+		pd ProfileData
+		activitySet []OverviewRenderer
+		wg sync.WaitGroup
+	)
 	// set user header data
-	hd := setHeaderData(uhd, recycleSet)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hd = setHeaderData(uhd, recycleSet)
+	}()
 	// set user profile data
-	pd := setProfileData(userData)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		pd = setProfileData(userData)
+	}()
 	// convert each activity into an OverviewRenderer set
-	activitySet := contentsToOverviewRendererSet(activity, currentUserId)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		activitySet = contentsToOverviewRendererSet(activity, currentUserId)
+	}()
 	// check whether the current user is a follower of the user viewing
 	var isF bool
 	if currentUserId == "" {
@@ -41,7 +61,7 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 	} else {
 		isF = strings.Contains(strings.Join(userData.FollowersIds, "|"), currentUserId)
 	}
-
+	wg.Wait()
 	return &ProfileView{
 		HeaderData:  hd,
 		ProfileData: pd,
@@ -66,14 +86,38 @@ func DataToDashboardView(dData *pbApi.DashboardData, feed, activity,
 			Link: "/recyclesaved",
 		},
 	}
+	var (
+		hd HeaderData
+		activitySet []OverviewRenderer
+		savedContentSet []OverviewRenderer
+		feedSet []OverviewRenderer
+		wg sync.WaitGroup
+	)
 	// set user header data
-	hd := setHeaderData(dData.UserHeaderData, recycleSet)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hd = setHeaderData(dData.UserHeaderData, recycleSet)
+	}()
 	// convert user activity set into an OverviewRenderer set
-	activitySet := contentsToOverviewRendererSet(activity, dData.UserId)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		activitySet = contentsToOverviewRendererSet(activity, dData.UserId)
+	}()
 	// convert saved content set into an OverviewRenderer set
-	savedContentSet := contentsToOverviewRendererSet(saved, dData.UserId)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		savedContentSet = contentsToOverviewRendererSet(saved, dData.UserId)
+	}()
 	// convert feed activity into an OverviewRenderer set
-	feedSet := contentsToOverviewRendererSet(feed, dData.UserId)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		feedSet = contentsToOverviewRendererSet(feed, dData.UserId)
+	}()
+	wg.Wait()
 	return &DashboardView{
 		HeaderData:   hd,
 		Followers:    len(dData.FollowersIds),
@@ -92,10 +136,24 @@ currentUserId string) *ExploreView {
 			Link:  "/explore/recycle",
 		},
 	}
+	var (
+		wg sync.WaitGroup
+		hd HeaderData
+		feedSet []OverviewRenderer
+	)
 	// set user header data
-	hd := setHeaderData(uhd, recycleSet)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hd = setHeaderData(uhd, recycleSet)
+	}()
 	// convert feed content into an OverviewRenderer set
-	feedSet := contentsToOverviewRendererSet(feed, currentUserId)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		feedSet = contentsToOverviewRendererSet(feed, currentUserId)
+	}()
+	wg.Wait()
 	return &ExploreView{
 		HeaderData: hd,
 		Feed:       feedSet,
@@ -112,11 +170,31 @@ uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 			Link:  fmt.Sprintf("/%s/%s/recycle", section, metadata.Id),
 		},
 	}
+	var (
+		hd HeaderData
+		threadContent ContentRenderer
+		threadComments []OverviewRenderer
+		wg sync.WaitGroup
+	)
 	// set user header data
-	hd := setHeaderData(uhd, recycleSet)
-	threadContent := contentToContentRenderer(content, currentUserId)
-	threadComments := commentsToOverviewRendererSet(feed, currentUserId)
-
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hd = setHeaderData(uhd, recycleSet)
+	}()
+	// convert *pbApi.ContentRule into a ContentRenderer
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		threadContent = contentToContentRenderer(content, currentUserId)
+	}()
+	// convert comments feed into a []OverviewRenderer
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		threadComments = commentsToOverviewRendererSet(feed, currentUserId)
+	}()
+	wg.Wait()
 	return &ThreadView{
 		HeaderData: hd,
 		Content:    threadContent,
@@ -127,10 +205,15 @@ uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 currentUserId string) *SectionView {
 	var section string
-	// just making sure the program doesn't crash in case of a nil feed
-	if len(feed) > 0 {
-		// get section name from 1st thread in feed
-		section = feed[0].Metadata.Section
+	// get section name from first valid content rule.
+	for _, pbRule := range feed {
+		if (pbRule.Data != nil) && (pbRule.Data.Metadata != nil) {
+			section = pbRule.Data.Metadata.Section
+			break
+		}
+	}
+	if section == "" {
+		log.Println("Could not get section name")
 	}
 	sectionId := strings.Replace(strings.ToLower(section), " ", "", -1)
 
@@ -142,6 +225,7 @@ currentUserId string) *SectionView {
 	}
 	// set user header data
 	hd := setHeaderData(uhd, recycleSet)
+	// convert feed into a []OverviewRenderer
 	sectionThreads := contentsToOverviewRendererSet(feed, currentUserId)
 
 	return &SectionView{
@@ -209,6 +293,10 @@ func setBasicUserData(userData *pbDataFormat.BasicUserData) BasicUserData {
 }
 
 func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentRenderer {
+	if pbRule.Data == nil {
+		log.Println("pbRule has no data")
+		return &NoContent{}
+	}
 	bc := setBasicContent(pbRule, userId)
 
 	metadata := pbRule.Data.Metadata
@@ -241,8 +329,10 @@ func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentR
 // formatCommentContent converts a *pbApi.ContentRule into a *CommentContent and
 // returns it along with an error indicating whether or not the content context was
 // not a *pbApi.ContentRule_CommentCtx. userId is used to setBasicContent.
-func formatCommentContent(pbRule *pbApi.1ContentRule, userId string) 
-(*CommentContent, error) {
+func formatCommentContent(pbRule *pbApi.ContentRule, userId string) (*CommentContent, error) {
+	if pbRule.Data == nil {
+		return nil, fmt.Errorf("Comment has no data")
+	}
 	ctx, ok := pbRule.ContentContext.(*pbApi.ContentRule_CommentCtx)
 	if !ok {
 		return nil, fmt.Errorf("Failed type assertion to *pbApi.ContentRule_CommentCtx")
@@ -270,23 +360,33 @@ func formatCommentContent(pbRule *pbApi.1ContentRule, userId string)
 	return comContent, nil
 }
 
-func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string)
-	[]OverviewRenderer {
-	var ovwRendererSet []OverviewRenderer
+func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string) []OverviewRenderer {
+	var (
+		ovwRendererSet = make([]OverviewRenderer, len(pbRuleSet))
+		wg sync.WaitGroup
+	)
 
-	for _, pbRule := range pbRuleSet {
-		ovwRenderer, err := formatCommentContent(pbRule, userId)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		ovwRendererset = append(ovwRendererset, ovwRenderer)
+	for idx, pbRule := range pbRuleSet {
+		wg.Add(1)
+		go func(idx int, pbRule *pbApi.ContentRule) {
+			defer wg.Done()
+			ovwRenderer, err := formatCommentContent(pbRule, userId)
+			if err != nil {
+				log.Println(err)
+				ovwRenderer = &NoContent{}
+			}
+			ovwRendererset[idx] = ovwRenderer
+		}(idx, pbRule)
 	}
+	wg.Wait()
 	return ovwRendererSet
 }
 
-func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) 
-	OverviewRenderer {
+func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) OverviewRenderer {
+	if pbRule.Data == nil {
+		log.Println("pbRule has no content")
+		return &NoContent{}
+	}
 
 	var ovwRenderer OverviewRenderer
 
@@ -352,20 +452,31 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string)
 
 // contentsToOverviewRendererSet converts a slice of *pbApi.ContentRule into a slice of
 // OverviewRenderer. userId is used to check whether the user has saved the content
-func contentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string) 
-	[]OverviewRenderer {
-	var ovwRendererSet []OverviewRenderer
+func contentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string) []OverviewRenderer {
+	var (
+		ovwRendererSet = make([]OverviewRenderer, len(pbRuleSet))
+		wg sync.WaitGroup
+	)
 
-	for _, pbRule := range pbRuleSet {
-		ovwRenderer := contentToOverviewRenderer(pbRule, userId)
-		ovwRendererset = append(ovwRendererset, ovwRenderer)
+	for idx, pbRule := range pbRuleSet {
+		wg.Add(1)
+		go func(idx int, pbRule *pbApi.ContentRule) {
+			defer wg.Done()
+			ovwRenderer := contentToOverviewRenderer(pbRule, userId)
+			ovwRendererset[idx] = ovwRenderer
+		}(idx, pbRule)
 	}
+	wg.Wait()
 	return ovwRendererSet
 }
 
 // setBasicContent returns a *BasicContent object filled with data retrieved from a
 // *pbApi.ContentRule. userId is used to check whether the user has upvoted the content.
 func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
+	if pbRule.Data == nil {
+		log.Println("pbRule has no data")
+		return &BasicContent{}
+	}
 	author := pbRule.Data.Author
 	content := pbRule.Data.Content
 	metadata := pbRule.Data.Metadata

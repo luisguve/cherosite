@@ -165,3 +165,32 @@ func (sc *SubcommentView) RenderOverview(idx int) template.HTML {
 	}
 	return template.HTML(result.String())
 }
+
+// type to be used when a given ContentRule has no data.
+type NoContent struct {
+	ClassName string
+}
+
+func (nc *NoContent) RenderOverview(idx int) template.HTML {
+	nc.ClassName = fmt.Sprintf("%s-%d", "no-content", idx)
+	tplName := "no_content.html"
+	
+	result := new(strings.Builder)
+	if err := tpl.ExecuteTemplate(result, tplName, nc); err != nil {
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
+	}
+	return template.HTML(result.String())
+}
+
+func (nc *NoContent) RenderContent() template.HTML {
+	nc.ClassName = "no-content"
+	tplName := "no_content.html"
+
+	result := new(strings.Builder)
+	if err := tpl.ExecuteTemplate(result, tplName, nc); err != nil {
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
+	}
+	return template.HTML(result.String())
+}
