@@ -204,9 +204,9 @@ func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, i
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
-			case codes.Unauthenticated:
+			case codes.NotFound:
 				log.Printf("User %v unregistered\n", userId)
-				return nil, http.StatusUnauthorized, errUnregistered
+				return nil, http.StatusNotFound, errUnregistered
 			default:
 				log.Printf("Unknown code %v: %v\n", resErr.Code(), resErr.Message())
 				return nil, http.StatusInternalServerError, errInternalFailure
