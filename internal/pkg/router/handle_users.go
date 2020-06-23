@@ -29,9 +29,9 @@ func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
-			case codes.Unauthenticated:
+			case codes.NotFound:
 				log.Println(resErr.Message())
-				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
+				http.Error(w, "USER_UNREGISTERED", http.StatusNotFound)
 				return
 			default:
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
