@@ -17,8 +17,9 @@ func main() {
 	// Get new template engine
 	tpl := templates.Setup()
 
+	const address = "localhost:50051"
 	// Establish connection with gRPC server
-	conn, err := grpc.Dial(os.Getenv("GRPC_ADDR"))
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
