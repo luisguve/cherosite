@@ -1,3 +1,4 @@
 *.txt
 *.pb.go
 *.exe
+*.env
