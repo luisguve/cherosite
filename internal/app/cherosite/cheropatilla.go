@@ -1,11 +1,13 @@
 package cherosite
 
 import (
+	"log"
 	"net/http"
 	"time"
 )
 
 func (app *App) Run() error {
+	log.Println("Running")
 	return app.srv.ListenAndServe()
 }
 
