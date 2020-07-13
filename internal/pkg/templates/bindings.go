@@ -1,10 +1,10 @@
 package templates
 
-import(
-	"sync"
-	"strings"
+import (
 	"fmt"
 	"log"
+	"strings"
+	"sync"
 	"time"
 
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
@@ -22,19 +22,19 @@ func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHe
 	}
 }
 
-func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderData, 
+func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderData,
 	activity []*pbApi.ContentRule, currentUserId string) *ProfileView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
-			Link: fmt.Sprintf("/profile/recycle?userid=%s", userData.UserId),
+			Link:  fmt.Sprintf("/profile/recycle?userid=%s", userData.UserId),
 		},
 	}
 	var (
-		hd HeaderData
-		pd ProfileData
+		hd          HeaderData
+		pd          ProfileData
 		activitySet []OverviewRenderer
-		wg sync.WaitGroup
+		wg          sync.WaitGroup
 	)
 	// set user header data
 	wg.Add(1)
@@ -70,28 +70,28 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 	}
 }
 
-func DataToDashboardView(dData *pbApi.DashboardData, feed, activity, 
+func DataToDashboardView(dData *pbApi.DashboardData, feed, activity,
 	saved []*pbApi.ContentRule) *DashboardView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: "Recycle your feed",
-			Link: "/recyclefeed",
+			Link:  "/recyclefeed",
 		},
 		RecycleType{
 			Label: "Recycle your activity",
-			Link: "/recycleactivity",
+			Link:  "/recycleactivity",
 		},
 		RecycleType{
 			Label: "Recycle your saved threads",
-			Link: "/recyclesaved",
+			Link:  "/recyclesaved",
 		},
 	}
 	var (
-		hd HeaderData
-		activitySet []OverviewRenderer
+		hd              HeaderData
+		activitySet     []OverviewRenderer
 		savedContentSet []OverviewRenderer
-		feedSet []OverviewRenderer
-		wg sync.WaitGroup
+		feedSet         []OverviewRenderer
+		wg              sync.WaitGroup
 	)
 	// set user header data
 	wg.Add(1)
@@ -129,7 +129,7 @@ func DataToDashboardView(dData *pbApi.DashboardData, feed, activity,
 }
 
 func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
-currentUserId string) *ExploreView {
+	currentUserId string) *ExploreView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: "Recycle explorer",
@@ -137,8 +137,8 @@ currentUserId string) *ExploreView {
 		},
 	}
 	var (
-		wg sync.WaitGroup
-		hd HeaderData
+		wg      sync.WaitGroup
+		hd      HeaderData
 		feedSet []OverviewRenderer
 	)
 	// set user header data
@@ -160,8 +160,8 @@ currentUserId string) *ExploreView {
 	}
 }
 
-func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule, 
-uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
+func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
+	uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView {
 	metadata := content.Metadata
 	section := strings.ToLower(strings.Replace(metadata.Section, " ", "", -1))
 	recycleSet := []RecycleType{
@@ -171,10 +171,10 @@ uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 		},
 	}
 	var (
-		hd HeaderData
-		threadContent ContentRenderer
+		hd             HeaderData
+		threadContent  ContentRenderer
 		threadComments []OverviewRenderer
-		wg sync.WaitGroup
+		wg             sync.WaitGroup
 	)
 	// set user header data
 	wg.Add(1)
@@ -203,7 +203,7 @@ uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 }
 
 func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
-currentUserId string) *SectionView {
+	currentUserId string) *SectionView {
 	var section string
 	// get section name from first valid content rule.
 	for _, pbRule := range feed {
@@ -274,8 +274,8 @@ func setProfileData(userData *pbApi.ViewUserResponse) ProfileData {
 				Username:     userData.Username,
 				Description:  userData.About,
 			},
-			Followers:    len(userData.FollowersIds),
-			Following:    len(userData.FollowingIds),
+			Followers: len(userData.FollowersIds),
+			Following: len(userData.FollowingIds),
 		}
 	}
 	return pd
@@ -294,7 +294,7 @@ func setBasicUserData(userData *pbDataFormat.BasicUserData) BasicUserData {
 	return bud
 }
 
-func contentToContentRenderer(pbData *pbApi.ContentData, userId string)	ContentRenderer {
+func contentToContentRenderer(pbData *pbApi.ContentData, userId string) ContentRenderer {
 	if pbData == nil {
 		log.Println("pbData has no data")
 		return &NoContent{}
@@ -313,7 +313,7 @@ func contentToContentRenderer(pbData *pbApi.ContentData, userId string)	ContentR
 	saveLink := fmt.Sprintf("%s/save", threadLink)
 	undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
 	replyLink := fmt.Sprintf("%s/comment", threadLink)
-	
+
 	var saved bool
 	if userId == "" {
 		saved = false
@@ -368,7 +368,7 @@ func formatCommentContent(pbRule *pbApi.ContentRule, userId string) (OverviewRen
 func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string) []OverviewRenderer {
 	var (
 		ovwRendererSet = make([]OverviewRenderer, len(pbRuleSet))
-		wg sync.WaitGroup
+		wg             sync.WaitGroup
 	)
 
 	for idx, pbRule := range pbRuleSet {
@@ -442,9 +442,9 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 		// subcomment context
 		subcCtx := ctx.SubcommentCtx
 
-		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s&sc_id=%s", threadLink, 
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s&sc_id=%s", threadLink,
 			subcCtx.CommentCtx.Id, subcCtx.Id)
-		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s&sc_id=%s", threadLink, 
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s&sc_id=%s", threadLink,
 			subcCtx.CommentCtx.Id, subcCtx.Id)
 		ovwRenderer = &SubcommentView{
 			BasicContent: bc,
@@ -460,7 +460,7 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 func contentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string) []OverviewRenderer {
 	var (
 		ovwRendererSet = make([]OverviewRenderer, len(pbRuleSet))
-		wg sync.WaitGroup
+		wg             sync.WaitGroup
 	)
 
 	for idx, pbRule := range pbRuleSet {
@@ -488,7 +488,7 @@ func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 
 	sectionLowercased := strings.ToLower(metadata.Section)
 	sectionLink := strings.Replace(fmt.Sprintf("/%s", sectionLowercased), " ", "-", -1)
-	
+
 	threadLink := fmt.Sprintf("%s/%s", sectionLink, metadata.Id)
 
 	var summary string

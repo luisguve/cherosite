@@ -1,21 +1,21 @@
 package router
 
-import(
-	"log"
-	"net/http"
+import (
 	"context"
 	"encoding/json"
+	"log"
+	"net/http"
 
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-// Thread "/{section}/{thread}" handler. It looks for a thread using its identifier 
-// under the given section name, and displays a layout showing buttons for 
+// Thread "/{section}/{thread}" handler. It looks for a thread using its identifier
+// under the given section name, and displays a layout showing buttons for
 // viewing profile, creating a thread and submitting a comment on the current thread.
 // That's the only difference between the logged in user and the non-logged in user
 // views. It may return an error in case of the following:
@@ -30,7 +30,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 
 	threadCtx := formatContextThread(section, thread)
 
-	request := &pbApi.GetThreadRequest{ 
+	request := &pbApi.GetThreadRequest{
 		Thread: threadCtx,
 	}
 	// Load thread
@@ -39,22 +39,22 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
-				// Section name or thread id are probably wrong. 
+				// Section name or thread id are probably wrong.
 				// Log for debugging.
 				log.Printf("Could not find thread (id: %s) on section %s\n",
-			 	thread, section)
+					thread, section)
 				http.NotFound(w, req)
 				return
-			 case codes.Unavailable:
-			 	// Section unavailable
-			 	log.Printf("Section %s unavailable\n", section)
-			 	http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
-			 	return
-			 default:
-			 	log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-			 		resErr.Message())
-			 	http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-			 	return
+			case codes.Unavailable:
+				// Section unavailable
+				log.Printf("Section %s unavailable\n", section)
+				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
+				return
+			default:
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
+					resErr.Message())
+				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+				return
 			}
 		}
 		log.Printf("Could not send request: %v\n", err)
@@ -269,7 +269,7 @@ func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, req *http.
 // - invalid section name or thread id ---> 404 NOT_FOUND
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
-func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter, 
+func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -284,13 +284,13 @@ func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 	r.handleDelete(w, req, deleteRequest)
 }
 
-// Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of 
-// submitting the upvote to the method handleUpvote, which returns OK on success or 
+// Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of
+// submitting the upvote to the method handleUpvote, which returns OK on success or
 // an error in case of the following:
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network failures ------------------> INTERNAL_FAILURE
-func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter, 
+func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -312,7 +312,7 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
 func (r *Router) handleUndoUpvoteThread(userId string, w http.ResponseWriter,
-req *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]

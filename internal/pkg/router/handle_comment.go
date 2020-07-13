@@ -1,27 +1,27 @@
 package router
 
-import(
-	"log"
-	"errors"
-	"time"
-	"net/http"
-	"strconv"
+import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
 
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
-	"github.com/gorilla/mux"
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Subcomments "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}" handler.
-// It returns 10 subcomments on a given comment (c_id) on a given thread, on a given 
+// It returns 10 subcomments on a given comment (c_id) on a given thread, on a given
 // section.
-// The offset query parameter indicates how many subcomments to skip, since these data 
-// is stored and returned in sequential order. It may return an error in case of the 
-// following: 
+// The offset query parameter indicates how many subcomments to skip, since these data
+// is stored and returned in sequential order. It may return an error in case of the
+// following:
 // - negative or non-number offset query parameter ------------> INVALID_OFFSET
 // - offset is out of range; there are not that much comments -> OFFSET_OOR
 // - network or encoding failures -----------------------------> INTERNAL_FAILURE
@@ -57,7 +57,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 				return
 			default:
 				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
-				resErr.Message())
+					resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
@@ -92,7 +92,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 // - file creation/write failure --------> CANT_WRITE_FILE
 // - missing content (empty input) ------> NO_CONTENT
 // - network failures -------------------> INTERNAL_FAILURE
-func (r *Router) handlePostComment(userId string, w http.ResponseWriter, 
+func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -115,10 +115,10 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 	}
 	thread := formatContextThread(section, threadId)
 	postCommentRequest := &pbApi.CommentRequest{
-		Content:        content,
-		FtFile:         filePath,
-		UserId:         userId,
-		PublishDate:    &pbTime.Timestamp{
+		Content: content,
+		FtFile:  filePath,
+		UserId:  userId,
+		PublishDate: &pbTime.Timestamp{
 			Seconds: time.Now().Unix(),
 		},
 		ContentContext: &pbApi.CommentRequest_ThreadCtx{thread},
@@ -127,13 +127,13 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 }
 
 // Delete Comment "/{section}/{thread}/comment/delete/?c_id={c_id}" handler.
-// It deletes the comment and all the content associated to it (i.e. 
+// It deletes the comment and all the content associated to it (i.e.
 // replies and any link pointing to the comment) from the database and
 // returns OK on success or an error in case of the following:
 // - invalid section name or thread id ---> 404 NOT_FOUND
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
-func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter, 
+func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -162,7 +162,7 @@ func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 // - file creation/write failure --------> CANT_WRITE_FILE
 // - missing content (empty input) ------> NO_CONTENT
 // - network failures -------------------> INTERNAL_FAILURE
-func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter, 
+func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -186,9 +186,9 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 	}
 	comment := formatContextComment(section, thread, commentId)
 	postCommentRequest := &pbApi.CommentRequest{
-		Content:        content,
-		FtFile:         filePath,
-		PublishDate:    &pbTime.Timestamp{
+		Content: content,
+		FtFile:  filePath,
+		PublishDate: &pbTime.Timestamp{
 			Seconds: time.Now().Unix(),
 		},
 		UserId:         userId,
@@ -205,7 +205,7 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 // - invalid section name or thread id ---> 404 NOT_FOUND
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
-func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter, 
+func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -221,13 +221,13 @@ func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 	r.handleDelete(w, req, deleteRequest)
 }
 
-// Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler. 
+// Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler.
 // It leverages the operation of submitting the upvote to the method handleUpvote
 // which returns OK on success or an error in case of the following:
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
-func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter, 
+func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -248,7 +248,7 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
-func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter, 
+func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -272,7 +272,7 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
 func (r *Router) handleUndoUpvoteComment(userId string, w http.ResponseWriter,
-req *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
@@ -294,7 +294,7 @@ req *http.Request) {
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
 func (r *Router) handleUndoUpvoteSubcomment(userId string, w http.ResponseWriter,
-req *http.Request) {
+	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]

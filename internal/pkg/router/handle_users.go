@@ -1,31 +1,31 @@
 package router
 
-import(
-	"net/http"
+import (
 	"context"
-	"log"
-	"strings"
-	"errors"
-	"strconv"
 	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
 
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/luisguve/cherosite/internal/pkg/templates"
-	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	"github.com/luisguve/cherosite/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-// Read Notifications "/readnotifs" handler. It moves the unread notifications of 
-// the current user to the read notifications and returns OK on success or an error 
+// Read Notifications "/readnotifs" handler. It moves the unread notifications of
+// the current user to the read notifications and returns OK on success or an error
 // in case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
-func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter, 
+func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 	req *http.Request) {
-	request := &pbApi.ReadNotifsRequest {
+	request := &pbApi.ReadNotifsRequest{
 		UserId: userId,
 	}
 	_, err := r.crudClient.MarkAllAsRead(context.Background(), request)
@@ -49,14 +49,14 @@ func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 	w.Write([]byte("OK"))
 }
 
-// Clear Notifications "/clearnotifs" handler. It deletes both read and unread 
-// notifications of the current user and returns OK on success or an error in 
+// Clear Notifications "/clearnotifs" handler. It deletes both read and unread
+// notifications of the current user and returns OK on success or an error in
 // case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
-func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter, 
+func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter,
 	req *http.Request) {
-	request := &pbApi.ClearNotifsRequest {
+	request := &pbApi.ClearNotifsRequest{
 		UserId: userId,
 	}
 	_, err := r.crudClient.ClearNotifs(context.Background(), request)
@@ -179,7 +179,7 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "INVALID_CONTEXT", http.StatusBadRequest)
 		return
 	}
-	request := &pbApi.ViewUsersRequest {
+	request := &pbApi.ViewUsersRequest{
 		UserId:  userId,
 		Context: ctx,
 		Offset:  uint32(offset),
@@ -216,7 +216,7 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
 // - template rendering ---> TEMPLATE_ERROR
-func (r *Router) handleMyProfile(userId string, w http.ResponseWriter, 
+func (r *Router) handleMyProfile(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	userData, s, err := r.getBasicUserData(userId)
 	if err != nil {
@@ -239,7 +239,7 @@ func (r *Router) handleMyProfile(userId string, w http.ResponseWriter,
 // username already in use -> USERNAME_UNAVAILABLE
 // not valid username ------> INVALID_USERNAME
 // network failures --------> INTERNAL_FAILURE
-func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter, 
+func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	alias := req.FormValue("alias")
 	username := req.FormValue("username")
@@ -263,7 +263,7 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 	_, err = r.crudClient.UpdateBasicUserData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code(){
+			switch resErr.Code() {
 			case codes.AlreadyExists:
 				http.Error(w, "USERNAME_UNAVAILABLE", http.StatusOK)
 				return
@@ -299,7 +299,7 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	userData, err := r.crudClient.ViewUserByUsername(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code(){
+			switch resErr.Code() {
 			case codes.NotFound:
 				http.NotFound(w, req)
 				return
@@ -345,15 +345,15 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	}
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds){
-				pActivity := feed.GetUserPaginationActivity()
-				id := userData.UserId
-				a := d.UserActivity[id]
-				a.ThreadsCreated = pActivity.ThreadsCreated
-				a.Comments = pActivity.Comments
-				a.Subcomments = pActivity.Subcomments
-				d.UserActivity[id] = a
-			})
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
+			pActivity := feed.GetUserPaginationActivity()
+			id := userData.UserId
+			a := d.UserActivity[id]
+			a.ThreadsCreated = pActivity.ThreadsCreated
+			a.Comments = pActivity.Comments
+			a.Subcomments = pActivity.Subcomments
+			d.UserActivity[id] = a
+		})
 	}
 	profileView := templates.DataToProfileView(userData, userHeader, feed.Contents, userId)
 
@@ -364,8 +364,8 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	}
 }
 
-// Recycle user activity "/profile/recycle?userid={userid}" handler. It returns a 
-// new feed of recent activity for the user in JSON format. It may return an error 
+// Recycle user activity "/profile/recycle?userid={userid}" handler. It returns a
+// new feed of recent activity for the user in JSON format. It may return an error
 // in case of the following:
 // - user not found ---------------> 404 NOT_FOUND
 // - network or encoding failures -> INTERNAL_FAILURE
@@ -373,13 +373,13 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	vars := mux.Vars(req)
 	userId := vars["userid"]
 
-	session, _ :=  r.store.Get(req, "session")
+	session, _ := r.store.Get(req, "session")
 	discardIds := getDiscardIds(session)
 
 	activityPattern := &pbApi.ActivityPattern{
 		DiscardIds: discardIds.FormatUserActivity(userId),
 		Pattern:    templates.CompactPattern,
-		Context:    &pbApi.ActivityPattern_UserId{
+		Context: &pbApi.ActivityPattern_UserId{
 			UserId: userId,
 		},
 	}
@@ -411,7 +411,7 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	}
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
-		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds){
+		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
 			pActivity := feed.GetUserPaginationActivity()
 			a := d.UserActivity[userId]
 			a.ThreadsCreated = append(a.ThreadsCreated, pActivity.ThreadsCreated...)
@@ -427,7 +427,7 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	}
 }
 
-// Login "/login" handler. It returns OK on successful login or an error in case of the 
+// Login "/login" handler. It returns OK on successful login or an error in case of the
 // following:
 // - invalid username or password -> 401 UNAUTHORIZED
 // - network failure --------------> INTERNAL_FAILURE
@@ -534,8 +534,8 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte("OK"))
 }
 
-// Logout "/logout" handler. It removes the session. It doesn't use the userId 
-// provided by r.onlyUsers middleware. It returns OK on success or an error in 
+// Logout "/logout" handler. It removes the session. It doesn't use the userId
+// provided by r.onlyUsers middleware. It returns OK on success or an error in
 // case of the following:
 // - unable to set cookie -> COOKIE_ERROR
 func (r *Router) handleLogout(_ string, w http.ResponseWriter, req *http.Request) {

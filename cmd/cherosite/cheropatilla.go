@@ -1,16 +1,16 @@
 package main
 
 import (
-	"os"
 	"log"
+	"os"
 
-	"google.golang.org/grpc"
 	"github.com/gorilla/sessions"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	app "github.com/luisguve/cherosite/internal/app/cherosite"
 	"github.com/luisguve/cherosite/internal/pkg/livedata"
 	"github.com/luisguve/cherosite/internal/pkg/router"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
-	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	"google.golang.org/grpc"
 )
 
 func main() {

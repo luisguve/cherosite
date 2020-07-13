@@ -1,12 +1,12 @@
 package pagination
 
-import(
+import (
 	"encoding/gob"
 	"sync"
-	
+
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 	pbContext "github.com/luisguve/cheroproto-go/context"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
 func init() {
@@ -14,16 +14,16 @@ func init() {
 }
 
 type DiscardIds struct {
-	// UserActivity holds threads, comments and subcomments created by the user that 
+	// UserActivity holds threads, comments and subcomments created by the user that
 	// she has already seen in its feed
-	UserActivity   map[string]Activity
-	// FeedActivity maps user ids of authors of threads, comments and subcomments 
+	UserActivity map[string]Activity
+	// FeedActivity maps user ids of authors of threads, comments and subcomments
 	// to ids of these kinds of content that compose the feed of the current user
 	// that she has already seen
-	FeedActivity   map[string]Activity
+	FeedActivity map[string]Activity
 	// SavedThreads maps section names to the threads the user has already seen in its
 	// saved area
-	SavedThreads   map[string][]string
+	SavedThreads map[string][]string
 	// SectionThreads maps section names to the threads the user has already seen
 	// in the section
 	SectionThreads map[string][]string
@@ -38,7 +38,7 @@ type DiscardIds struct {
 // ids on a given section name (SectionThreads). Alternatively, you can access
 // SectionThreads on a DiscardIds instance and get the threads by using
 // the section name as the key.
-func(d *DiscardIds) FormatSectionThreads(sectionName string) []string {
+func (d *DiscardIds) FormatSectionThreads(sectionName string) []string {
 	return d.SectionThreads[sectionName]
 }
 
@@ -50,7 +50,7 @@ func (d *DiscardIds) FormatThreadComments(threadId string) []string {
 	return d.ThreadComments[threadId]
 }
 
-// FormatGeneralThreads converts the field GeneralThreads into a 
+// FormatGeneralThreads converts the field GeneralThreads into a
 // map[string]*pbApi.IdList to be used in a request to recycle general threads.
 func (d *DiscardIds) FormatGeneralThreads() map[string]*pbApi.IdList {
 	result := make(map[string]*pbApi.IdList)
@@ -85,7 +85,7 @@ func (d *DiscardIds) FormatUserActivity(userId string) map[string]*pbDataFormat.
 	return pbActivity
 }
 
-// FormatFeedActivity converts the field FeedActivity into a 
+// FormatFeedActivity converts the field FeedActivity into a
 // map[string]*pbDataFormat.Activity to be used in a request to recycle activity,
 // formatting the threads created, comments and subcomments in the given Activity
 // object of  each key in FeedActivity into a *pbDataFormat.Activity.
@@ -109,7 +109,7 @@ func formatActivity(activity Activity) *pbDataFormat.Activity {
 		defer wg.Done()
 		for _, t := range activity.ThreadsCreated {
 			pbThread := &pbContext.Thread{
-				Id:         t.Id,
+				Id: t.Id,
 				SectionCtx: &pbContext.Section{
 					Id: t.SectionName,
 				},
@@ -123,9 +123,9 @@ func formatActivity(activity Activity) *pbDataFormat.Activity {
 		defer wg.Done()
 		for _, c := range activity.Comments {
 			pbComment := &pbContext.Comment{
-				Id:        c.Id,
+				Id: c.Id,
 				ThreadCtx: &pbContext.Thread{
-					Id:         c.Thread.Id,
+					Id: c.Thread.Id,
 					SectionCtx: &pbContext.Section{
 						Id: c.Thread.SectionName,
 					},
@@ -140,9 +140,9 @@ func formatActivity(activity Activity) *pbDataFormat.Activity {
 		defer wg.Done()
 		for _, sc := range activity.Subcomments {
 			pbSubcomment := &pbContext.Subcomment{
-				Id:         sc.Id,
+				Id: sc.Id,
 				CommentCtx: &pbContext.Comment{
-					Id:        sc.Comment.Id,
+					Id: sc.Comment.Id,
 					ThreadCtx: &pbContext.Thread{
 						Id: sc.Comment.Thread.Id,
 						SectionCtx: &pbContext.Section{
@@ -187,7 +187,7 @@ type Subcomment struct {
 func FormatComment(comCtx *pbApi.ContentRule_CommentCtx) Comment {
 	comment := comCtx.CommentCtx
 	return Comment{
-		Id:     comment.Id,
+		Id: comment.Id,
 		Thread: Thread{
 			SectionName: comment.ThreadCtx.SectionCtx.Id,
 			Id:          comment.ThreadCtx.Id,
@@ -200,9 +200,9 @@ func FormatComment(comCtx *pbApi.ContentRule_CommentCtx) Comment {
 func FormatSubcomment(subcCtx *pbApi.ContentRule_SubcommentCtx) Subcomment {
 	sc := subcCtx.SubcommentCtx
 	return Subcomment{
-		Id:      sc.Id,
+		Id: sc.Id,
 		Comment: Comment{
-			Id:     sc.CommentCtx.Id,
+			Id: sc.CommentCtx.Id,
 			Thread: Thread{
 				SectionName: sc.CommentCtx.ThreadCtx.SectionCtx.Id,
 				Id:          sc.CommentCtx.ThreadCtx.Id,

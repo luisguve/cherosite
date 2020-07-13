@@ -22,7 +22,7 @@ type Notif struct {
 
 // UserHeader holds information about the user currently logged in
 type UserHeader struct {
-	Alias         string
+	Alias        string
 	UnreadNotifs []*Notif
 	ReadNotifs   []*Notif
 }
@@ -37,8 +37,8 @@ type RecycleType struct {
 // HeaderData holds information to render the header section of a page.
 type HeaderData struct {
 	User *UserHeader
-	// A page shows its content grouped together in different sections, 
-	// e.g. the dashboard contains feed, user activity and user saved content, 
+	// A page shows its content grouped together in different sections,
+	// e.g. the dashboard contains feed, user activity and user saved content,
 	// but profile pages contains only user activity.
 	// RecycleTypes holds the possible content types a user can select to recycle.
 	RecycleTypes []RecycleType
@@ -47,7 +47,7 @@ type HeaderData struct {
 type ProfileView struct {
 	HeaderData
 	ProfileData
-	Activity   []OverviewRenderer
+	Activity []OverviewRenderer
 	// IsFollower indicates whether the current user is following another user,
 	// in a context in which it is viewing another user's profile or content
 	IsFollower bool

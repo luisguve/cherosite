@@ -1,15 +1,15 @@
 package router
 
-import(
-	"net/http"
+import (
 	"html/template"
 	"log"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
-	"github.com/luisguve/cherosite/internal/pkg/livedata"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	"github.com/luisguve/cherosite/internal/pkg/livedata"
 )
 
 type Router struct {
@@ -21,7 +21,7 @@ type Router struct {
 	hub        *livedata.Hub
 }
 
-func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store, 
+func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store,
 	hub *livedata.Hub) *Router {
 	if t == nil {
 		log.Fatal("missing templates")
@@ -36,8 +36,8 @@ func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store
 		log.Fatal("missing hub")
 	}
 	return &Router{
-		handler:    mux.NewRouter(),
-		upgrader:   websocket.Upgrader{
+		handler: mux.NewRouter(),
+		upgrader: websocket.Upgrader{
 			ReadBufferSize:  livedata.ReadBufferSize,
 			WriteBufferSize: livedata.WriteBufferSize,
 		},
@@ -60,7 +60,7 @@ func (r *Router) SetupRoutes() {
 	// WEBSOCKET
 	//
 	root.HandleFunc("/livenotifs", r.handleLiveNotifs).Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
-	
+
 	// handlers for homepage "/" features
 	root.HandleFunc("/", r.onlyUsers(r.handleRoot)).Methods("GET")
 
@@ -79,9 +79,9 @@ func (r *Router) SetupRoutes() {
 	root.HandleFunc("/clearnotifs", r.onlyUsers(r.handleClearNotifs)).Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 
 	// follow event
-	root.HandleFunc("/follow", r.onlyUsers(r.handleFollow)).Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/follow", r.onlyUsers(r.handleFollow)).Methods("POST").Queries("username", "{username:[a-zA-Z0-9]+}")
 	// unfollow event
-	root.HandleFunc("/unfollow", r.onlyUsers(r.handleUnfollow)).Methods("POST").Queries("username","{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/unfollow", r.onlyUsers(r.handleUnfollow)).Methods("POST").Queries("username", "{username:[a-zA-Z0-9]+}")
 
 	// get basic info of users either following or followers
 	root.HandleFunc("/viewusers", r.handleViewUsers).Methods("GET").Queries("context", "{context:[a-z]+}", "userid", "{userid:[a-zA-Z0-9]+}").Headers("X-Requested-With", "XMLHttpRequest")
@@ -132,7 +132,7 @@ func (r *Router) SetupRoutes() {
 	comments.HandleFunc("/", r.onlyUsers(r.handlePostSubcomment)).Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 	// delete a subcomment
 	// "/{section}/{thread}/comment/delete?c_id={c_id}&sc_id={sc_id}"
-	comments.HandleFunc("/delete", r.onlyUsers(r.handleDeleteSubcomment)).Methods("DELETE").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", 
+	comments.HandleFunc("/delete", r.onlyUsers(r.handleDeleteSubcomment)).Methods("DELETE").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id",
 		"{sc_id:[a-zA-Z0-9]+}")
 
 	// handlers for upvotes

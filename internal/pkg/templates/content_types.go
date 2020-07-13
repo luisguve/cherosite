@@ -1,9 +1,9 @@
 package templates
 
-import(
+import (
+	"fmt"
 	"html/template"
 	"strings"
-	"fmt"
 )
 
 // OveriewRenderer is the interface that types must implement in order to be displayed
@@ -53,7 +53,7 @@ type Thread struct {
 	Replies      uint32
 	SaveLink     string // URL to post request to save thread
 	UndoSaveLink string
-	Saved        bool // Did the current user save this thread?
+	Saved        bool   // Did the current user save this thread?
 	ReplyLink    string // URL to post reply
 }
 
@@ -70,7 +70,7 @@ func (t *Thread) RenderContent() template.HTML {
 }
 
 func (t *Thread) RenderOverview(idx int) template.HTML {
-	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%d", t.BasicContent.Status, 
+	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%d", t.BasicContent.Status,
 		idx)
 
 	var tplName string
@@ -118,7 +118,7 @@ type CommentView struct {
 }
 
 func (c *CommentView) RenderOverview(idx int) template.HTML {
-	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%d",	c.BasicContent.Status, 
+	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%d", c.BasicContent.Status,
 		idx)
 
 	var tplName string
@@ -146,9 +146,9 @@ type SubcommentView struct {
 }
 
 func (sc *SubcommentView) RenderOverview(idx int) template.HTML {
-	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%d",	sc.BasicContent.Status,
+	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%d", sc.BasicContent.Status,
 		idx)
-	
+
 	var tplName string
 	switch sc.BasicContent.Status {
 	case "NEW":
@@ -174,7 +174,7 @@ type NoContent struct {
 func (nc *NoContent) RenderOverview(idx int) template.HTML {
 	nc.ClassName = fmt.Sprintf("%s-%d", "no-content", idx)
 	tplName := "no_content.html"
-	
+
 	result := new(strings.Builder)
 	if err := tpl.ExecuteTemplate(result, tplName, nc); err != nil {
 		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)

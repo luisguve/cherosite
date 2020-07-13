@@ -1,11 +1,11 @@
 package router
 
-import(
+import (
 	"log"
 	"net/http"
 
-	"github.com/luisguve/cherosite/internal/pkg/livedata"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
+	"github.com/luisguve/cherosite/internal/pkg/livedata"
 )
 
 // Register new clients into the hub.
@@ -33,7 +33,7 @@ func (r *Router) handleLiveNotifs(w http.ResponseWriter, req *http.Request) {
 			SendOk:    make(chan bool),
 		},
 	}
-	client.Hub.Register<- client.User
+	client.Hub.Register <- client.User
 	go client.WritePump()
 	go client.ReadPump()
 }

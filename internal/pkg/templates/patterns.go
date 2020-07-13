@@ -1,6 +1,6 @@
 package templates
 
-import(
+import (
 	pbMetadata "github.com/luisguve/cheroproto-go/metadata"
 )
 

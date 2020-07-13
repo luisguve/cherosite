@@ -1,25 +1,25 @@
 package router
 
-import(
+import (
+	"context"
+	"encoding/json"
 	"log"
 	"net/http"
-	"context"
 	"time"
-	"encoding/json"
 
-	"github.com/gorilla/mux"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-// Section "/{section}" handler. It requests a set of threads using the identifier 
-// of the given section name, and displays a layout showing buttons for viewing profile 
+// Section "/{section}" handler. It requests a set of threads using the identifier
+// of the given section name, and displays a layout showing buttons for viewing profile
 // and for creating a thread under the current section.
-// That's the only difference between the logged in user and the non-logged in user 
+// That's the only difference between the logged in user and the non-logged in user
 // views. It may return an error in case of the following:
 // - wrong section name ------------------> 404 NOT FOUND
 // - valid section name, but unavailable -> SECTION_UNAVAILABLE
@@ -38,7 +38,7 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
-			switch resErr.Code(){
+			switch resErr.Code() {
 			case codes.NotFound:
 				// The section name is probably wrong.
 				// log for debugging.
@@ -155,7 +155,7 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
-// Create thread "/{section}/new" handler. It handles the creation of content 
+// Create thread "/{section}/new" handler. It handles the creation of content
 // in a section through POSTing a form. It returns the permalink of the newly created
 // thread on success, or an error in case of the following:
 // - creating a thread in an invalid section -> 404 NOT_FOUND
@@ -169,7 +169,7 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 // - user has already posted today -----------> USER_UNABLE_TO_POST
 // - user unathenticated ---------------------> USER_UNREGISTERED
 // - network failures ------------------------> INTERNAL_FAILURE
-func (r *Router) handleNewThread(userId string, w http.ResponseWriter, 
+func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
@@ -193,11 +193,11 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	}
 	sectionCtx := formatContextSection(section)
 	createRequest := &pbApi.CreateThreadRequest{
-		UserId:     userId,
-		Content:    &pbApi.Content{
-			Title:       title,
-			Content:     content,
-			FtFile:      filePath,
+		UserId: userId,
+		Content: &pbApi.Content{
+			Title:   title,
+			Content: content,
+			FtFile:  filePath,
 			PublishDate: &pbTime.Timestamp{
 				Seconds: time.Now().Unix(),
 			},

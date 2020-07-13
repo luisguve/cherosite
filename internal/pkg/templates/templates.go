@@ -12,11 +12,11 @@
 
 package templates
 
-import(
+import (
 	"html/template"
 
-	pag "github.com/luisguve/cherosite/internal/pkg/pagination"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pag "github.com/luisguve/cherosite/internal/pkg/pagination"
 )
 
 var tpl *template.Template
@@ -93,7 +93,7 @@ func (cf ContentsFeed) GetPaginationActivity() map[string]pag.Activity {
 // from a single section into a slice of thread ids.
 func (cf ContentsFeed) GetSectionPaginationThreads() []string {
 	var threadIds []string
-	
+
 	for _, content := range cf.Contents {
 		metadata := content.Data.Metadata
 		threadIds = append(threadIds, metadata.Id)

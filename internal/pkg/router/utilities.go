@@ -1,34 +1,34 @@
 package router
 
-import(
+import (
+	"context"
 	"crypto/rand"
-	"os"
-	"path/filepath"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"io"
+	"io/ioutil"
 	"log"
 	"mime"
-	"errors"
 	"net/http"
-	"context"
+	"os"
+	"path/filepath"
 
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	"github.com/gorilla/sessions"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pbContext "github.com/luisguve/cheroproto-go/context"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
-	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-const(
+const (
 	maxUploadSize = 64 << 20 // 64 mb
-	uploadPath = "tmp"
+	uploadPath    = "tmp"
 )
 
-var(
+var (
 	errMissingFile      = errors.New("MISSING_ft_file_INPUT")
 	errInternalFailure  = errors.New("INTERNAL_FAILURE")
 	errFileTooBig       = errors.New("FILE_TOO_BIG")
@@ -51,7 +51,7 @@ type streamFeed interface {
 	Recv() (*pbApi.ContentRule, error)
 }
 
-// getFeed continuously receive content rules from the given stream and returns a 
+// getFeed continuously receive content rules from the given stream and returns a
 // templates.ContentsFeed and any error encountered.
 func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
 	var feed templates.ContentsFeed
@@ -91,9 +91,9 @@ func getDiscardIds(sess *sessions.Session) (discard *pagination.DiscardIds) {
 	return discard
 }
 
-// updateDiscardIdsSession replaces ids of contents already set in the session 
+// updateDiscardIdsSession replaces ids of contents already set in the session
 // with the provided templates.ContentsFeed and saves the cookie.
-func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWriter, 
+func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWriter,
 	setDiscardIds func(*pagination.DiscardIds)) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -107,11 +107,11 @@ func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWrite
 	}
 }
 
-// getAndSaveFile gets the file identified by formName coming in the request, 
-// verifies that it does not exceeds the file size limit, and saves it to the 
+// getAndSaveFile gets the file identified by formName coming in the request,
+// verifies that it does not exceeds the file size limit, and saves it to the
 // disk assigning to it a unique, random name.
-// On success, it should return the filepath under which it was stored. If there 
-// are any errors, it will return an empty string, the error message and the 
+// On success, it should return the filepath under which it was stored. If there
+// are any errors, it will return an empty string, the error message and the
 // http status code, which can be StatusBadRequest, StatusInternalServerError or
 // StatusOK.
 func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
@@ -172,8 +172,8 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 // user. It sets the corresponding error header given any error while getting user
 // header data.
 func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbApi.UserHeaderData {
-	userData, err := r.crudClient.GetUserHeaderData(context.Background(), 
-			&pbApi.GetBasicUserDataRequest{UserId: userId})
+	userData, err := r.crudClient.GetUserHeaderData(context.Background(),
+		&pbApi.GetBasicUserDataRequest{UserId: userId})
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -184,8 +184,8 @@ func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbApi.
 				log.Printf("Internal error: %v\n", resErr.Message())
 				w.WriteHeader(http.StatusInternalServerError)
 			default:
-				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-				resErr.Message())
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
+					resErr.Message())
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		} else {
@@ -196,7 +196,7 @@ func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbApi.
 	return userData
 }
 
-// getBasicUserData returns a user's basic data: alias, username, pic_url and 
+// getBasicUserData returns a user's basic data: alias, username, pic_url and
 // description, along with a status code and any error encountered.
 func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, int, error) {
 	request := &pbApi.GetBasicUserDataRequest{
@@ -220,7 +220,7 @@ func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, i
 	return userData, http.StatusOK, nil
 }
 
-// handleUpvote is an utility method to help reduce the repetition of similar code in 
+// handleUpvote is an utility method to help reduce the repetition of similar code in
 // other handlers that perform the same operation, in this case, an upvote,  since
 // all the handlers that are called in an upvote event share the same upvote request
 // object. The duties of returning a response to the client are also delegated to
@@ -228,7 +228,7 @@ func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, i
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
-func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request, 
+func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
 	upvoteRequest *pbApi.UpvoteRequest) {
 	stream, err := r.crudClient.Upvote(context.Background(), upvoteRequest)
 	if err != nil {
@@ -258,7 +258,7 @@ func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
 	w.Write([]byte("OK"))
 }
 
-// handleComment is an utility method to help reduce the repetition of similar code in 
+// handleComment is an utility method to help reduce the repetition of similar code in
 // other handlers that perform the same operation, in this case, a comment post, since
 // all the handlers that are called in a comment event share the same comment request
 // object. The duties of returning a response to the client are also delegated to
@@ -311,7 +311,7 @@ func (r *Router) broadcastNotifs(stream streamNotifs) {
 	}
 }
 
-// handleDelete is an utility method to help reduce the repetition of similar code in 
+// handleDelete is an utility method to help reduce the repetition of similar code in
 // other handlers that perform the same operation, in this case, a content deletion, since
 // all the handlers that are called in a delete event share the same delete request
 // object. The duties of returning a response to the client are also delegated to
@@ -319,8 +319,8 @@ func (r *Router) broadcastNotifs(stream streamNotifs) {
 // - invalid section name or thread id ---> 404 NOT_FOUND
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
-func (r *Router) handleDelete(w http.ResponseWriter, req *http.Request, 
-deleteRequest *pbApi.DeleteContentRequest) {
+func (r *Router) handleDelete(w http.ResponseWriter, req *http.Request,
+	deleteRequest *pbApi.DeleteContentRequest) {
 	_, err := r.crudClient.DeleteContent(context.Background(), deleteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
@@ -335,8 +335,8 @@ deleteRequest *pbApi.DeleteContentRequest) {
 				http.Error(w, "USER_UNAUTHORIZED", http.StatusUnauthorized)
 				return
 			default:
-				log.Printf("Unknown error code %v: %v", resErr.Code(), 
-				resErr.Message())
+				log.Printf("Unknown error code %v: %v", resErr.Code(),
+					resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
@@ -349,7 +349,7 @@ deleteRequest *pbApi.DeleteContentRequest) {
 	w.Write([]byte("OK"))
 }
 
-// handleUndoUpvote is an utility method to help reduce the repetition of similar code in 
+// handleUndoUpvote is an utility method to help reduce the repetition of similar code in
 // other handlers that perform the same operation, in this case, a content upvote undoing,
 // since all the handlers that are called in an unupvote event share the same unupvote
 // request object. The duties of returning a response to the client are also delegated to
@@ -358,7 +358,7 @@ deleteRequest *pbApi.DeleteContentRequest) {
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
 func (r *Router) handleUndoUpvote(w http.ResponseWriter, req *http.Request,
-undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
+	undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
 	_, err := r.crudClient.UndoUpvote(context.Background(), undoUpvoteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
@@ -373,8 +373,8 @@ undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
 				http.Error(w, "NOT_UPVOTED", http.StatusBadRequest)
 				return
 			default:
-				log.Printf("Unknown error code %v: %v", resErr.Code(), 
-				resErr.Message())
+				log.Printf("Unknown error code %v: %v", resErr.Code(),
+					resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
@@ -387,7 +387,7 @@ undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
 	w.Write([]byte("OK"))
 }
 
-// currentUser returns a string containing the current user id or an empty 
+// currentUser returns a string containing the current user id or an empty
 // string if the user is not logged in.
 func (r *Router) currentUser(req *http.Request) string {
 	session, _ := r.store.Get(req, "session")

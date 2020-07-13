@@ -1,23 +1,23 @@
 package router
 
-import(
-	"sync"
-	"log"
-	"net/http"
+import (
 	"context"
 	"encoding/json"
+	"log"
+	"net/http"
+	"sync"
 
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-// Dashboard "/" handler. It displays the dashboard of the logged in user that 
-// consists of the user notifications, the threads saved, threads created, the 
-// number of followers and following. Below that, a list of the active threads 
-// created by users that this user is following. 
+// Dashboard "/" handler. It displays the dashboard of the logged in user that
+// consists of the user notifications, the threads saved, threads created, the
+// number of followers and following. Below that, a list of the active threads
+// created by users that this user is following.
 // It may return an error in case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
@@ -35,8 +35,8 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
 			default:
-				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-				resErr.Message())
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
+					resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
@@ -170,7 +170,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 			}
 		})
 	}
-	dashboardView := templates.DataToDashboardView(dData, feed.Contents, 
+	dashboardView := templates.DataToDashboardView(dData, feed.Contents,
 		userActivity.Contents, savedThreads.Contents)
 
 	err = r.templates.ExecuteTemplate(w, "dashboard.html", dashboardView)
@@ -187,7 +187,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 // - user is unregistered --------------> USER_UNREGISTERED
 // - user is not following other users -> NO_USERS_FOLLOWING
 // - network or encoding failures ------> INTERNAL_FAILURE
-func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter, 
+func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	request := &pbApi.GetBasicUserDataRequest{
 		UserId: userId,
@@ -201,8 +201,8 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
 			default:
-				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-				resErr.Message())
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
+					resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
@@ -276,7 +276,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 // following:
 // - user is unregistered ---------> USER_UNREGISTERED
 // - network or encoding failures -> INTERNAL_FAILURE
-func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter, 
+func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -349,7 +349,7 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 // following:
 // - user is unregistered ---------> USER_UNREGISTERED
 // - network or encoding failures -> INTERNAL_FAILURE
-func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter, 
+func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -373,8 +373,8 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
 			default:
-				log.Printf("Unknown error code %v: %v\n", resErr.Code(), 
-				resErr.Message())
+				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
+					resErr.Message())
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
@@ -410,7 +410,7 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 }
 
 // Explore page "/explore" handler. It returns html containing a feed composed of
-// random threads from different sections. It may return an error in case of 
+// random threads from different sections. It may return an error in case of
 // the following:
 // - template rendering failure -> TEMPLATE_ERROR
 func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
@@ -488,7 +488,7 @@ func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) 
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
 			pThreads := feed.GetPaginationThreads()
 			for section, threadIds := range pThreads {
-				d.GeneralThreads[section] = append(d.GeneralThreads[section], 
+				d.GeneralThreads[section] = append(d.GeneralThreads[section],
 					threadIds...)
 			}
 		})
