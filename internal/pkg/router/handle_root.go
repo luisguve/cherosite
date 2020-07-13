@@ -31,7 +31,12 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
-				log.Printf("User %s unregistered\n", userId)
+				log.Printf("User %s unregistered. Deleting session... ", userId)
+				if err = r.deleteSession(req, w); err != nil {
+					log.Printf("Could not save session because... %v\n", err)
+				} else {
+					log.Println("Done.")
+				}
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
 				return
 			default:
