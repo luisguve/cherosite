@@ -240,6 +240,7 @@ func setHeaderData(uhd *pbApi.UserHeaderData, recycleSet []RecycleType) HeaderDa
 	if uhd == nil {
 		return hd
 	}
+	hd.User = new(UserHeader)
 	// set read notifs
 	for _, pbNotif := range uhd.ReadNotifs {
 		notif := &Notif{
