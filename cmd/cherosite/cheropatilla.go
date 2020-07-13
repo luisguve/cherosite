@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/gorilla/sessions"
+	"github.com/joho/godotenv"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	app "github.com/luisguve/cherosite/internal/app/cherosite"
 	"github.com/luisguve/cherosite/internal/pkg/livedata"
@@ -28,8 +28,18 @@ func main() {
 	// Create gRPC crud client
 	ccc := pbApi.NewCrudCheropatillaClient(conn)
 
-	// Get session store
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	// Get session key.
+	env, err := godotenv.Read("cookie_hash.env")
+	if err != nil {
+		log.Fatal(err)
+	}
+	key, ok := env["SESSION_KEY"]
+	if !ok {
+		log.Fatal("Missing session key")
+	}
+
+	// Create session store.
+	store := sessions.NewCookieStore([]byte(key))
 
 	// Create and start hub
 	hub := livedata.NewHub()
