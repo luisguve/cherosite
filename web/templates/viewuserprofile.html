@@ -8,7 +8,7 @@
 <body>
 	{{ template "header" .HeaderData }}
 	
-	{{ $isFollowing := .IsFollowing }}
+	{{ $isFollower := .IsFollower }}
 	{{ $userAlias := .ProfileData.BasicUserData.Alias }}
 	{{ $followers := .ProfileData.Followers }}
 	{{ $following := .ProfileData.Following }}
@@ -24,7 +24,7 @@
 		<div class="follow">
 			<p>Following: {{$following}}</p>
 			<p>Followers: {{$followers}}</p>
-			{{ if $isFollowing }}
+			{{ if $isFollower }}
 			<a href="{{ printf "/unfollow?username=%s" .Username }}">Unfollow</a>
 			{{ else }}
 			<a href="{{ printf "/follow?username=%s" .Username }}">Follow</a>
