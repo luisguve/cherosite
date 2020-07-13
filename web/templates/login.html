@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Cheropatilla Login</title>
+</head>
+<body>
+	<h4>Login</h4>
+	<form action="/login" method="POST">
+		<label for="login-username">Type in your username</label>
+		<input type="text" name="username" id="login-username">
+		<label for="login-password">Insert your password</label>
+		<input type="password" name="password" id="login-password">
+		<input type="submit">
+	</form>
+	<h4>Signin</h4>
+	<form action="/signin" method="POST" enctype="multipart/form-data">
+		<label for="signin-email">Insert your email</label>
+		<input type="email" name="email" id="signin-email">
+
+		<label for="signin-name">Insert your name</label>
+		<input type="text" name="name" id="signin-name">
+
+		<label for="signin-alias">Insert your alias</label>
+		<input type="text" name="alias" id="signin-alias">
+
+		<label for="signin-about">Insert your description</label>
+		<textarea name="about" id="signin-about" placeholder="A brief description about you."></textarea>
+
+		<label for="signin-username">Insert your username</label>
+		<input type="text" name="username" id="signin-username">
+
+		<label for="signin-password">Insert your password</label>
+		<input type="password" name="password" id="signin-password">
+
+		<label for="signin-pic_url">Submit your patillavatar</label>
+		<input type="file" name="pic_url" id="signin-pic_url">
+
+		<input type="submit">
+	</form>
+</body>
+</html>
