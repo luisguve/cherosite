@@ -9,7 +9,7 @@
 		{{ .Content.RenderContent }}
 	</section>
 	<section class="thread-comments" id="comments">
-		{{ $idx, $comment := range .Comments }}
+		{{ range $idx, $comment := .Comments }}
 			{{ $comment.RenderOverview $idx }}
 		{{ end }}
 	</section>

@@ -28,6 +28,7 @@
 			<a href="{{ printf "/unfollow?username=%s" .Username }}">Unfollow</a>
 			{{ else }}
 			<a href="{{ printf "/follow?username=%s" .Username }}">Follow</a>
+			{{ end }}
 		</div>
 		<div class="description">
 			<p>
@@ -40,7 +41,7 @@
 	<section class="feed">
 	{{ with .Activity }}
 		<h4>{{ $userAlias }} activity</h4>
-		{{ $idx, $content := range . }}
+		{{ range $idx, $content := . }}
 			{{ $content.RenderOverview $idx }}
 		{{ end }}
 	{{ else }}

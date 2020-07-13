@@ -9,7 +9,7 @@
 	<section class="feed">
 		{{ with .Feed }}
 			<h4>Your feed</h4>
-			{{ $idx, $content := range . }}
+			{{ range $idx, $content := . }}
 				{{ $content.RenderOverview $idx }}
 			{{ end }}
 		{{ else }}
@@ -22,7 +22,7 @@
 	<section class="user-activity">
 		{{ with .Activity }}
 			<h4>Your recent activity</h4>
-			{{ $idx, $content := range . }}
+			{{ range $idx, $content := . }}
 				{{ $content.RenderOverview $idx }}
 			{{ end }}
 		{{ else }}
@@ -35,7 +35,7 @@
 	<section class="saved-content">
 		{{ with .SavedContent }}
 			<h4>You saved these threads</h4>
-			{{ $idx, $content := range . }}
+			{{ range $idx, $content := . }}
 				{{ $content.RenderOverview $idx }}
 			{{ end }}
 		{{ else }}

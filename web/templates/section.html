@@ -7,7 +7,7 @@
 	{{ template "header" .HeaderData }}
 	<h1>You are in the section <strong>{{.SectionName}}</strong></h1>
 	<section class="feed">
-		{{ $idx, $content := range .Feed }}
+		{{ range $idx, $content := .Feed }}
 			{{ $content.RenderOverview $idx }}
 		{{ else }}
 			<h3>There are no threads to show. Come back later and see if someone created content.</h3>
