@@ -22,8 +22,8 @@ import (
 var tpl *template.Template
 
 func Setup() *template.Template {
-	tpl = template.Must(template.ParseGlob("/web/internal/templates/*.html"))
-	return template.Must(template.ParseGlob("/web/templates/*.html"))
+	tpl = template.Must(template.ParseGlob("web/internal/templates/*.html"))
+	return template.Must(template.ParseGlob("web/templates/*.html"))
 }
 
 // ContentsFeed holds a list of *pbApi.ContentRule, representing a page feed of
