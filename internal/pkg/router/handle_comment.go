@@ -3,6 +3,7 @@ package router
 import(
 	"log"
 	"errors"
+	"time"
 	"net/http"
 	"strconv"
 	"context"
@@ -11,8 +12,8 @@ import(
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
+	pbTime "github.com/golang/protobuf/ptypes/timestamp"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cheropatilla/internal/pkg/templates"
 )
 
 // Subcomments "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}" handler.
@@ -32,7 +33,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 		http.Error(w, "INVALID_OFFSET", http.StatusBadRequest)
 		return
 	}
-	section := vard["section"]
+	section := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
 	commentCtx := formatContextComment(section, thread, commentId)
@@ -42,7 +43,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 		CommentCtx: commentCtx,
 	}
 
-	stream, err := r.crudClient.GetComments(context.Background(), request)
+	stream, err := r.crudClient.GetSubcomments(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -117,7 +118,9 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		Content:        content,
 		FtFile:         filePath,
 		UserId:         userId,
-		PublishDate:    time.Now().Unix(),
+		PublishDate:    &pbTime.Timestamp{
+			Seconds: time.Now().Unix(),
+		},
 		ContentContext: &pbApi.CommentRequest_ThreadCtx{thread},
 	}
 	r.handleComment(w, req, postCommentRequest)
@@ -185,7 +188,9 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 	postCommentRequest := &pbApi.CommentRequest{
 		Content:        content,
 		FtFile:         filePath,
-		PublishDate:    time.Now().Unix(),
+		PublishDate:    &pbTime.Timestamp{
+			Seconds: time.Now().Unix(),
+		},
 		UserId:         userId,
 		ContentContext: &pbApi.CommentRequest_CommentCtx{comment},
 	}
@@ -293,7 +298,7 @@ req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
-	comment := vars["c_id"]
+	commentId := vars["c_id"]
 	subcommentId := vars["sc_id"]
 
 	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)

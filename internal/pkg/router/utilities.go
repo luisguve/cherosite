@@ -6,18 +6,21 @@ import(
 	"path/filepath"
 	"fmt"
 	"io/ioutil"
+	"io"
 	"log"
 	"mime"
-	"error"
+	"errors"
 	"net/http"
 	"context"
 
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/codes"
+	"github.com/gorilla/sessions"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pbContext "github.com/luisguve/cheroproto-go/context"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
-	"github.com/luisguve/cheropatilla/internal/pkg/livedata"
-	"github.com/luisguve/cheropatilla/internal/pkg/templates"
-	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"github.com/luisguve/cherosite/internal/pkg/pagination"
 )
 
 const(
@@ -51,7 +54,7 @@ type streamFeed interface {
 // getFeed continuously receive content rules from the given stream and returns a 
 // templates.ContentsFeed and any error encountered.
 func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
-	var feed templates.FeedContent
+	var feed templates.ContentsFeed
 	var err error
 	// Continuously receive responses
 	for {
@@ -99,7 +102,7 @@ func (r *Router) updateDiscardIdsSession(req *http.Request, w http.ResponseWrite
 	// Replace content already seen by the user with the new feed
 	setDiscardIds(discard)
 	session.Values["discard_ids"] = discard
-	if err = session.Save(req, w); err != nil {
+	if err := session.Save(req, w); err != nil {
 		log.Printf("Could not save session because... %v\n", err)
 	}
 }
@@ -142,7 +145,7 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	case "application/pdf":
 		break
 	default:
-		return "" errInvalidFileType, http.StatusBadRequest
+		return "", errInvalidFileType, http.StatusBadRequest
 	}
 	fileName := randToken(12)
 	fileEndings, err := mime.ExtensionsByType(detectedFileType)
@@ -168,10 +171,9 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 // getUserHeaderData returns username, alias, both read and unread notifs of the given
 // user. It sets the corresponding error header given any error while getting user
 // header data.
-func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) 
-	*pbApi.UserHeaderData {
+func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbApi.UserHeaderData {
 	userData, err := r.crudClient.GetUserHeaderData(context.Background(), 
-			&pbApi.GetUserHeaderDataRequest{UserId: userId})
+			&pbApi.GetBasicUserDataRequest{UserId: userId})
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -389,7 +391,8 @@ undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
 // string if the user is not logged in.
 func (r *Router) currentUser(req *http.Request) string {
 	session, _ := r.store.Get(req, "session")
-	if userId, ok := session.Values["user_id"].(string); !ok {
+	userId, ok := session.Values["user_id"].(string)
+	if !ok {
 		// User not logged in
 		return ""
 	}
@@ -399,8 +402,7 @@ func (r *Router) currentUser(req *http.Request) string {
 // onlyUsers middleware displays the login page if the user has not logged in yet,
 // otherwise it executes the next handler passing it the current user id, the
 // ResponseWriter and the Request.
-func (r *Router) onlyUsers(next func(string, http.ResponseWriter, *http.Request))
-http.HandlerFunc {
+func (r *Router) onlyUsers(next func(string, http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		userId := r.currentUser(req)
 		if userId == "" {

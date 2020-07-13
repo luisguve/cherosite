@@ -4,7 +4,8 @@ import(
 	"log"
 	"net/http"
 
-	"github.com/luisguve/cheropatilla/internal/pkg/livedata"
+	"github.com/luisguve/cherosite/internal/pkg/livedata"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
 // Register new clients into the hub.
@@ -24,15 +25,15 @@ func (r *Router) handleLiveNotifs(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	client := &livedata.Client{
-		Hub. r.hub,
+		Hub:  r.hub,
 		Conn: conn,
 		User: &livedata.User{
 			Id:        userId,
-			SendNotif: make(chan *pb.Notif, 256),
+			SendNotif: make(chan *pbDataFormat.Notif, 256),
 			SendOk:    make(chan bool),
 		},
 	}
-	client.Hub.Register <- client.User
+	client.Hub.Register<- client.User
 	go client.WritePump()
 	go client.ReadPump()
 }

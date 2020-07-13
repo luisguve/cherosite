@@ -15,7 +15,7 @@ package templates
 import(
 	"html/template"
 
-	pag "github.com/luisguve/cheropatilla/internal/pkg/pagination"
+	pag "github.com/luisguve/cherosite/internal/pkg/pagination"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 )
 
@@ -69,15 +69,21 @@ func (cf ContentsFeed) GetPaginationActivity() map[string]pag.Activity {
 		case *pbApi.ContentRule_ThreadCtx:
 			// content type: THREAD
 			thread := pag.FormatThread(ctx)
-			pActivity[userId].ThreadsCreated = append(pActivity[userId].ThreadsCreated, thread)
+			a := pActivity[userId]
+			a.ThreadsCreated = append(a.ThreadsCreated, thread)
+			pActivity[userId] = a
 		case *pbApi.ContentRule_CommentCtx:
 			// content type: COMMENT
 			comment := pag.FormatComment(ctx)
-			pActivity[userId].Comments = append(pActivity[userId].Comments, comment)
+			a := pActivity[userId]
+			a.Comments = append(a.Comments, comment)
+			pActivity[userId] = a
 		case *pbApi.ContentRule_SubcommentCtx:
 			// content type: SUBCOMMENT
-			sc := pag.FormatSubcomment(ctx)
-			pActivity[userId].Subcomments = append(pActivity[userId].Subcomments, sc)
+			subcom := pag.FormatSubcomment(ctx)
+			a := pActivity[userId]
+			a.Subcomments = append(a.Subcomments, subcom)
+			pActivity[userId] = a
 		}
 	}
 	return pActivity
@@ -119,7 +125,7 @@ func (cf ContentsFeed) GetPaginationComments() []string {
 		if !ok {
 			continue
 		}
-		commentId := ctx.Id
+		commentId := ctx.CommentCtx.Id
 		commentIds = append(commentIds, commentId)
 	}
 	return commentIds

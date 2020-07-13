@@ -189,8 +189,8 @@ func FormatComment(comCtx *pbApi.ContentRule_CommentCtx) Comment {
 	return Comment{
 		Id:     comment.Id,
 		Thread: Thread{
-			SectionName: comment.TheadCtx.SectionCtx.Id,
-			Id:          comment.TheadCtx.Id,
+			SectionName: comment.ThreadCtx.SectionCtx.Id,
+			Id:          comment.ThreadCtx.Id,
 		},
 	}
 }

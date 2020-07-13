@@ -10,8 +10,8 @@ import(
 	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cheropatilla/internal/pkg/templates"
-	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"github.com/luisguve/cherosite/internal/pkg/pagination"
 )
 
 // Thread "/{section}/{thread}" handler. It looks for a thread using its identifier 
@@ -70,8 +70,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 			ContentContext: &pbApi.ContentPattern_ThreadCtx{threadCtx},
 			// ignore DiscardIds; do not discard any comment
 		}
-		stream, err = r.crudClient.RecycleContent(context.Background(), 
-		contentPattern)
+		stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
 		if err != nil {
 			log.Printf("Could not send request: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
@@ -93,14 +92,14 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// get current user data for header section
-	userId := currentUser(req)
-	var userHeader *pb.UserHeaderData
+	userId := r.currentUser(req)
+	var userHeader *pbApi.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
 
-	threadView := templates.DataToThreadView(content, feed, userHeader, userId)
+	threadView := templates.DataToThreadView(content, feed.Contents, userHeader, userId)
 
 	if err := r.templates.ExecuteTemplate(w, "thread.html", threadView); err != nil {
 		log.Printf("Could not execute template thread.html: %v\n", err)
@@ -156,7 +155,8 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 			return
 		}
 	} else {
-		feed, err := getFeed(stream)
+		var err error
+		feed, err = getFeed(stream)
 		if err != nil {
 			log.Printf("An error occurred while getting feed: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
@@ -227,8 +227,7 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter,
 // It returns OK on success or an error in case of the following:
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - network failures ------------------> INTERNAL_FAILURE
-func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, 
-	r *http.Request) {
+func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]

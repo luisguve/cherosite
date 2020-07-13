@@ -12,6 +12,9 @@ import(
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 )
 
@@ -85,7 +88,7 @@ func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter,
 // - network failures -----> INTERNAL_FAILURE
 func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	username = vars["username"]
+	username := vars["username"]
 	request := &pbApi.FollowUserRequest{
 		UserId:       userId,
 		UserToFollow: username,
@@ -122,7 +125,7 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 // - network failures -----> INTERNAL_FAILURE
 func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	username = vars["username"]
+	username := vars["username"]
 	request := &pbApi.UnfollowUserRequest{
 		UserId:         userId,
 		UserToUnfollow: username,
@@ -159,8 +162,8 @@ func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.
 // - network or encoding failures --------------------> INTERNAL_FAILURE
 func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	context := strings.ToLower(vars["context"])
-	userid := vars["userid"]
+	ctx := strings.ToLower(vars["context"])
+	userId := vars["userid"]
 
 	offset, err := strconv.Atoi(vars["offset"])
 	if err != nil || offset < 0 {
@@ -168,8 +171,8 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "INVALID_OFFSET", http.StatusBadRequest)
 		return
 	}
-	// context should be either "following" or "followers"
-	switch context {
+	// ctx should be either "following" or "followers"
+	switch ctx {
 	case "followers":
 	case "following":
 	default:
@@ -178,8 +181,8 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 	}
 	request := &pbApi.ViewUsersRequest {
 		UserId:  userId,
-		Context: context,
-		Offset:  offset,
+		Context: ctx,
+		Offset:  uint32(offset),
 	}
 	users, err := r.crudClient.ViewUsers(context.Background(), request)
 	if err != nil {
@@ -215,15 +218,16 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 // - template rendering ---> TEMPLATE_ERROR
 func (r *Router) handleMyProfile(userId string, w http.ResponseWriter, 
 	req *http.Request) {
-	if userData, status, err := r.getBasicUserData(userId); err != nil {
-		http.Error(w, err.Error(), status)
+	userData, s, err := r.getBasicUserData(userId)
+	if err != nil {
+		http.Error(w, err.Error(), s)
 		return
 	}
-	userHeader := r.getUserHeaderData(userId)
+	userHeader := r.getUserHeaderData(w, userId)
 
 	profileView := templates.DataToMyProfileView(userData, userHeader)
 
-	if err = r.templates.ExecuteTemplate(w, "myprofile.html", profileView); err != nil {
+	if err := r.templates.ExecuteTemplate(w, "myprofile.html", profileView); err != nil {
 		log.Printf("Could not execute template myprofile.html: %v", err)
 		http.Error(w, "TEMPLATE_ERROR", http.StatusInternalServerError)
 	}
@@ -240,12 +244,12 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 	alias := req.FormValue("alias")
 	username := req.FormValue("username")
 	description := req.FormValue("description")
-	newPicUrl, err, status := getAndSaveFile(req, "pic_url")
+	newPicUrl, err, s := getAndSaveFile(req, "pic_url")
 	if err != nil {
 		// It's ok to get an errMissingFile, but if it's not such an error, it is
 		// an internal failure.
 		if !errors.Is(err, errMissingFile) {
-			http.Error(w, err.Error(), status)
+			http.Error(w, err.Error(), s)
 			return
 		}
 	}
@@ -256,7 +260,7 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 		Description: description,
 		PicUrl:      newPicUrl,
 	}
-	_, err := r.crudClient.UpdateBasicUserData(context.Background(), request)
+	_, err = r.crudClient.UpdateBasicUserData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code(){
@@ -333,7 +337,7 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	}
 
 	// get current user data for header section
-	userId := currentUser(req)
+	userId := r.currentUser(req)
 	var userHeader *pbApi.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
@@ -344,9 +348,11 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds){
 				pActivity := feed.GetUserPaginationActivity()
 				id := userData.UserId
-				d.UserActivity[id].ThreadsCreated = pActivity.ThreadsCreated
-				d.UserActivity[id].Comments = pActivity.Comments
-				d.UserActivity[id].Subcomments = pActivity.Subcomments
+				a := d.UserActivity[id]
+				a.ThreadsCreated = pActivity.ThreadsCreated
+				a.Comments = pActivity.Comments
+				a.Subcomments = pActivity.Subcomments
+				d.UserActivity[id] = a
 			})
 	}
 	profileView := templates.DataToProfileView(userData, userHeader, feed.Contents, userId)
@@ -406,20 +412,13 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds){
-				pActivity := feed.GetUserPaginationActivity()
-				
-				tc := d.UserActivity[userId].ThreadsCreated
-				tc = append(tc, pActivity.ThreadsCreated...)
-				d.UserActivity[userId].ThreadsCreated = tc
-
-				c := d.UserActivity[userId].Comments
-				c = append(c, pActivity.Comments...)
-				d.UserActivity[userId].Comments = c
-
-				sc := d.UserActivity[userId].Subcomments
-				sc = append(sc, pActivity.Subcomments...)
-				d.UserActivity[userId].Subcomments = sc
-			})
+			pActivity := feed.GetUserPaginationActivity()
+			a := d.UserActivity[userId]
+			a.ThreadsCreated = append(a.ThreadsCreated, pActivity.ThreadsCreated...)
+			a.Comments = append(a.Comments, pActivity.Comments...)
+			a.Subcomments = append(a.Subcomments, pActivity.Subcomments...)
+			d.UserActivity[userId] = a
+		})
 	}
 	// Encode and send response
 	if err = json.NewEncoder(w).Encode(feed); err != nil {
@@ -483,12 +482,12 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 	about := req.FormValue("about")
 	username := req.FormValue("username")
 	password := req.FormValue("password")
-	picUrl, err, status := getAndSaveFile(req, "pic_url")
+	picUrl, err, s := getAndSaveFile(req, "pic_url")
 	if err != nil {
-		// It's ok to get an errMissingFile, but if it's not such an error, it is
-		// an internal failure.
+		// It's ok to get an errMissingFile, but if it's not such an error,
+		// it is an internal failure.
 		if !errors.Is(err, errMissingFile) {
-			http.Error(w, err.Error(), status)
+			http.Error(w, err.Error(), s)
 			return
 		}
 		picUrl = "/tmp/default.jpg"
@@ -532,7 +531,7 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write("OK")
+	w.Write([]byte("OK"))
 }
 
 // Logout "/logout" handler. It removes the session. It doesn't use the userId 
@@ -547,7 +546,7 @@ func (r *Router) handleLogout(_ string, w http.ResponseWriter, req *http.Request
 	}
 	if err := session.Save(req, w); err != nil {
 		log.Printf("Could not save session because... %v\n", err)
-		http.Error(w, "COOKIE_ERROR", htp.StatusServiceUnavailable)
+		http.Error(w, "COOKIE_ERROR", http.StatusServiceUnavailable)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

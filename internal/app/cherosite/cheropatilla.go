@@ -1,4 +1,4 @@
-package app
+package cherosite
 
 import (
 	"net/http"

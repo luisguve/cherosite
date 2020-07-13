@@ -5,13 +5,13 @@ import(
 	"strings"
 	"fmt"
 	"log"
+	"time"
 
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
-func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHeaderData)
-	*MyProfileView {
+func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHeaderData) *MyProfileView {
 	// set user header data
 	hd := setHeaderData(uhd, nil)
 	// set user profile data
@@ -28,7 +28,7 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
 			Link: fmt.Sprintf("/profile/recycle?userid=%s", userData.UserId),
-		}
+		},
 	}
 	var (
 		hd HeaderData
@@ -160,7 +160,7 @@ currentUserId string) *ExploreView {
 	}
 }
 
-func DataToThreadView(content *pbApi.ContentRule, feed []*pbApi.ContentRule, 
+func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule, 
 uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView{
 	metadata := content.Metadata
 	section := strings.ToLower(strings.Replace(metadata.Section, " ", "", -1))
@@ -246,9 +246,9 @@ func setHeaderData(uhd *pbApi.UserHeaderData, recycleSet []RecycleType) HeaderDa
 			Permalink: pbNotif.Permalink,
 			Title:     pbNotif.Subject,
 			Message:   pbNotif.Message,
-			Date:      pbNotif.Timestamp,
+			Date:      pbNotif.Timestamp.Seconds,
 		}
-		hd.ReadNotifs = append(hd.ReadNotifs, notif)
+		hd.User.ReadNotifs = append(hd.User.ReadNotifs, notif)
 	}
 	// set unread notifs
 	for _, pbNotif := range uhd.UnreadNotifs {
@@ -256,11 +256,11 @@ func setHeaderData(uhd *pbApi.UserHeaderData, recycleSet []RecycleType) HeaderDa
 			Permalink: pbNotif.Permalink,
 			Title:     pbNotif.Subject,
 			Message:   pbNotif.Message,
-			Date:      pbNotif.Timestamp,
+			Date:      pbNotif.Timestamp.Seconds,
 		}
-		hd.UnreadNotifs = append(hd.UnreadNotifs, notif)
+		hd.User.UnreadNotifs = append(hd.User.UnreadNotifs, notif)
 	}
-	hd.Alias = uhd.Alias
+	hd.User.Alias = uhd.Alias
 	return hd
 }
 
@@ -268,12 +268,14 @@ func setProfileData(userData *pbApi.ViewUserResponse) ProfileData {
 	var pd ProfileData
 	if userData != nil {
 		pd = ProfileData{
-			Patillavatar: userData.PicUrl,
-			Alias:        userData.Alias,
-			Username:     userData.Username,
+			BasicUserData: BasicUserData{
+				Patillavatar: userData.PicUrl,
+				Alias:        userData.Alias,
+				Username:     userData.Username,
+				Description:  userData.About,
+			},
 			Followers:    len(userData.FollowersIds),
 			Following:    len(userData.FollowingIds),
-			Description:  userData.About,
 		}
 	}
 	return pd
@@ -292,14 +294,17 @@ func setBasicUserData(userData *pbDataFormat.BasicUserData) BasicUserData {
 	return bud
 }
 
-func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentRenderer {
-	if pbRule.Data == nil {
-		log.Println("pbRule has no data")
+func contentToContentRenderer(pbData *pbApi.ContentData, userId string)	ContentRenderer {
+	if pbData == nil {
+		log.Println("pbData has no data")
 		return &NoContent{}
+	}
+	pbRule := &pbApi.ContentRule{
+		Data: pbData,
 	}
 	bc := setBasicContent(pbRule, userId)
 
-	metadata := pbRule.Data.Metadata
+	metadata := pbData.Metadata
 
 	threadId := metadata.Id
 	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
@@ -329,7 +334,7 @@ func contentToContentRenderer(pbRule *pbApi.ContentRule, userId string)	ContentR
 // formatCommentContent converts a *pbApi.ContentRule into a *CommentContent and
 // returns it along with an error indicating whether or not the content context was
 // not a *pbApi.ContentRule_CommentCtx. userId is used to setBasicContent.
-func formatCommentContent(pbRule *pbApi.ContentRule, userId string) (*CommentContent, error) {
+func formatCommentContent(pbRule *pbApi.ContentRule, userId string) (OverviewRenderer, error) {
 	if pbRule.Data == nil {
 		return nil, fmt.Errorf("Comment has no data")
 	}
@@ -375,7 +380,7 @@ func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string
 				log.Println(err)
 				ovwRenderer = &NoContent{}
 			}
-			ovwRendererset[idx] = ovwRenderer
+			ovwRendererSet[idx] = ovwRenderer
 		}(idx, pbRule)
 	}
 	wg.Wait()
@@ -463,7 +468,7 @@ func contentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string
 		go func(idx int, pbRule *pbApi.ContentRule) {
 			defer wg.Done()
 			ovwRenderer := contentToOverviewRenderer(pbRule, userId)
-			ovwRendererset[idx] = ovwRenderer
+			ovwRendererSet[idx] = ovwRenderer
 		}(idx, pbRule)
 	}
 	wg.Wait()
@@ -511,7 +516,7 @@ func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 		SectionName: metadata.Section,
 		Author:      author.Alias,
 		Username:    author.Username,
-		PublishDate: content.PublishDate,
+		PublishDate: time.Unix(content.PublishDate.Seconds, 0).Format(time.RFC822),
 		ThreadLink:  threadLink,
 		SectionLink: sectionLink,
 	}

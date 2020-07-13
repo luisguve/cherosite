@@ -17,7 +17,7 @@ type Notif struct {
 	Permalink string
 	Title     string
 	Message   string
-	Date      string
+	Date      int64
 }
 
 // UserHeader holds information about the user currently logged in

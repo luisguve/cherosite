@@ -10,9 +10,10 @@ import(
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	pbTime "github.com/golang/protobuf/ptypes/timestamp"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cheropatilla/internal/pkg/templates"
-	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"github.com/luisguve/cherosite/internal/pkg/pagination"
 )
 
 // Section "/{section}" handler. It requests a set of threads using the identifier 
@@ -65,14 +66,14 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusPartialContent)
 	}
 
-	var userHeader *pb.UserHeaderData
-	userId := currentUser(req)
+	var userHeader *pbApi.UserHeaderData
+	userId := r.currentUser(req)
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
 
-	sectionView := templates.DataToSectionView(feed, userHeader, userId)
+	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId)
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -174,9 +175,9 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	section := vars["section"]
 
 	// Get ft_file and save it to the disk with a unique, random name.
-	filePath, err, status := getAndSaveFile(req, "ft_file")
+	filePath, err, s := getAndSaveFile(req, "ft_file")
 	if err != nil {
-		http.Error(w, err.Error(), status)
+		http.Error(w, err.Error(), s)
 		return
 	}
 	// Get the rest of the content parts
@@ -197,7 +198,9 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 			Title:       title,
 			Content:     content,
 			FtFile:      filePath,
-			PublishDate: time.Now().Unix(),
+			PublishDate: &pbTime.Timestamp{
+				Seconds: time.Now().Unix(),
+			},
 		},
 		SectionCtx: sectionCtx,
 	}

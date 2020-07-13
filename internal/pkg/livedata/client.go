@@ -1,17 +1,17 @@
 package livedata
 
-import(
-	"bytes"
+import (
+	"encoding/json"
 	"log"
-	"net/http"
+	"strconv"
 	"time"
 
-	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 	"github.com/gorilla/websocket"
+	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
 type Client struct {
-	Hub *Hub
+	Hub  *Hub
 	Conn *websocket.Conn
 	User *User
 }
@@ -42,9 +42,9 @@ const (
 	WriteBufferSize = 1024
 )
 
-func (c *CLient) ReadPump() {
+func (c *Client) ReadPump() {
 	defer func() {
-		c.Hub.unregister <- c.User.Id
+		c.Hub.Unregister <- c.User.Id
 		c.Conn.Close()
 	}()
 
@@ -58,7 +58,7 @@ func (c *CLient) ReadPump() {
 	for {
 		_, _, err := c.Conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.AbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v\n", err)
 			}
 			break
@@ -67,7 +67,7 @@ func (c *CLient) ReadPump() {
 	}
 }
 
-func (c *Client) WritePump {
+func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -75,8 +75,8 @@ func (c *Client) WritePump {
 	}()
 	for {
 		select {
-		case notif, ok := <- c.User.sendNotif:
-			c.Conn.SetWriteDeadline(writeWait)
+		case notif, ok := <-c.User.SendNotif:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -93,27 +93,27 @@ func (c *Client) WritePump {
 				return
 			}
 			w.Write(notifJSON)
-			if len(c.User.sendNotif) >= 1 {
-				notifsJSON := mergeNotifs(c.User.sendNotif)
-				for notifJSON = range notifsJSON {
+			if len(c.User.SendNotif) >= 1 {
+				notifsJSON := mergeNotifs(c.User.SendNotif)
+				for _, notifJSON = range notifsJSON {
 					w.Write(notifJSON)
-				}				
+				}
 			}
 			if err = w.Close(); err != nil {
 				log.Printf("Error: %v\n", err)
 				return
 			}
-		case ok := <- c.User.sendOk:
+		case ok := <-c.User.SendOk:
 			result := strconv.FormatBool(ok)
-			msg := []byte(`{"ok":"`+result+`"}`)
+			msg := []byte(`{"ok":"` + result + `"}`)
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Printf("Error: %v\n", err)
 			}
-		case <- ticker.C:
+		case <-ticker.C:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.Conn.WriteMessage(websocket.PingMessage, []byte()); err != nil {
-				fmt.Printf("Error: %v\n", err)
+			if err := c.Conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.Printf("Error: %v\n", err)
 			}
 		}
 	}
@@ -132,7 +132,7 @@ func mergeNotifs(receive chan *pbDataFormat.Notif) (notifsJSON [][]byte) {
 	}
 	// merged will contain only the last duplicate notif, if there are duplicates
 	merged := make(map[string]*pbDataFormat.Notif)
-	for notif := range notifs {
+	for _, notif := range notifs {
 		merged[notif.Id] = notif
 	}
 	// empty notifs slice
@@ -142,7 +142,7 @@ func mergeNotifs(receive chan *pbDataFormat.Notif) (notifsJSON [][]byte) {
 		notifs = append(notifs, notif)
 	}
 	// marshal into JSON and fill slice of JSON notifs
-	for notif := range notifs {
+	for _, notif := range notifs {
 		notifJSON, err := json.Marshal(notif)
 		if err != nil {
 			log.Printf("Could not marshal notif: %v\n", err)

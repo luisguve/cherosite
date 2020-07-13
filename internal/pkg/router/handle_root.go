@@ -10,8 +10,8 @@ import(
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cheropatilla/internal/pkg/templates"
-	"github.com/luisguve/cheropatilla/internal/pkg/pagination"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	"github.com/luisguve/cherosite/internal/pkg/pagination"
 )
 
 // Dashboard "/" handler. It displays the dashboard of the logged in user that 
@@ -26,7 +26,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 	request := &pbApi.GetDashboardDataRequest{
 		UserId: userId,
 	}
-	dData, err = r.crudClient.GetDashboardData(context.Background(), request)
+	dData, err := r.crudClient.GetDashboardData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -46,12 +46,10 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	followers := len(dData.FollowersIds)
-	following := len(dData.FollowingIds)
-
 	var wg sync.WaitGroup
 	// Get dashboard feed only if this user is following other users
 	var feed templates.ContentsFeed
+	following := len(dData.FollowingIds)
 	if following > 0 {
 		wg.Add(1)
 		go func() {
@@ -123,7 +121,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 				UserId:  dData.UserId,
 				// ignore DiscardIds; do not discard any thread
 			}
-			stream, err = r.crudClient.RecycleSaved(context.Background(), savedPattern)
+			stream, err := r.crudClient.RecycleSaved(context.Background(), savedPattern)
 			if err != nil {
 				log.Printf("Could not send request: %v\n", err)
 				w.WriteHeader(http.StatusPartialContent)
@@ -144,9 +142,11 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 			pActivity := feed.GetPaginationActivity()
 
 			for userId, content := range pActivity {
-				d.FeedActivity[userId].ThreadsCreated = content.ThreadsCreated
-				d.FeedActivity[userId].Comments = content.Comments
-				d.FeedActivity[userId].Subcomments = content.Subcomments
+				a := d.FeedActivity[userId]
+				a.ThreadsCreated = content.ThreadsCreated
+				a.Comments = content.Comments
+				a.Subcomments = content.Subcomments
+				d.FeedActivity[userId] = a
 			}
 		})
 	case len(userActivity.Contents) > 0:
@@ -155,9 +155,11 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 
 			// avoid conflict with profile view by adding a preffix dashboard-
 			id := "dashboard-" + dData.UserId
-			d.UserActivity[id].ThreadsCreated = pActivity.ThreadsCreated
-			d.UserActivity[id].Comments = pActivity.Comments
-			d.UserActivity[id].Subcomments = pActivity.Subcomments
+			a := d.UserActivity[id]
+			a.ThreadsCreated = pActivity.ThreadsCreated
+			a.Comments = pActivity.Comments
+			a.Subcomments = pActivity.Subcomments
+			d.UserActivity[id] = a
 		})
 	case len(savedThreads.Contents) > 0:
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -192,7 +194,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	}
 	following, err := r.crudClient.GetUserFollowingIds(context.Background(), request)
 	if err != nil {
-		if resErr, ok := status.FromError(); ok {
+		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				log.Printf("User %s unregistered\n", userId)
@@ -245,7 +247,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	}
 	// FOR DEBUGGING
 	if len(feed.Contents) == 0 {
-		log.Printf("Could not get any threads created by %v\n", dData.FollowingIds)
+		log.Printf("Could not get any threads created by %v\n", following.Ids)
 	}
 	// Update session only if there is content.
 	if len(feed.Contents) > 0 {
@@ -253,17 +255,11 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 			pActivity := feed.GetPaginationActivity()
 
 			for userId, content := range pActivity {
-				tc := d.FeedActivity[userId].ThreadsCreated
-				tc = append(tc, content.ThreadsCreated...)
-				d.FeedActivity[userId].ThreadsCreated = tc
-
-				c := d.FeedActivity[userId].Comments
-				c = append(c, content.Comments...)
-				d.FeedActivity[userId].Comments = c
-
-				sc := d.FeedActivity[userId].Subcomments
-				sc = append(sc, content.Subcomments...)
-				d.FeedActivity[userId].Subcomments = sc
+				a := d.FeedActivity[userId]
+				a.ThreadsCreated = append(a.ThreadsCreated, content.ThreadsCreated...)
+				a.Comments = append(a.Comments, content.Comments...)
+				a.Subcomments = append(a.Subcomments, content.Subcomments...)
+				d.FeedActivity[userId] = a
 			}
 		})
 	}
@@ -333,17 +329,11 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 			// avoid conflict with view profile by adding a preffix dashboard-
 			id := "dashboard-" + userId
 
-			tc := d.UserActivity[id].ThreadsCreated
-			tc = append(tc, pActivity.ThreadsCreated...)
-			d.UserActivity[id].ThreadsCreated = tc
-
-			c := d.UserActivity[id].Comments
-			c = append(c, pActivity.Comments...)
-			d.UserActivity[id].Comments = c
-
-			sc := d.UserActivity[id].Subcomments
-			sc = append(sc, pActivity.Subcomments...)
-			d.UserActivity[id].Subcomments = sc
+			a := d.UserActivity[id]
+			a.ThreadsCreated = append(a.ThreadsCreated, pActivity.ThreadsCreated...)
+			a.Comments = append(a.Comments, pActivity.Comments...)
+			a.Subcomments = append(a.Subcomments, pActivity.Subcomments...)
+			d.UserActivity[id] = a
 		})
 	}
 	// Encode and send response
@@ -366,7 +356,7 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 	// Get id of contents to be discarded
 	discard := getDiscardIds(session)
 
-	var userActivity templates.ContentsFeed
+	var savedThreads templates.ContentsFeed
 
 	savedPattern := &pbApi.SavedPattern{
 		Pattern:    templates.CompactPattern,
@@ -441,14 +431,14 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	// get current user data for header section
-	userId := currentUser(req)
+	userId := r.currentUser(req)
 	var userHeader *pbApi.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
 
-	exploreView := templates.DataToExploreView(feed, userHeader, userId)
+	exploreView := templates.DataToExploreView(feed.Contents, userHeader, userId)
 
 	// Update session only if there is feed
 	if len(feed.Contents) > 0 {
@@ -481,7 +471,7 @@ func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) 
 	}
 
 	var feed templates.ContentsFeed
-	stream, err := r.crudClient.RecycleGeneral(generalPattern)
+	stream, err := r.crudClient.RecycleGeneral(context.Background(), generalPattern)
 	if err != nil {
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)

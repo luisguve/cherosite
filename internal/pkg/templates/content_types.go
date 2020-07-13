@@ -58,7 +58,7 @@ type Thread struct {
 }
 
 func (t *Thread) RenderContent() template.HTML {
-	t.BasicContent.ClassName = fmt.Sprintf("%s", t.BasicContent.Status)
+	t.BasicContent.ClassName = "thread"
 
 	tplName := "thread_content.html"
 	result := new(strings.Builder)

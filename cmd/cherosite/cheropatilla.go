@@ -6,11 +6,11 @@ import (
 
 	"google.golang.org/grpc"
 	"github.com/gorilla/sessions"
-	"github.com/luisguve/cheropatilla/internal/app"
-	"github.com/luisguve/cheropatilla/internal/pkg/livedata"
-	"github.com/luisguve/cheropatilla/internal/pkg/router"
-	"github.com/luisguve/cheropatilla/internal/pkg/templates"
-	pb "github.com/luisguve/cheropatilla/internal/cheropatillapb"
+	app "github.com/luisguve/cherosite/internal/app/cherosite"
+	"github.com/luisguve/cherosite/internal/pkg/livedata"
+	"github.com/luisguve/cherosite/internal/pkg/router"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
+	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 	defer conn.Close()
 
 	// Create gRPC crud client
-	ccc := pb.NewCrudCheropatillaClient(conn)
+	ccc := pbApi.NewCrudCheropatillaClient(conn)
 
 	// Get session store
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))

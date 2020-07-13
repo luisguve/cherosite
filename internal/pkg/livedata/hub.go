@@ -1,6 +1,9 @@
 package livedata
 
-import(
+import (
+	"context"
+	"log"
+
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
@@ -33,18 +36,18 @@ func NewHub() *Hub {
 }
 
 // Run continuously listens for user registering/unregistering messages
-func (h *Hub) Run(crudServiceClient *pbApi.CrudCheropatillaClient) {
+func (h *Hub) Run(crudServiceClient pbApi.CrudCheropatillaClient) {
 	for {
 		select {
-		case user := <- h.Register:
+		case user := <-h.Register:
 			h.onlineUsers[user.Id] = user
-		case userId := <- h.Unregister:
+		case userId := <-h.Unregister:
 			if user, ok := h.onlineUsers[userId]; ok {
 				delete(h.onlineUsers, userId)
 				close(user.SendNotif)
 				close(user.SendOk)
 			}
-		case userId := <- h.ReadAllFromUser:
+		case userId := <-h.ReadAllFromUser:
 			if user, ok := h.onlineUsers[userId]; ok {
 				go markAllAsRead(userId, user.SendOk, crudServiceClient)
 			}
@@ -64,11 +67,11 @@ func (h *Hub) Broadcast(userId string, notif *pbDataFormat.Notif) {
 	}
 }
 
-func markAllAsRead(userId string, sendOk chan bool, cc *pbApi.CrudCheropatillaClient) {
-	_, err := cc.MarkAllAsRead(context.Background(), &pbApi.ReadNotifsRequest{userId})
+func markAllAsRead(userId string, sendOk chan bool, cc pbApi.CrudCheropatillaClient) {
+	_, err := cc.MarkAllAsRead(context.Background(), &pbApi.ReadNotifsRequest{UserId: userId})
 	if err != nil {
 		log.Println("Could not send request to mark all notifs as read: %v\n", err)
-		sendOk <- false 
+		sendOk <- false
 	} else {
 		sendOk <- true
 	}
