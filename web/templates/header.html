@@ -20,7 +20,7 @@
 		{{ with .User }}
 		{{- /* Notifications */ -}}
 		<div class="notifs">
-			<button>Notifs ({{len .Notifications}})</button>
+			<button>Notifs ({{len .UnreadNotifs}})</button>
 			<div class="dropdown-notifs">
 			{{ range .UnreadNotifs }}
 				<a href="{{.Permalink}}">
