@@ -492,6 +492,9 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 		}
 		picUrl = "/tmp/default.jpg"
 	}
+	if alias == "" {
+		alias = name
+	}
 	request := &pbApi.RegisterUserRequest{
 		Email:    email,
 		Name:     name,
@@ -539,16 +542,21 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 // case of the following:
 // - unable to set cookie -> COOKIE_ERROR
 func (r *Router) handleLogout(_ string, w http.ResponseWriter, req *http.Request) {
-	session, _ := r.store.Get(req, "session")
-	session.Options = &sessions.Options{
-		// MaxAge < 0 means delete cookie immediately
-		MaxAge: -1,
-	}
-	if err := session.Save(req, w); err != nil {
+	if err := r.deleteSession(req, w); err != nil {
 		log.Printf("Could not save session because... %v\n", err)
 		http.Error(w, "COOKIE_ERROR", http.StatusServiceUnavailable)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+// Delete cookie and update session.
+func (r *Router) deleteSession(req *http.Request, w http.ResponseWriter) error {
+	session, _ := r.store.Get(req, "session")
+	session.Options = &sessions.Options{
+		// MaxAge < 0 means delete cookie immediately
+		MaxAge: -1,
+	}
+	return session.Save(req, w)
 }
