@@ -45,8 +45,14 @@ func main() {
 	hub := livedata.NewHub()
 	go hub.Run(ccc)
 
+	// Get section names mapped to their ids.
+	env, err = godotenv.Read("sections.env")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Setup router and routes
-	router := router.New(tpl, ccc, store, hub)
+	router := router.New(tpl, ccc, store, hub, env)
 	router.SetupRoutes()
 
 	// Start app
