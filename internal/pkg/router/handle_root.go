@@ -85,9 +85,6 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 				log.Printf("Could not get any threads created by %v\n", dData.FollowingIds)
 			}
 		}()
-	} else {
-		// FOR DEBUGGING
-		log.Println("This user isn't following anybody")
 	}
 
 	// Get user activity

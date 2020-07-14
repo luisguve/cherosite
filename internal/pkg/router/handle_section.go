@@ -31,7 +31,6 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	// Check whether the section exists.
 	sectionName, ok := r.sections[section]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
 		http.NotFound(w, req)
 		return
 	}
