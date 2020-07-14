@@ -19,10 +19,11 @@ type Router struct {
 	templates  *template.Template
 	store      sessions.Store
 	hub        *livedata.Hub
+	sections   map[string]string
 }
 
 func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store,
-	hub *livedata.Hub) *Router {
+	hub *livedata.Hub, sections map[string]string) *Router {
 	if t == nil {
 		log.Fatal("missing templates")
 	}
@@ -35,6 +36,9 @@ func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store
 	if hub == nil {
 		log.Fatal("missing hub")
 	}
+	if sections == nil || len(sections) == 0 {
+		log.Fatal("no sections")
+	}
 	return &Router{
 		handler: mux.NewRouter(),
 		upgrader: websocket.Upgrader{
@@ -45,6 +49,7 @@ func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store
 		templates:  t,
 		store:      s,
 		hub:        hub,
+		sections:   sections,
 	}
 }
 
@@ -132,8 +137,7 @@ func (r *Router) SetupRoutes() {
 	comments.HandleFunc("/", r.onlyUsers(r.handlePostSubcomment)).Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}")
 	// delete a subcomment
 	// "/{section}/{thread}/comment/delete?c_id={c_id}&sc_id={sc_id}"
-	comments.HandleFunc("/delete", r.onlyUsers(r.handleDeleteSubcomment)).Methods("DELETE").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id",
-		"{sc_id:[a-zA-Z0-9]+}")
+	comments.HandleFunc("/delete", r.onlyUsers(r.handleDeleteSubcomment)).Methods("DELETE").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
 
 	// handlers for upvotes
 	upvotes := thread.PathPrefix("/upvote").Subrouter()
