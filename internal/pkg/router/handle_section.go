@@ -10,6 +10,7 @@ import (
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	"github.com/luisguve/cherosite/internal/app/cherosite"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
@@ -72,8 +73,8 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
-
-	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId)
+	sectionName := cherosite.SectionIds[section]
+	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId, sectionName)
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
