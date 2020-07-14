@@ -27,6 +27,13 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	threadCtx := formatContextThread(section, thread)
 
@@ -99,7 +106,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 		userHeader = r.getUserHeaderData(w, userId)
 	}
 
-	threadView := templates.DataToThreadView(content, feed.Contents, userHeader, userId)
+	threadView := templates.DataToThreadView(content, feed.Contents, userHeader, userId, section)
 
 	if err := r.templates.ExecuteTemplate(w, "thread.html", threadView); err != nil {
 		log.Printf("Could not execute template thread.html: %v\n", err)
@@ -117,6 +124,13 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	threadCtx := formatContextThread(section, thread)
 
@@ -183,11 +197,17 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 // - invalid section name or thread id -> 404 NOT_FOUND
 // - section or thread are unavailable -> SECTION_UNAVAILABLE
 // - network failures ------------------> INTERNAL_FAILURE
-func (r *Router) handleSave(userId string, w http.ResponseWriter,
-	req *http.Request) {
+func (r *Router) handleSave(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	threadCtx := formatContextThread(section, thread)
 
@@ -231,6 +251,13 @@ func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, req *http.
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	threadCtx := formatContextThread(section, thread)
 
@@ -274,6 +301,13 @@ func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	threadCtx := formatContextThread(section, thread)
 
@@ -295,6 +329,14 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
+
 	threadCtx := formatContextThread(section, thread)
 
 	upvoteRequest := &pbApi.UpvoteRequest{
@@ -316,6 +358,13 @@ func (r *Router) handleUndoUpvoteThread(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	thread := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	threadCtx := formatContextThread(section, thread)
 

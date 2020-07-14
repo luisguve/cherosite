@@ -36,6 +36,13 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	section := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 	commentCtx := formatContextComment(section, thread, commentId)
 
 	request := &pbApi.GetSubcommentsRequest{
@@ -97,6 +104,13 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 	vars := mux.Vars(req)
 	section := vars["section"]
 	threadId := vars["thread"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, status := getAndSaveFile(req, "ft_file")
 	if err != nil {
@@ -139,6 +153,13 @@ func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 	section := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	comment := formatContextComment(section, thread, commentId)
 	deleteContentRequest := &pbApi.DeleteContentRequest{
@@ -168,6 +189,13 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 	section := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, status := getAndSaveFile(req, "ft_file")
 	if err != nil {
@@ -212,6 +240,13 @@ func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 	thread := vars["thread"]
 	comment := vars["c_id"]
 	subcommentId := vars["sc_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	subcomment := formatContextSubcomment(section, thread, comment, subcommentId)
 	deleteRequest := &pbApi.DeleteContentRequest{
@@ -233,6 +268,13 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 	section := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	comment := formatContextComment(section, thread, commentId)
 	upvoteRequest := &pbApi.UpvoteRequest{
@@ -255,6 +297,13 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	thread := vars["thread"]
 	commentId := vars["c_id"]
 	subcommentId := vars["sc_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)
 	upvoteRequest := &pbApi.UpvoteRequest{
@@ -277,6 +326,13 @@ func (r *Router) handleUndoUpvoteComment(userId string, w http.ResponseWriter,
 	section := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	comment := formatContextComment(section, thread, commentId)
 	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
@@ -300,6 +356,13 @@ func (r *Router) handleUndoUpvoteSubcomment(userId string, w http.ResponseWriter
 	thread := vars["thread"]
 	commentId := vars["c_id"]
 	subcommentId := vars["sc_id"]
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)
 	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{

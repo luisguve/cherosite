@@ -10,7 +10,6 @@ import (
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
-	"github.com/luisguve/cherosite/internal/app/cherosite"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
@@ -28,6 +27,15 @@ import (
 func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
+
+	// Check whether the section exists.
+	sectionName, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
+
 	sectionCtx := formatContextSection(section)
 
 	contentPattern := &pbApi.ContentPattern{
@@ -73,8 +81,7 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
-	sectionName := cherosite.SectionIds[section]
-	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId, sectionName)
+	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId, sectionName, section)
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -98,6 +105,15 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
+
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
+
 	sectionCtx := formatContextSection(section)
 
 	// Get always returns a session, even if empty
@@ -174,6 +190,14 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
 	section := vars["section"]
+
+	// Check whether the section exists.
+	_, ok := r.sections[section]
+	if !ok {
+		log.Printf("Section %s not found\n", section)
+		http.NotFound(w, req)
+		return
+	}
 
 	// Get ft_file and save it to the disk with a unique, random name.
 	filePath, err, s := getAndSaveFile(req, "ft_file")
