@@ -203,18 +203,8 @@ func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
 }
 
 func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
-	currentUserId string) *SectionView {
-	var section string
-	// get section name from first valid content rule.
-	for _, pbRule := range feed {
-		if (pbRule.Data != nil) && (pbRule.Data.Metadata != nil) {
-			section = pbRule.Data.Metadata.Section
-			break
-		}
-	}
-	if section == "" {
-		log.Println("Could not get section name")
-	}
+	currentUserId, section string) *SectionView {
+	
 	sectionId := strings.Replace(strings.ToLower(section), " ", "", -1)
 
 	recycleSet := []RecycleType{
