@@ -83,9 +83,10 @@ func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter,
 // Follow User "/follow?username={username}" handler. It updates the current user
 // to follow the user with the given username and returns OK on success or an
 // error in case of the following:
-// - username not found ---> 404 NOT_FOUND
-// - user is unregistered -> USER_UNREGISTERED
-// - network failures -----> INTERNAL_FAILURE
+// - username not found ----> 404 NOT_FOUND
+// - user following itself -> SELF_FOLLOW
+// - user is unregistered --> USER_UNREGISTERED
+// - network failures ------> INTERNAL_FAILURE
 func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	username := vars["username"]
@@ -99,6 +100,9 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 			switch resErr.Code() {
 			case codes.NotFound:
 				http.NotFound(w, req)
+				return
+			case codes.InvalidArgument:
+				http.Error(w, "SELF_FOLLOW", http.StatusBadRequest)
 				return
 			case codes.Unauthenticated:
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
@@ -120,9 +124,10 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 // Unfollow User "/unfollow?username={username}" handler. It updates the current user
 // to unfollow the user with the given username and returns OK on success or an
 // error in case of the following:
-// - username not found ---> 404 NOT_FOUND
-// - user is unregistered -> USER_UNREGISTERED
-// - network failures -----> INTERNAL_FAILURE
+// - username not found ------> 404 NOT_FOUND
+// - user unfollowing itself -> SELF_UNFOLLOW
+// - user is unregistered ----> USER_UNREGISTERED
+// - network failures --------> INTERNAL_FAILURE
 func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	username := vars["username"]
@@ -136,6 +141,9 @@ func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.
 			switch resErr.Code() {
 			case codes.NotFound:
 				http.NotFound(w, req)
+				return
+			case codes.InvalidArgument:
+				http.Error(w, "SELF_UNFOLLOW", http.StatusBadRequest)
 				return
 			case codes.Unauthenticated:
 				http.Error(w, "USER_UNREGISTERED", http.StatusUnauthorized)
