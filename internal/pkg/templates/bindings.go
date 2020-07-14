@@ -58,7 +58,7 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 	var (
 		isF bool
 		showFollowOption = true
-	}
+	)
 	// check whether the current user is a follower of the user viewing
 	if currentUserId == "" {
 		isF = false
