@@ -7,7 +7,8 @@
 </head>
 <body>
 	{{ template "header" .HeaderData }}
-	
+
+	{{ $showFollowOption := .FollowOption }}
 	{{ $isFollower := .IsFollower }}
 	{{ $userAlias := .ProfileData.BasicUserData.Alias }}
 	{{ $followers := .ProfileData.Followers }}
@@ -24,10 +25,12 @@
 		<div class="follow">
 			<p>Following: {{$following}}</p>
 			<p>Followers: {{$followers}}</p>
-			{{ if $isFollower }}
-			<a href="{{ printf "/unfollow?username=%s" .Username }}">Unfollow</a>
-			{{ else }}
-			<a href="{{ printf "/follow?username=%s" .Username }}">Follow</a>
+			{{ if $showFollowOption }}
+				{{ if $isFollower }}
+				<a href="{{ printf "/unfollow?username=%s" .Username }}">Unfollow</a>
+				{{ else }}
+				<a href="{{ printf "/follow?username=%s" .Username }}">Follow</a>
+				{{ end }}
 			{{ end }}
 		</div>
 		<div class="description">

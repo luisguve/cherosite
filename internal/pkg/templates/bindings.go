@@ -54,19 +54,29 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 		defer wg.Done()
 		activitySet = contentsToOverviewRendererSet(activity, currentUserId)
 	}()
+	// isFollower
+	var (
+		isF bool
+		showFollowOption = true
+	}
 	// check whether the current user is a follower of the user viewing
-	var isF bool
 	if currentUserId == "" {
 		isF = false
 	} else {
-		isF = strings.Contains(strings.Join(userData.FollowersIds, "|"), currentUserId)
+		// Show option to follow/unfollow only if the current user is not the
+		// user viewing.
+		showFollowOption = userData.UserId != currentUserId
+		if showFollowOption {
+			isF = strings.Contains(strings.Join(userData.FollowersIds, "|"), currentUserId)
+		}
 	}
 	wg.Wait()
 	return &ProfileView{
-		HeaderData:  hd,
-		ProfileData: pd,
-		Activity:    activitySet,
-		IsFollower:  isF,
+		HeaderData:   hd,
+		ProfileData:  pd,
+		Activity:     activitySet,
+		FollowOption: showFollowOption,
+		IsFollower:   isF,
 	}
 }
 

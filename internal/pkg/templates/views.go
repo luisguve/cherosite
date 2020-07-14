@@ -48,9 +48,11 @@ type ProfileView struct {
 	HeaderData
 	ProfileData
 	Activity []OverviewRenderer
-	// IsFollower indicates whether the current user is following another user,
-	// in a context in which it is viewing another user's profile or content
-	IsFollower bool
+	// FollowOption indicates whether to show the button to follow/unfollow the
+	// user. It may be false in case of a user viewing its own profile.
+	// 
+	// IsFollower indicates whether the current user is following another user.
+	FollowOption, IsFollower bool
 }
 
 type DashboardView struct {
