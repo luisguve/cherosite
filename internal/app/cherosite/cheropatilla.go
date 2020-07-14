@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+var SectionIds = map[string]string{
+	"mylife": "My Life",
+	// And many others...
+}
+
 func (app *App) Run() error {
 	log.Println("Running")
 	return app.srv.ListenAndServe()
