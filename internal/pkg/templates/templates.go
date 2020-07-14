@@ -6,7 +6,7 @@
 // It also defines the patterns of specified quality expected to get from the
 // server into feeds.
 //
-// The template engine used to render the templates is html/templates.
+// The template engine used to render the templates is html/template.
 //
 // The templates definitions are located in /web/.
 
@@ -26,8 +26,7 @@ func Setup() *template.Template {
 	return template.Must(template.ParseGlob("web/templates/*.html"))
 }
 
-// ContentsFeed holds a list of *pbApi.ContentRule, representing a page feed of
-// some kind.
+// ContentsFeed holds a list of *pbApi.ContentRule, representing a page feed.
 type ContentsFeed struct {
 	Contents []*pbApi.ContentRule
 }
