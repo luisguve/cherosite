@@ -53,9 +53,9 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) SetupRoutes() {
-	root := r.handler.PathPrefix("/").Subrouter()
+	root := r.handler.PathPrefix("/").Subrouter().StrictSlash(true)
 	// favicon (not found)
-	root.Handle("/favicon", http.NotFoundHandler())
+	root.Handle("/favicon.ico", http.NotFoundHandler())
 	//
 	// WEBSOCKET
 	//
