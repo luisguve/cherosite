@@ -161,13 +161,12 @@ func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 }
 
 func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
-	uhd *pbApi.UserHeaderData, currentUserId string) *ThreadView {
+	uhd *pbApi.UserHeaderData, currentUserId, sectionId string) *ThreadView {
 	metadata := content.Metadata
-	section := strings.ToLower(strings.Replace(metadata.Section, " ", "", -1))
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: "Recycle comments",
-			Link:  fmt.Sprintf("/%s/%s/recycle", section, metadata.Id),
+			Link:  fmt.Sprintf("/%s/%s/recycle", sectionId, metadata.Id),
 		},
 	}
 	var (
@@ -203,10 +202,7 @@ func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
 }
 
 func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
-	currentUserId, section string) *SectionView {
-	
-	sectionId := strings.Replace(strings.ToLower(section), " ", "", -1)
-
+	currentUserId, sectionName, sectionId string) *SectionView {
 	recycleSet := []RecycleType{
 		RecycleType{
 			Label: "Recycle threads",
@@ -221,7 +217,7 @@ func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 	return &SectionView{
 		HeaderData:  hd,
 		Feed:        sectionThreads,
-		SectionName: section,
+		SectionName: sectionName,
 	}
 }
 
