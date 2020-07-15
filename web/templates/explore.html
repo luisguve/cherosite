@@ -5,6 +5,7 @@
 </head>
 <body>
 	{{ template "header" .HeaderData }}
+	<h1>Explore</h1>
 	<section class="feed">
 		{{ range $idx, $content := .Feed }}
 			{{ $content.RenderOverview $idx }}
