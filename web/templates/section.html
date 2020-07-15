@@ -5,7 +5,17 @@
 </head>
 <body>
 	{{ template "header" .HeaderData }}
-	<h1>You are in the section <strong>{{.SectionName}}</strong></h1>
+	<h1>You are in the section {{.SectionName}}</h1>
+	<section class="create-post">
+		<form action="/{{.SectionId}}/new" method="POST" enctype="multipart/form-data">
+			<label for="title">Title</label>
+			<input type="text" name="title" id="title">
+			<textarea name="content"></textarea>
+			<label for="ft_file">Submit a thumbnail</label>
+			<input type="file" name="ft_file" id="ft_file">
+			<input type="submit">
+		</form>
+	</section>
 	<section class="feed">
 		{{ range $idx, $content := .Feed }}
 			{{ $content.RenderOverview $idx }}
