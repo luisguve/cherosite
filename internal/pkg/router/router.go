@@ -107,7 +107,7 @@ func (r *Router) SetupRoutes() {
 	// handlers for sections
 	section := root.PathPrefix("/{section}").Subrouter()
 
-	section.HandleFunc("/", r.handleViewSection).Methods("GET")
+	section.HandleFunc("", r.handleViewSection).Methods("GET")
 	// create a thread
 	section.HandleFunc("/new", r.onlyUsers(r.handleNewThread)).Methods("POST")
 	// recycle section threads
@@ -115,7 +115,7 @@ func (r *Router) SetupRoutes() {
 
 	// handlers for threads
 	thread := section.PathPrefix("/{thread}").Subrouter()
-	thread.HandleFunc("/", r.handleViewThread).Methods("GET")
+	thread.HandleFunc("", r.handleViewThread).Methods("GET")
 	// recycle thread comments
 	thread.HandleFunc("/recycle", r.handleRecycleComments).Methods("GET")
 	// save thread "/{section}/{thread}/save"
