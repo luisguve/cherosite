@@ -124,11 +124,8 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 		return "", errInternalFailure, http.StatusInternalServerError
 	}
 	defer file.Close()
-	// Get and print out file size
-	fileSize := fileHeader.Size
-	log.Printf("File size (bytes): %v\n", fileSize)
 	// Validate file size
-	if fileSize > maxUploadSize {
+	if fileHeader.Size > maxUploadSize {
 		return "", errFileTooBig, http.StatusBadRequest
 	}
 	fileBytes, err := ioutil.ReadAll(file)
