@@ -208,6 +208,7 @@ func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
 		HeaderData: hd,
 		Content:    threadContent,
 		Comments:   threadComments,
+		Title:      content.Content.Title,
 	}
 }
 
@@ -228,6 +229,7 @@ func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 		HeaderData:  hd,
 		Feed:        sectionThreads,
 		SectionName: sectionName,
+		SectionId:   sectionId,
 	}
 }
 

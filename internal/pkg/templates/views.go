@@ -73,12 +73,14 @@ type SectionView struct {
 	HeaderData
 	Feed        []OverviewRenderer
 	SectionName string
+	SectionId   string
 }
 
 type ThreadView struct {
 	HeaderData
 	Content  ContentRenderer
 	Comments []OverviewRenderer
+	Title    string
 }
 
 type MyProfileView struct {
