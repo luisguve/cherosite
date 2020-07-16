@@ -5,12 +5,12 @@
 <article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}">
 	<header>
 	{{ with .BasicContent }}
-		By <a href="/profile?{{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
+		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="{{.SectionLink}}">{{.SectionName}}</a>
 	{{ end }}
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		<a href="/{{.Permalink}}"><h2>{{.Title}}</h2></a>
+		<a href="{{.Permalink}}"><h2>{{.Title}}</h2></a>
 		<hr>
 			{{ if .Thumbnail }}
 			<img src="/{{.Thumbnail}}" alt="thumbnail">

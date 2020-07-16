@@ -6,12 +6,12 @@
 <article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-reply-link="{{$replyLink}}">
 	<header>
 	{{ with .BasicContent }}
-		By <a href="/profile?{{.Username}}">{{.Author}}</a> on {{.PublishDate}}
+		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}}
 	{{ end }}
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		{{ with .Thumbnail }}<img src="/{{.}}" alt="thumbnail">{{ end }}
+		<img src="/{{.Thumbnail}}" alt="thumbnail">
 		<div class="content">{{.Content}}</div>
 		{{ end }}
 	</main>
