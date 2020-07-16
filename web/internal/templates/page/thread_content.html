@@ -9,10 +9,11 @@
 	<header>
 	{{ with .BasicContent }}
 	<div class="thread-info">
-		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="/{{.SectionLink}}">{{.SectionName}}</a>
+		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="{{.SectionLink}}">{{.SectionName}}</a>
 	</div>
 	{{ end }}
 	<div class="save">
+		{{ if .ShowSaveOption }}
 		<button type="button" data-saved="{{.Saved}}">
 			{{- if .Saved -}}
 			You saved this thread
@@ -20,6 +21,7 @@
 			Save this thread
 			{{- end -}}
 		</button>
+		{{ end }}
 	</div>
 	</header>
 	<main>

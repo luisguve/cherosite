@@ -12,6 +12,7 @@
 	</div>
 	{{ end }}
 	<div class="save">
+		{{ if .ShowSaveOption }}
 		<button type="button" data-saved="{{.Saved}}">
 			{{- if .Saved -}}
 			You saved this thread
@@ -19,6 +20,7 @@
 			Save this thread
 			{{- end -}}
 		</button>
+		{{ end }}
 	</div>
 	</header>
 	<main>

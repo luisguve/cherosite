@@ -314,19 +314,22 @@ func contentToContentRenderer(pbData *pbApi.ContentData, userId string) ContentR
 	replyLink := fmt.Sprintf("%s/comment", threadLink)
 
 	var saved bool
+	var showSaveOption bool
 	if userId == "" {
 		saved = false
 	} else {
 		saved = strings.Contains(strings.Join(metadata.UsersWhoSaved, "|"), userId)
+		showSaveOption = userId != pbRule.Data.Author.Id
 	}
 
 	return &Thread{
-		BasicContent: bc,
-		Replies:      metadata.Replies,
-		SaveLink:     saveLink,
-		UndoSaveLink: undoSaveLink,
-		Saved:        saved,
-		ReplyLink:    replyLink,
+		BasicContent:   bc,
+		Replies:        metadata.Replies,
+		SaveLink:       saveLink,
+		UndoSaveLink:   undoSaveLink,
+		ShowSaveOption: showSaveOption,
+		Saved:          saved,
+		ReplyLink:      replyLink,
 	}
 }
 
@@ -410,19 +413,22 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 		bc.UpvoteLink = fmt.Sprintf("%s/upvote", threadLink)
 		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote", threadLink)
 		var saved bool
+		var showSaveOption bool
 		if userId == "" {
 			saved = false
 		} else {
 			saved = strings.Contains(strings.Join(metadata.UsersWhoSaved, "|"), userId)
+			showSaveOption = userId != pbRule.Data.Author.Id
 		}
 
 		ovwRenderer = &Thread{
-			BasicContent: bc,
-			Replies:      metadata.Replies,
-			SaveLink:     saveLink,
-			UndoSaveLink: undoSaveLink,
-			Saved:        saved,
-			ReplyLink:    replyLink,
+			BasicContent:   bc,
+			Replies:        metadata.Replies,
+			SaveLink:       saveLink,
+			UndoSaveLink:   undoSaveLink,
+			ShowSaveOption: showSaveOption,
+			Saved:          saved,
+			ReplyLink:      replyLink,
 		}
 	// it's a COMMENT
 	case *pbApi.ContentRule_CommentCtx:
