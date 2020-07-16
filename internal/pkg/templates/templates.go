@@ -13,8 +13,12 @@
 package templates
 
 import (
+	"fmt"
 	"html/template"
+	"log"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +26,7 @@ import (
 	pag "github.com/luisguve/cherosite/internal/pkg/pagination"
 )
 
+var baseURL *url.URL
 var tpl *template.Template
 
 func mustParseTemplates(dir string) *template.Template {
@@ -41,9 +46,73 @@ func mustParseTemplates(dir string) *template.Template {
 	return templ
 }
 
-func Setup() *template.Template {
-	tpl = mustParseTemplates("web/internal/templates")
-	return mustParseTemplates("web/templates")
+// AbsURL creates an absolute URL from the relative path given and the baseURL
+// defined in the global variable.
+func absURL(in string) string {
+	url, err := url.Parse(in)
+	if err != nil {
+		log.Printf("Could not parse %s: %v\n", in, err)
+		return in
+	}
+	if url.IsAbs() || strings.HasPrefix(in, "//") {
+		return in
+	}
+
+	var stringBaseURL = baseURL.String()
+	if strings.HasPrefix(in, "/") {
+		// Strip trailing / from baseURL.
+		last := len(stringBaseURL)
+		stringBaseURL = stringBaseURL[:last]
+	}
+	return makePermalink(stringBaseURL, in).String()
+}
+
+// MakePermalink combines base URL with content path to create full URL paths.
+// Example
+//    base:   http://spf13.com/
+//    path:   post/how-i-blog
+//    result: http://spf13.com/post/how-i-blog
+// *Borrowed from gohugo.io:
+// https://github.com/gohugoio/hugo/blob/master/helpers/url.go
+func makePermalink(host, plink string) *url.URL {
+
+	base, err := url.Parse(host)
+	if err != nil {
+		panic(err)
+	}
+
+	p, err := url.Parse(plink)
+	if err != nil {
+		panic(err)
+	}
+
+	if p.Host != "" {
+		panic(fmt.Errorf("can't make permalink from absolute link %q", plink))
+	}
+
+	base.Path = path.Join(base.Path, p.Path)
+
+	// path.Join will strip off the last /, so put it back if it was there.
+	hadTrailingSlash := (plink == "" && strings.HasSuffix(host, "/")) || strings.HasSuffix(p.Path, "/")
+	if hadTrailingSlash && !strings.HasSuffix(base.Path, "/") {
+		base.Path = base.Path + "/"
+	}
+
+	return base
+}
+
+func Setup(env, port string) *template.Template {
+	if env == "local" {
+		stringBaseURL := "http://localhost" + port + "/"
+		var err error
+		baseURL, err = url.Parse(stringBaseURL)
+		if err != nil {
+			log.Printf("Could not parse baseURL (%s): %v\n", stringBaseURL, err)
+		}
+	}
+	tpl = mustParseTemplates("web/internal/templates").Funcs(template.FuncMap{"absURL": absURL})
+	publicTpl := mustParseTemplates("web/templates").Funcs(template.FuncMap{"absURL": absURL})
+	return publicTpl
 }
 
 // ContentsFeed holds a list of *pbApi.ContentRule, representing a page feed.
