@@ -486,7 +486,7 @@ func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 	metadata := pbRule.Data.Metadata
 
 	sectionLowercased := strings.ToLower(metadata.Section)
-	sectionLink := strings.Replace(fmt.Sprintf("/%s", sectionLowercased), " ", "-", -1)
+	sectionLink := strings.Replace(fmt.Sprintf("/%s", sectionLowercased), " ", "", -1)
 
 	threadLink := fmt.Sprintf("%s/%s", sectionLink, metadata.Id)
 
