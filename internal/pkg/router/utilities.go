@@ -150,10 +150,11 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 		log.Printf("Can't read filetype: %v\n", err)
 		return "", errCantReadFileType, http.StatusInternalServerError
 	}
-	newPath := filepath.Join(uploadPath, fileName+fileEndings[0])
+	filepathOS := filepath.Join(uploadPath, fileName+fileEndings[0])
+	fileURL := fmt.Sprintf("%s/%s", uploadPath, fileName+fileEndings[0])
 
 	// Write file to disk
-	newFile, err := os.Create(newPath)
+	newFile, err := os.Create(filepathOS)
 	if err != nil {
 		log.Printf("Could not create file: %s\n", err)
 		return "", errCantWriteFile, http.StatusInternalServerError
@@ -162,7 +163,7 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 	if _, err = newFile.Write(fileBytes); err != nil || newFile.Close() != nil {
 		return "", errCantWriteFile, http.StatusInternalServerError
 	}
-	return newPath, nil, http.StatusOK
+	return fileURL, nil, http.StatusOK
 }
 
 // getUserHeaderData returns username, alias, both read and unread notifs of the given
