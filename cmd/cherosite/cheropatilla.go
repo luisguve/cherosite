@@ -14,8 +14,26 @@ import (
 )
 
 func main() {
+	// Get config variables.
+	config, err := godotenv.Read("config.env")
+	if err != nil {
+		log.Fatal(err)
+	}
+	environment, ok := config["ENV"]
+	if !ok {
+		log.Fatal("Missing env in config.env")
+	}
+	// Get address and port
+	addr, ok := config["BIND_ADDR"]
+	if !ok {
+		log.Fatal("Missing bind address in config.env")
+	}
+	port, ok := config["PORT"]
+	if !ok {
+		log.Fatal("Misssing port in config.env")
+	}
 	// Get new template engine
-	tpl := templates.Setup()
+	tpl := templates.Setup(environment, port)
 
 	const address = "localhost:50051"
 	// Establish connection with gRPC server
@@ -56,6 +74,6 @@ func main() {
 	router.SetupRoutes()
 
 	// Start app
-	a := app.New(router)
+	a := app.New(router, addr, port)
 	log.Fatal(a.Run())
 }
