@@ -61,6 +61,8 @@ func (r *Router) SetupRoutes() {
 	root := r.handler.PathPrefix("/").Subrouter().StrictSlash(true)
 	// favicon (not found)
 	root.Handle("/favicon.ico", http.NotFoundHandler())
+	// serve assets
+	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadPath))))
 	//
 	// WEBSOCKET
 	//
