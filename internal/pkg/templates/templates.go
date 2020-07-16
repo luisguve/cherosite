@@ -14,6 +14,9 @@ package templates
 
 import (
 	"html/template"
+	"os"
+	"path/filepath"
+	"strings"
 
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
 	pag "github.com/luisguve/cherosite/internal/pkg/pagination"
@@ -21,9 +24,26 @@ import (
 
 var tpl *template.Template
 
+func mustParseTemplates(dir string) *template.Template {
+	templ := template.New("")
+	filepath.Walk(dir, func(path string, _ os.FileInfo, err error) error {
+		if err != nil {
+			panic(err)
+		}
+		if strings.Contains(path, ".html") {
+			_, err = templ.ParseFiles(path)
+			if err != nil {
+				panic(err)
+			}
+		}
+		return nil
+	})
+	return templ
+}
+
 func Setup() *template.Template {
-	tpl = template.Must(template.ParseGlob("web/internal/templates/*.html"))
-	return template.Must(template.ParseGlob("web/templates/*.html"))
+	tpl = mustParseTemplates("web/internal/templates")
+	return mustParseTemplates("web/templates")
 }
 
 // ContentsFeed holds a list of *pbApi.ContentRule, representing a page feed.
