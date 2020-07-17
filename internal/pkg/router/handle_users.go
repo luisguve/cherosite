@@ -518,7 +518,6 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 			switch resErr.Code() {
 			case codes.AlreadyExists:
 				// could be email or username already in use
-				log.Printf(resErr.Message())
 				http.Error(w, resErr.Message(), http.StatusConflict)
 				return
 			case codes.InvalidArgument:
