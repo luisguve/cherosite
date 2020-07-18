@@ -28,7 +28,7 @@ type ContentRenderer interface {
 // threads, comments and subcomments
 type BasicContent struct {
 	Title          string
-	Status         string // NEW, RELEVANT or TOP
+	Status         string // NEW, REL or TOP
 	ClassName      string
 	UpvoteLink     string // URL to post upvote to content
 	UndoUpvoteLink string // URL to post undo content upvote
@@ -78,7 +78,7 @@ func (t *Thread) RenderOverview(idx int) template.HTML {
 	switch t.BasicContent.Status {
 	case "NEW":
 		tplName = "new_content.html"
-	case "RELEVANT":
+	case "REL":
 		tplName = "rel_thread.html"
 	case "TOP":
 		tplName = "top_thread.html"
@@ -126,7 +126,7 @@ func (c *CommentView) RenderOverview(idx int) template.HTML {
 	switch c.BasicContent.Status {
 	case "NEW":
 		tplName = "new_content.html"
-	case "RELEVANT":
+	case "REL":
 		tplName = "rel_comment.html"
 	case "TOP":
 		tplName = "top_comment.html"
@@ -154,7 +154,7 @@ func (sc *SubcommentView) RenderOverview(idx int) template.HTML {
 	switch sc.BasicContent.Status {
 	case "NEW":
 		tplName = "new_content.html"
-	case "RELEVANT":
+	case "REL":
 		tplName = "rel_subcomment.html"
 	case "TOP":
 		tplName = "top_subcomment.html"
