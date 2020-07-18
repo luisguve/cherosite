@@ -63,6 +63,7 @@ func (r *Router) SetupRoutes() {
 	root.Handle("/favicon.ico", http.NotFoundHandler())
 	// serve assets
 	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadPath))))
+	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
 	//
 	// WEBSOCKET
 	//
