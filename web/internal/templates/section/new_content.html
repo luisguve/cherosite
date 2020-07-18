@@ -1,14 +1,15 @@
 {{ with .BasicContent }}
+{{ $permalink := .Permalink }}
 <article class=".ClassName">
 	<h3>
-		<a href="{{.Permalink}}">
+		<a href="{{$permalink}}">
 			{{.Title}}
 		</a> - <a href="{{.SectionLink}}">
 			{{.SectionName}}
 		</a>
 		<p class="summary">
 			{{ with .Summary }}
-			{{.}} ...<a href="{{.Permalink}}">Read more</a>
+			{{.}} ...<a href="{{$permalink}}">Read more</a>
 			{{ else }}
 			{{ .Content }}
 			{{ end }}
