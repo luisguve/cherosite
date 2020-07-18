@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" type="text/css" href="/tmp/css/styles.css">
-	<script defer src="/tmp/js/save.js"></script>
+	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<script defer src="/static/js/save.js"></script>
+	<script defer src="/static/js/follow.js"></script>
 	{{ with .ProfileData.BasicUserData }}
 	<title>Patilla Profile - {{.Alias}} (@{{.Username}})</title>
 	{{ end }}
@@ -24,14 +25,14 @@
 			<h3>{{.Alias}}</h3>
 			<h5>@{{.Username}}</h5>
 		</div>
-		<div class="follow">
+		<div class="follow" data-follow-link="{{ printf "/unfollow?username=%s" .Username }}" data-unfollow-link="{{ printf "/follow?username=%s" .Username }}">
 			<p>Following: {{$following}}</p>
 			<p>Followers: {{$followers}}</p>
 			{{ if $showFollowOption }}
 				{{ if $isFollower }}
-				<a href="{{ printf "/unfollow?username=%s" .Username }}">Unfollow</a>
+				<button type="button">Unfollow</button>
 				{{ else }}
-				<a href="{{ printf "/follow?username=%s" .Username }}">Follow</a>
+				<button type="button">Follow</button>
 				{{ end }}
 			{{ end }}
 		</div>
