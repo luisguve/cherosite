@@ -87,9 +87,9 @@ func (r *Router) SetupRoutes() {
 	root.HandleFunc("/clearnotifs", r.onlyUsers(r.handleClearNotifs)).Methods("GET").Headers("X-Requested-With", "XMLHttpRequest")
 
 	// follow event
-	root.HandleFunc("/follow", r.onlyUsers(r.handleFollow)).Methods("POST").Queries("username", "{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/follow", r.onlyUsers(r.handleFollow)).Methods("POST").Queries("username", "{username:[a-zA-Z0-9_]+}")
 	// unfollow event
-	root.HandleFunc("/unfollow", r.onlyUsers(r.handleUnfollow)).Methods("POST").Queries("username", "{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/unfollow", r.onlyUsers(r.handleUnfollow)).Methods("POST").Queries("username", "{username:[a-zA-Z0-9_]+}")
 
 	// get basic info of users either following or followers
 	root.HandleFunc("/viewusers", r.handleViewUsers).Methods("GET").Queries("context", "{context:[a-z]+}", "userid", "{userid:[a-zA-Z0-9]+}").Headers("X-Requested-With", "XMLHttpRequest")
@@ -99,7 +99,7 @@ func (r *Router) SetupRoutes() {
 	root.HandleFunc("/myprofile/update", r.onlyUsers(r.handleUpdateMyProfile)).Methods("PUT")
 
 	// show other user's profile
-	root.HandleFunc("/profile", r.handleViewUserProfile).Methods("GET").Queries("username", "{username:[a-zA-Z0-9]+}")
+	root.HandleFunc("/profile", r.handleViewUserProfile).Methods("GET").Queries("username", "{username:[a-zA-Z0-9_]+}")
 	// recycle other user's activity
 	root.HandleFunc("/profile/recycle", r.handleRecycleUserActivity).Methods("GET").Queries("userid", "{userid:[a-zA-Z0-9]+}").Headers("X-Requested-With", "XMLHttpRequest")
 
