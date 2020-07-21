@@ -11,7 +11,7 @@ import (
 type OverviewRenderer interface {
 	// Render returns the HTML representation of the content, according to its kind
 	// and status, with an appropiate class name to place the content accordingly.
-	RenderOverview(idx int) template.HTML
+	RenderOverview(idx int, showSection bool) template.HTML
 }
 
 // ContentRenderer is the interface that types must implement in order to be displayed
@@ -36,8 +36,10 @@ type BasicContent struct {
 	Permalink      string // Content URL
 	Content        string
 	Summary        string
+	LongerSummary  string
 	Upvotes        uint32
-	Upvoted        bool // Has the current user topvote'd this content?
+	Upvoted        bool // Has the current user topvoted this content?
+	ShowSection    bool // Whether to show the section name and link
 	SectionName    string
 	Author         string // User alias
 	Username       string // Author's username
@@ -70,9 +72,16 @@ func (t *Thread) RenderContent() template.HTML {
 	return template.HTML(result.String())
 }
 
-func (t *Thread) RenderOverview(idx int) template.HTML {
-	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%d", t.BasicContent.Status,
-		idx)
+func (t *Thread) RenderOverview(idx int, showSection bool) template.HTML {
+	var idxS string
+	if idx < 10 {
+		idxS = fmt.Sprintf("0%d", idx)
+	} else {
+		idxS = fmt.Sprintf("%d", idx)
+	}
+	t.BasicContent.ClassName = fmt.Sprintf("thread %s-%s", t.BasicContent.Status,
+		idxS)
+	t.BasicContent.ShowSection = showSection
 
 	var tplName string
 	switch t.BasicContent.Status {
@@ -99,8 +108,15 @@ type CommentContent struct {
 	ReplyLink string // URL to post reply
 }
 
-func (c *CommentContent) RenderOverview(idx int) template.HTML {
-	c.BasicContent.ClassName = fmt.Sprintf("%s-%d", c.BasicContent.Status, idx)
+func (c *CommentContent) RenderOverview(idx int, showSection bool) template.HTML {
+	var idxS string
+	if idx < 10 {
+		idxS = fmt.Sprintf("0%d", idx)
+	} else {
+		idxS = fmt.Sprintf("%d", idx)
+	}
+	c.BasicContent.ClassName = fmt.Sprintf("%s-%s", c.BasicContent.Status, idxS)
+	c.BasicContent.ShowSection = showSection
 
 	tplName := "comment_content.html"
 	result := new(strings.Builder)
@@ -118,9 +134,16 @@ type CommentView struct {
 	Replies uint32
 }
 
-func (c *CommentView) RenderOverview(idx int) template.HTML {
-	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%d", c.BasicContent.Status,
-		idx)
+func (c *CommentView) RenderOverview(idx int, showSection bool) template.HTML {
+	var idxS string
+	if idx < 10 {
+		idxS = fmt.Sprintf("0%d", idx)
+	} else {
+		idxS = fmt.Sprintf("%d", idx)
+	}
+	c.BasicContent.ClassName = fmt.Sprintf("comment %s-%s", c.BasicContent.Status,
+		idxS)
+	c.BasicContent.ShowSection = showSection
 
 	var tplName string
 	switch c.BasicContent.Status {
@@ -146,9 +169,16 @@ type SubcommentView struct {
 	Id        string
 }
 
-func (sc *SubcommentView) RenderOverview(idx int) template.HTML {
-	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%d", sc.BasicContent.Status,
-		idx)
+func (sc *SubcommentView) RenderOverview(idx int, showSection bool) template.HTML {
+	var idxS string
+	if idx < 10 {
+		idxS = fmt.Sprintf("0%d", idx)
+	} else {
+		idxS = fmt.Sprintf("%d", idx)
+	}
+	sc.BasicContent.ClassName = fmt.Sprintf("subcomment %s-%s", sc.BasicContent.Status,
+		idxS)
+	sc.BasicContent.ShowSection = showSection
 
 	var tplName string
 	switch sc.BasicContent.Status {
@@ -172,7 +202,7 @@ type NoContent struct {
 	ClassName string
 }
 
-func (nc *NoContent) RenderOverview(idx int) template.HTML {
+func (nc *NoContent) RenderOverview(idx int, _ bool) template.HTML {
 	nc.ClassName = fmt.Sprintf("%s-%d", "no-content", idx)
 	tplName := "no_content.html"
 
