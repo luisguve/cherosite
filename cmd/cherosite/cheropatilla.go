@@ -57,8 +57,9 @@ func main() {
 	}
 
 	// Create session store.
-	store := sessions.NewCookieStore([]byte(key))
-
+	store := sessions.NewFilesystemStore("tmp/sess", []byte(key))
+	// Set no limit on length of sessions.
+	store.MaxLength(0)
 	// Create and start hub
 	hub := livedata.NewHub()
 	go hub.Run(ccc)
