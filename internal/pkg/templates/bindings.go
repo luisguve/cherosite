@@ -11,6 +11,8 @@ import (
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
+const timeFormat = "Jan _2 2006 15:04 MST"
+
 func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHeaderData) *MyProfileView {
 	// set user header data
 	hd := setHeaderData(uhd, nil)
@@ -502,6 +504,14 @@ func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 	} else {
 		summary = content.Content
 	}
+
+	var longerSummary string
+	if len(content.Content) > 175 {
+		longerSummary = content.Content[:175]
+	} else {
+		longerSummary = content.Content
+	}
+
 	var upvoted bool
 	if userId == "" {
 		upvoted = false
@@ -510,19 +520,20 @@ func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 	}
 
 	return &BasicContent{
-		Title:       content.Title,
-		Status:      pbRule.Status,
-		Thumbnail:   content.FtFile,
-		Permalink:   metadata.Permalink,
-		Content:     content.Content,
-		Summary:     summary,
-		Upvotes:     metadata.Upvotes,
-		Upvoted:     upvoted,
-		SectionName: metadata.Section,
-		Author:      author.Alias,
-		Username:    author.Username,
-		PublishDate: time.Unix(content.PublishDate.Seconds, 0).Format(time.RFC822),
-		ThreadLink:  threadLink,
-		SectionLink: sectionLink,
+		Title:         content.Title,
+		Status:        pbRule.Status,
+		Thumbnail:     content.FtFile,
+		Permalink:     metadata.Permalink,
+		Content:       content.Content,
+		Summary:       summary,
+		LongerSummary: longerSummary,
+		Upvotes:       metadata.Upvotes,
+		Upvoted:       upvoted,
+		SectionName:   metadata.Section,
+		Author:        author.Alias,
+		Username:      author.Username,
+		PublishDate:   time.Unix(content.PublishDate.Seconds, 0).Format(timeFormat),
+		ThreadLink:    threadLink,
+		SectionLink:   sectionLink,
 	}
 }
