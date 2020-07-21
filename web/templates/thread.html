@@ -3,6 +3,7 @@
 <head>
 	<title>Patilla thread - {{ .Title }}</title>
 	<script defer src="/static/js/save.js"></script>
+	<script defer src="/static/js/logout.js"></script>
 </head>
 <body>
 	{{ template "header" .HeaderData }}
@@ -11,7 +12,7 @@
 	</section>
 	<section class="thread-comments" id="comments">
 		{{ range $idx, $comment := .Comments }}
-			{{ $comment.RenderOverview $idx }}
+			{{ $comment.RenderOverview $idx false }}
 		{{ end }}
 	</section>
 </body>
