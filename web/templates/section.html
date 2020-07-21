@@ -3,27 +3,33 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
 	<script defer src="/static/js/save.js"></script>
+	<script defer src="/static/js/logout.js"></script>
+	<script defer src="/static/js/post.js"></script>
 	<title>Cheropatilla - {{.SectionName}}</title>
 </head>
 <body>
+	<div class="container">
 	{{ template "header" .HeaderData }}
 	<h1>You are in the section {{.SectionName}}</h1>
 	<section class="create-post">
-		<form action="/{{.SectionId}}/new" method="POST" enctype="multipart/form-data">
+		<form data-action="/{{.SectionId}}/new" method="POST" enctype="multipart/form-data" name="post">
 			<label for="title">Title</label>
 			<input type="text" name="title" id="title">
-			<textarea name="content"></textarea>
-			<label for="ft_file">Submit a thumbnail</label>
+			<label for="content">Content</label>
+			<textarea name="content" id="content"></textarea>
+			<label for="ft_file">thumbnail</label>
 			<input type="file" name="ft_file" id="ft_file">
 			<input type="submit">
 		</form>
 	</section>
 	<section class="feed">
+		{{ $printSection := false }}
 		{{ range $idx, $content := .Feed }}
-			{{ $content.RenderOverview $idx }}
+			{{ $content.RenderOverview $idx false }}
 		{{ else }}
 			<h3>There are no threads to show. Come back later and see if someone created content.</h3>
 		{{ end }}
 	</section>
+	</div>
 </body>
 </html>
