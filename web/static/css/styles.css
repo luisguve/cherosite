@@ -1,9 +1,266 @@
-main img {
-	max-width: 220px;
-	max-height: 100%;
+body {
+	margin: 0;
+}
+
+.container {
+	padding: 10px;
+	max-width: 100%;
 }
 
 .profile-pic img {
 	max-width: 110px;
 	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:visited {
+	color: blue;
+}
+
+a:hover {
+	background-color: tomato;
+	color: green;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	display: inline-block;
+}
+
+.content p {
+	margin: 0 5px;
+}
+
+nav, .user-actions {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.user-actions h4 {
+	margin: 0;
+}
+
+.feed {
+	display: grid;
+	grid-gap: 10px;
+	grid-template-columns: repeat(6, 1fr);
+	grid-template-rows: repeat(12, 1fr);
+	grid-template-areas: 
+		"NEW-0  TOP-3  TOP-3  TOP-3  TOP-3  REL-4"
+		"REL-1  TOP-3  TOP-3  TOP-3  TOP-3  REL-4"
+		"REL-1  TOP-3  TOP-3  TOP-3  TOP-3  REL-5"
+		"NEW-2  TOP-3  TOP-3  TOP-3  TOP-3  REL-5"
+		"NEW-6  REL-7  REL-7  REL-8  REL-8  REL-9"
+		"REL-10 REL-10 NEW-12 REL-8  REL-8  REL-9"
+		"REL-10 REL-10 REL-13 REL-13 REL-14 REL-14"
+		"REL-11 REL-11 REL-13 REL-13 REL-14 REL-14"
+		"REL-15 REL-15 NEW-16 REL-18 REL-18 NEW-19"
+		"REL-15 REL-15 REL-17 REL-17 REL-22 REL-22"
+		"REL-20 REL-20 REL-21 REL-21 REL-22 REL-22"
+		"REL-20 REL-20 REL-21 REL-21 REL-23 REL-23";
+	margin-top: 25px;
+}
+
+/* Organize content of REL contents vertically. */
+article[class*="REL-01"] .content, article[class*="REL-04"] .content, article[class*="REL-05"] .content, article[class*="REL-09"] .content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+/* Add margin to the top of thumbnail in the articles organized vertically. */
+article[class*="REL-01"] .content img, article[class*="REL-04"] .content img, article[class*="REL-05"] .content img, article[class*="REL-09"] .content img {
+	margin-top: 10px;
+}
+
+/* Adjust size of paragraphs in the articles organized vertically. */
+article[class*="REL-01"] .content p, article[class*="REL-04"] .content p, article[class*="REL-05"] .content p, article[class*="REL-09"] .content p {
+	font-size: 18px;
+}
+
+/* Position thumbnail of REL contents after paragraphs. */
+article[class*="REL-01"] img, article[class*="REL-04"] img, article[class*="REL-05"] img, article[class*="REL-07"] img, article[class*="REL-09"] img, article[class*="REL-11"] img, article[class*="REL-17"] img, article[class*="REL-18"] img, article[class*="REL-23"] img {
+	order: 2;
+	max-width: 160px;
+	max-height: 100%;
+}
+
+/* Adjust size of img in the rest of REL contents. */
+article[class*="REL-08"] img, article[class*="REL-10"] img, article[class*="REL-13"] img, article[class*="REL-14"] img, article[class*="REL-15"] img, article[class*="REL-20"] img, article[class*="REL-21"] img, article[class*="REL-22"] img {
+	max-width: 240px;
+	max-height: 100%;
+}
+
+/* Do not render header in the following articles. */
+article[class*="REL-01"] header, article[class*="REL-04"] header, article[class*="REL-05"] header, article[class*="REL-07"] header, article[class*="REL-09"] header, article[class*="REL-11"] header, article[class*="REL-17"] header, article[class*="REL-18"] header, article[class*="REL-23"] header {
+	display: none;
+}
+
+/* Do not add margin to headings in the following articles. */
+article[class*="REL-01"] h2, article[class*="REL-04"] h2, article[class*="REL-05"] h2, article[class*="REL-07"] h2, article[class*="REL-09"] h2, article[class*="REL-11"] h2, article[class*="REL-17"] h2, article[class*="REL-18"] h2, article[class*="REL-23"] h2 {
+	margin: 0;
+}
+
+/* Organize content of REL contents horizontally. */
+article[class*="REL-07"] .content, article[class*="REL-11"] .content, article[class*="REL-17"] .content, article[class*="REL-18"] .content, article[class*="REL-23"] .content {
+	display: flex;
+	flex-direction: row;
+}
+
+article[class*="REL-08"] img, article[class*="REL-10"] img, article[class*="REL-13"] img, article[class*="REL-14"] img, article[class*="REL-15"] img, article[class*="REL-20"] img, article[class*="REL-21"] img, article[class*="REL-22"] img {
+	float: left;
+	padding-right: 15px;
+}
+
+article[class*="REL-08"] p, article[class*="REL-10"] p, article[class*="REL-13"] p, article[class*="REL-14"] p, article[class*="REL-15"] p, article[class*="REL-20"] p, article[class*="REL-21"] p, article[class*="REL-22"] p {
+	font-size: 20px;
+	margin: 0;
+}
+
+article[class*="NEW-"] h3 {
+	margin-top: 10px;
+	margin-bottom: 0;
+}
+
+.summary {
+	font-size: 20px;
+	margin: 10px 5px;
+}
+
+.NEW-00 {
+	grid-area: NEW-0;
+}
+
+.REL-01 {
+	grid-area: REL-1;
+}
+
+.NEW-02 {
+	grid-area: NEW-2;
+}
+
+.TOP-03 {
+	grid-area: TOP-3;
+	display: flex;
+	flex-direction: column;
+	border: 1px solid magenta;
+	border-radius: 6px;
+	padding: 5px;
+}
+
+.TOP-03 main {
+	display: flex;
+	flex-direction: column;
+}
+
+.TOP-03 main .content img {
+	float: left;
+	padding-right: 15px;
+	max-width: 420px;
+	max-height: 100%;
+}
+
+.TOP-03 main .content p {
+	padding-right: 15px;
+	margin: 0;
+	font-size: 25px;
+}
+
+article[class*="REL"] {
+	border: 1px solid lightblue;
+	border-radius: 6px;
+	padding: 5px;
+}
+
+article[class*="NEW"] {
+	border: 1px solid lightgray;
+	border-radius: 6px;
+	padding: 5px;
+}
+
+.TOP-03 footer, article[class*="REL"] footer {
+	margin-top: 10px;
+}
+
+.REL-04 {
+	grid-area: REL-4;
+}
+
+.REL-05 {
+	grid-area: REL-5;
+}
+
+.NEW-06 {
+	grid-area: NEW-6;
+}
+
+.REL-07 {
+	grid-area: REL-7;
+}
+
+.REL-08 {
+	grid-area: REL-8;
+}
+
+.REL-09 {
+	grid-area: REL-9;
+}
+
+.REL-10 {
+	grid-area: REL-10;
+}
+
+.REL-11 {
+	grid-area: REL-11;
+}
+
+.NEW-12 {
+	grid-area: NEW-12;
+}
+
+.REL-13 {
+	grid-area: REL-13;
+}
+
+.REL-14 {
+	grid-area: REL-14;
+}
+
+.REL-15 {
+	grid-area: REL-15;
+}
+
+.NEW-16 {
+	grid-area: NEW-16;
+}
+
+.REL-17 {
+	grid-area: REL-17;
+}
+
+.REL-18 {
+	grid-area: REL-18;
+}
+
+.NEW-19 {
+	grid-area: NEW-19;
+}
+
+.REL-20 {
+	grid-area: REL-20;
+}
+
+.REL-21 {
+	grid-area: REL-21;
+}
+
+.REL-22 {
+	grid-area: REL-22;
+}
+
+.REL-23 {
+	grid-area: REL-23;
 }
