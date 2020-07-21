@@ -3,15 +3,16 @@
 {{ $undoUpvoteLink := .BasicContent.UndoUpvoteLink }}
 {{ $saveLink:= .SaveLink }}
 {{ $undoSaveLink:= .UndoSaveLink }}
+{{ $permalink := .BasicContent.Permalink }}
 
 <article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-save-link="{{$saveLink}}" data-undo-save-link="{{$undoSaveLink}}">
 	<header>
 	{{ with .BasicContent }}
-	<div class="thread-info">
-		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="{{.SectionLink}}">{{.SectionName}}</a>
-	</div>
+	<span class="thread-info">
+		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}}{{- if .ShowSection -}} - <a href="{{.SectionLink}}">{{.SectionName}}</a>{{- end -}}
+	</span>
 	{{ end }}
-	<div class="save">
+	<span class="save">
 		{{ if .ShowSaveOption }}
 		<button type="button" data-saved="{{.Saved}}" class="save-button">
 			{{- if .Saved -}}
@@ -21,28 +22,34 @@
 			{{- end -}}
 		</button>
 		{{ end }}
-	</div>
+	</span>
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		<a href="{{.Permalink}}"><h2>{{.Title}}</h2></a>
-		<hr>
-		<img src="/{{.Thumbnail}}" alt="thumbnail">
+		<a href="{{$permalink}}"><h2>{{.Title}}</h2></a>
+		<div class="content">
+			<img src="/{{.Thumbnail}}" alt="thumbnail">
+			<p>{{- with .LongerSummary -}}
+			{{.}} ...<a href="{{$permalink}}">Read more</a>
+			{{- else -}}
+			{{- .Content -}}
+			{{- end -}}</p>
+		</div>
 		{{ end }}
 	</main>
 	<footer>
 		{{ with .BasicContent }}
-		<div class="upvotes">
+		<span class="upvotes">
 			<button type="button" data-upvoted="{{.Upvoted}}">
 				{{.Upvotes}} Upvotes 
 				{{- if .Upvoted }}; You upvoted this.{{ end }}
 			</button>
-		</div>
+		</span>
 		{{ end }}
-		<div class="replies">
+		<span class="replies">
 			<a href="{{.BasicContent.Permalink}}#comments">
 				{{ .Replies }} Replies
 			</a>
-		</div>
+		</span>
 	</footer>
 </article>
