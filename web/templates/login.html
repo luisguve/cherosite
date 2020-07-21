@@ -6,7 +6,7 @@
 </head>
 <body>
 	<h4>Login</h4>
-	<form action="/login" method="POST" class="login-form">
+	<form data-action="/login" method="POST" class="login-form" name="login">
 		<label for="login-username">Type in your username</label>
 		<input type="text" name="username" id="login-username">
 		<label for="login-password">Insert your password</label>
@@ -14,7 +14,7 @@
 		<input type="submit">
 	</form>
 	<h4>Signin</h4>
-	<form action="/signin" method="POST" enctype="multipart/form-data" class="signin-form">
+	<form data-action="/signin" method="POST" enctype="multipart/form-data" class="signin-form" name="signin">
 		<label for="signin-email">Insert your email</label>
 		<input type="email" name="email" id="signin-email">
 
