@@ -3,6 +3,8 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
 	<script defer src="/static/js/save.js"></script>
+	<script defer src="/static/js/logout.js"></script>
+	<script defer src="/static/js/cleanup-grid.js"></script>
 	<title>Patilla Dashboard</title>
 </head>
 <body>
@@ -12,7 +14,7 @@
 		{{ with .Feed }}
 			<h4>Your feed</h4>
 			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx }}
+				{{ $content.RenderOverview $idx true }}
 			{{ end }}
 		{{ else }}
 			<h4>
@@ -25,7 +27,7 @@
 		{{ with .Activity }}
 			<h4>Your recent activity</h4>
 			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx }}
+				{{ $content.RenderOverview $idx true }}
 			{{ end }}
 		{{ else }}
 			<h4>
@@ -38,7 +40,7 @@
 		{{ with .SavedContent }}
 			<h4>You saved these threads</h4>
 			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx }}
+				{{ $content.RenderOverview $idx true }}
 			{{ end }}
 		{{ else }}
 			<h4>

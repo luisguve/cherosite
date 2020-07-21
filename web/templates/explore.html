@@ -3,6 +3,7 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
 	<script defer src="/static/js/save.js"></script>
+	<script defer src="/static/js/logout.js"></script>
 	<title>Cheropatilla - Explore</title>
 </head>
 <body>
@@ -10,7 +11,7 @@
 	<h1>Explore</h1>
 	<section class="feed">
 		{{ range $idx, $content := .Feed }}
-			{{ $content.RenderOverview $idx }}
+			{{ $content.RenderOverview $idx true }}
 		{{ else }}
 			<h3>There are no threads to show. Come back later and see if someone created content.</h3>
 		{{ end }}
