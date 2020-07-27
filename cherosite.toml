@@ -1,0 +1,13 @@
+# Specify the absolute path for the .env file containing the sections.
+sections = "C:/cheroshared_files/sections.env"
+
+# Specify the absolute path for the .env file containing sensitive data about the sessions.
+session_variables = "C:/cherosite_files/cookie_hash.env"
+
+[http_config]
+env = "local"
+bind_address = "127.0.0.1"
+port = "8000"
+
+[grpc_config]
+bind_address = "localhost:50051"
