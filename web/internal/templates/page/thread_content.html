@@ -5,7 +5,7 @@
 {{ $undoSaveLink := .UndoSaveLink }}
 {{ $replyLink := .ReplyLink }}
 
-<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-save-link="{{$saveLink}}" data-undo-save-link="{{$undoSaveLink}}" data-reply-link="{{$replyLink}}">
+<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-save-link="{{$saveLink}}" data-undo-save-link="{{$undoSaveLink}}">
 	<header>
 	{{ with .BasicContent }}
 	<div class="thread-info">
@@ -36,17 +36,17 @@
 		{{ with .BasicContent }}
 		<div class="upvotes">
 		<button type="button" data-upvoted="{{.Upvoted}}">
-			{{.Upvotes}} Upvotes 
-			{{- if .Upvoted }}; You upvoted this.{{ end }}
+			{{.Upvotes}} Upvotes
 		</button>
 		</div>
 		{{ end }}
 		<div class="replies">{{ .Replies }} Replies</div>
 	</footer>
-	<form class="reply">
-		<label for="ft_file">Upload a file (optional)</label>
-		<input type="file" name="ft_file" id="ft_file">
-		<textarea>Leave a reply</textarea>
+	<form data-action="{{$replyLink}}" name="reply" method="POST" enctype="multipart/formdata">
+		<label>Upload a file (optional)
+			<input type="file" name="ft_file">
+		</label>
+		<textarea placeholder="Reply this thread" name="content"></textarea>
 		<input type="submit">
 	</form>
 </article>
