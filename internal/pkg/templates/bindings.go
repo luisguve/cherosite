@@ -313,7 +313,10 @@ func contentToContentRenderer(pbData *pbApi.ContentData, userId string) ContentR
 	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
 	saveLink := fmt.Sprintf("%s/save", threadLink)
 	undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
-	replyLink := fmt.Sprintf("%s/comment", threadLink)
+	replyLink := fmt.Sprintf("%s/comment/", threadLink)
+
+	bc.UpvoteLink = fmt.Sprintf("%s/upvote/", threadLink)
+	bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/", threadLink)
 
 	var saved bool
 	var showSaveOption bool
@@ -357,8 +360,8 @@ func formatCommentContent(pbRule *pbApi.ContentRule, userId string) (OverviewRen
 	comCtx := ctx.CommentCtx
 
 	replyLink := fmt.Sprintf("%s/comment/?c_id=%s", threadLink, comCtx.Id)
-	bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
-	bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s", threadLink, comCtx.Id)
+	bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", threadLink, comCtx.Id)
+	bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s", threadLink, comCtx.Id)
 
 	comContent := &CommentContent{
 		BasicContent: bc,
@@ -412,8 +415,8 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 		saveLink := fmt.Sprintf("%s/save", threadLink)
 		undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
 		replyLink := fmt.Sprintf("%s/comment", threadLink)
-		bc.UpvoteLink = fmt.Sprintf("%s/upvote", threadLink)
-		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote", threadLink)
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote/", threadLink)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/", threadLink)
 		var saved bool
 		var showSaveOption bool
 		if userId == "" {
@@ -437,8 +440,8 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 		// comment context
 		comCtx := ctx.CommentCtx
 
-		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s", threadLink, comCtx.Id)
-		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s", threadLink, comCtx.Id)
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", threadLink, comCtx.Id)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s", threadLink, comCtx.Id)
 		ovwRenderer = &CommentView{
 			BasicContent: bc,
 			Id:           comCtx.Id,
@@ -449,9 +452,9 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 		// subcomment context
 		subcCtx := ctx.SubcommentCtx
 
-		bc.UpvoteLink = fmt.Sprintf("%s/upvote?c_id=%s&sc_id=%s", threadLink,
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s&sc_id=%s", threadLink,
 			subcCtx.CommentCtx.Id, subcCtx.Id)
-		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote?c_id=%s&sc_id=%s", threadLink,
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s&sc_id=%s", threadLink,
 			subcCtx.CommentCtx.Id, subcCtx.Id)
 		ovwRenderer = &SubcommentView{
 			BasicContent: bc,
