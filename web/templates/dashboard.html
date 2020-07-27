@@ -5,9 +5,11 @@
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/cleanup-grid.js"></script>
+	<script defer src="/static/js/upvotes.js"></script>
 	<title>Patilla Dashboard</title>
 </head>
 <body>
+	<div class="container">
 	{{ template "header" .HeaderData }}
 	<!-- User feed section -->
 	<section class="feed">
@@ -51,6 +53,7 @@
 	<!-- User info section -->
 	<div class="follow">
 		<p>You have {{.Followers}} followers and are following {{.Following}} users</p>
+	</div>
 	</div>
 </body>
 </html>
