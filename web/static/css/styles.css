@@ -64,6 +64,11 @@ nav, .user-actions {
 	margin-top: 25px;
 }
 
+button[data-upvoted="true"] {
+	background-color: navy;
+	color: lightgray;
+}
+
 /* Organize content of REL contents vertically. */
 article[class*="REL-01"] .content, article[class*="REL-04"] .content, article[class*="REL-05"] .content, article[class*="REL-09"] .content {
 	display: flex;
