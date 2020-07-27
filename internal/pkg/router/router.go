@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -62,8 +64,14 @@ func (r *Router) SetupRoutes() {
 	// favicon (not found)
 	root.Handle("/favicon.ico", http.NotFoundHandler())
 	// serve assets
-	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadPath))))
-	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
+	gopath, ok := os.LookupEnv("GOPATH")
+	if !ok || gopath == "" {
+		log.Fatal("GOPATH must be set.")
+	}
+	uploadDir := filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", uploadPath)
+	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadDir))))
+	staticDir := filepath.Join(gopath, "github.com", "luisguve", "cherosite", "web", "static")
+	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./" + staticDir))))
 	//
 	// WEBSOCKET
 	//

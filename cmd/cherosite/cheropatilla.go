@@ -15,27 +15,35 @@ import (
 
 func main() {
 	// Get config variables.
-	config, err := godotenv.Read("config.env")
+	config, err := godotenv.Read("C:/cherosite_files/config.env")
 	if err != nil {
 		log.Fatal(err)
 	}
 	environment, ok := config["ENV"]
 	if !ok {
-		log.Fatal("Missing env in config.env")
+		log.Fatal("Missing ENV in config.env")
 	}
 	// Get address and port
 	addr, ok := config["BIND_ADDR"]
 	if !ok {
-		log.Fatal("Missing bind address in config.env")
+		log.Fatal("Missing BIND_ADDR in config.env")
 	}
 	port, ok := config["PORT"]
 	if !ok {
-		log.Fatal("Misssing port in config.env")
+		log.Fatal("Misssing PORT in config.env")
 	}
 	// Get new template engine
 	tpl := templates.Setup(environment, port)
 
-	const address = "localhost:50051"
+	// Get grpc config variables.
+	grpcConfig, err := godotenv.Read("C:/cheroshared_files/grpc_config.env")
+	if err != nil {
+		log.Fatal(err)
+	}
+	address, ok := grpcConfig["BIND_ADDR"]
+	if !ok {
+		log.Fatal("Missing BIND_ADDR in grpc_config.env")
+	}
 	// Establish connection with gRPC server
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
@@ -47,13 +55,13 @@ func main() {
 	ccc := pbApi.NewCrudCheropatillaClient(conn)
 
 	// Get session key.
-	env, err := godotenv.Read("cookie_hash.env")
+	env, err := godotenv.Read("C:/cherosite_files/cookie_hash.env")
 	if err != nil {
 		log.Fatal(err)
 	}
 	key, ok := env["SESSION_KEY"]
 	if !ok {
-		log.Fatal("Missing session key")
+		log.Fatal("Missing SESSION_KEY in cookie_hash.env")
 	}
 
 	// Create session store.
@@ -65,13 +73,13 @@ func main() {
 	go hub.Run(ccc)
 
 	// Get section names mapped to their ids.
-	env, err = godotenv.Read("sections.env")
+	sections, err := godotenv.Read("C:/cheroshared_files/sections.env")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Setup router and routes
-	router := router.New(tpl, ccc, store, hub, env)
+	router := router.New(tpl, ccc, store, hub, sections)
 	router.SetupRoutes()
 
 	// Start app
