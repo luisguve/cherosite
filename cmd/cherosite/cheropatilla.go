@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
@@ -14,6 +17,23 @@ import (
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc"
 )
+
+type httpConfig struct {
+	BindAddress string `toml:"bind_address"`
+	Env         string
+	Port        string
+}
+
+type grpcConfig struct {
+	BindAddress string `toml:"bind_address"`
+}
+
+type cherositeConfig struct {
+	GrpcConf grpcConfig `toml:"grpc_config"`
+	HttpConf httpConfig `toml:"http_config"`
+	Sections string `toml:"sections"`
+	SessEnv  string `toml:"session_variables"`
+}
 
 func siteConfig(file string, vars ...string) (map[string]string, error) {
 	config, err := godotenv.Read(file)
@@ -37,15 +57,21 @@ func siteConfig(file string, vars ...string) (map[string]string, error) {
 }
 
 func main() {
-	// Get grpc config variables.
-	grpcConfig, err := siteConfig("C:/cheroshared_files/grpc_config.env",
-		"BIND_ADDR")
-	if err != nil {
+	gopath, ok := os.LookupEnv("GOPATH")
+	if !ok || gopath == "" {
+		log.Fatal("GOPATH must be set.")
+	}
+
+	configDir := filepath.Join(gopath, "src", "github.com", "luisguve",
+		"cherosite", "cherosite.toml")
+
+	cheroConfig := new(cherositeConfig)
+	if _, err := toml.DecodeFile(configDir, cheroConfig); err != nil {
 		log.Fatal(err)
 	}
 
 	// Establish connection with gRPC server
-	conn, err := grpc.Dial(grpcConfig["BIND_ADDR"], grpc.WithInsecure())
+	conn, err := grpc.Dial(cheroConfig.GrpcConf.BindAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,10 +81,9 @@ func main() {
 	ccc := pbApi.NewCrudCheropatillaClient(conn)
 
 	// Get session key.
-	sess, err := siteConfig("C:/cherosite_files/cookie_hash.env", "SESSION_KEY",
-		"SESS_DIR")
+	sess, err := siteConfig(cheroConfig.SessEnv, "SESSION_KEY", "SESS_DIR")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("siteConfig called with SessEnv: ", err)
 	}
 
 	// Create session store.
@@ -71,26 +96,19 @@ func main() {
 	go hub.Run(ccc)
 
 	// Get section names mapped to their ids.
-	sections, err := siteConfig("C:/cheroshared_files/sections.env")
+	sections, err := siteConfig(cheroConfig.Sections)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Get config variables.
-	config, err := siteConfig("C:/cherosite_files/config.env", "ENV", "BIND_ADDR",
-		"PORT")
-	if err != nil {
-		log.Fatal(err)
+		log.Fatal("siteConfig called with Sections: ", err)
 	}
 
 	// Setup a new templates engine.
-	tpl := templates.Setup(config["ENV"], config["PORT"])
+	tpl := templates.Setup(cheroConfig.HttpConf.Env, ":" + cheroConfig.HttpConf.Port)
 
 	// Setup router and routes.
 	router := router.New(tpl, ccc, store, hub, sections)
 	router.SetupRoutes()
 
 	// Start app.
-	a := app.New(router, config["BIND_ADDR"], config["PORT"])
+	a := app.New(router, cheroConfig.HttpConf.BindAddress, ":" + cheroConfig.HttpConf.Port)
 	log.Fatal(a.Run())
 }
