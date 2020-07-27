@@ -2,8 +2,9 @@
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
 {{ $undoUpvoteLink := .BasicContent.UndoUpvoteLink }}
 {{ $replyLink := .ReplyLink }}
+{{ $id := printf "c_id=%s" .Id }}
 
-<article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-reply-link="{{$replyLink}}">
+<article id="{{$id}}" class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-reply-link="{{$replyLink}}">
 	<header>
 	{{ with .BasicContent }}
 		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}}
@@ -11,7 +12,7 @@
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		<img src="/{{.Thumbnail}}" alt="thumbnail">
+		{{with .Thumbnail}}<img src="/{{.}}" alt="thumbnail">{{end}}
 		<div class="content">{{.Content}}</div>
 		{{ end }}
 	</main>
@@ -19,8 +20,7 @@
 		{{ with .BasicContent }}
 		<div class="upvotes">
 		<button type="button" data-upvoted="{{.Upvoted}}">
-			{{.Upvotes}} Upvotes 
-			{{- if .Upvoted }}; You upvoted this.{{ end }}
+			{{.Upvotes}} Upvotes
 		</button>
 		</div>
 		{{ end }}
@@ -29,9 +29,10 @@
 		</div>
 	</footer>
 	<form class="reply">
-		<label for="ft_file">Upload a file (optional)</label>
-		<input type="file" name="ft_file" id="ft_file">
-		<textarea>Leave a reply</textarea>
+		<label>Upload a file (optional)
+			<input type="file" name="ft_file">
+		</label>
+		<textarea placeholder="Reply this comment"></textarea>
 		<input type="submit">
 	</form>
 </article>
