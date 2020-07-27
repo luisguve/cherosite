@@ -70,7 +70,7 @@ func (r *Router) SetupRoutes() {
 	}
 	uploadDir := filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", uploadPath)
 	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadDir))))
-	staticDir := filepath.Join(gopath, "github.com", "luisguve", "cherosite", "web", "static")
+	staticDir := filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", "web", "static")
 	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./" + staticDir))))
 	//
 	// WEBSOCKET
