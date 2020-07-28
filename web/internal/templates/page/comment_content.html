@@ -4,7 +4,7 @@
 {{ $replyLink := .ReplyLink }}
 {{ $id := printf "c_id=%s" .Id }}
 
-<article id="{{$id}}" class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-reply-link="{{$replyLink}}">
+<article id="{{$id}}" class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}">
 	<header>
 	{{ with .BasicContent }}
 		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}}
@@ -28,11 +28,11 @@
 			<button type="button">{{ .Replies }} Replies | Reply</button>
 		</div>
 	</footer>
-	<form class="reply">
+	<form class="replyCom" data-action="{{$replyLink}}" name="replyCom" method="POST" enctype="multipart/form-data">
 		<label>Upload a file (optional)
 			<input type="file" name="ft_file">
 		</label>
-		<textarea placeholder="Reply this comment"></textarea>
+		<textarea placeholder="Reply this comment" name="content"></textarea>
 		<input type="submit">
 	</form>
 </article>
