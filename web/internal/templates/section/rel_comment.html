@@ -1,6 +1,7 @@
 {{ $class := .BasicContent.ClassName }}
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
 {{ $undoUpvoteLink := .BasicContent.UndoUpvoteLink }}
+{{ $permalink := .BasicContent.Permalink }}
 
 <article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}">
 	<header>
@@ -10,29 +11,31 @@
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		<a href="{{.Permalink}}"><h2>{{.Title}}</h2></a>
-		<hr>
-		<p class="summary">
-			{{ with .LongerSummary }}
-			{{.}} ...<a href="{{.Permalink}}">Read more</a>
+		<a href="{{$permalink}}"><h2>{{.Title}}</h2></a> <em>~ comment</em>
+		<div class="content">
+			{{ with .Thumbnail }}
+			<img src="{{.}}" alt="thumbnail">
+			{{ end }}
+			<p class="summary">{{ with .LongerSummary }}
+			{{.}} ...<a href="{{$permalink}}">Read more</a>
 			{{ else }}
 			{{ .Content }}
-			{{ end }}
-		</p>
+			{{ end }}</p>
+		</div>
 		{{ end }}
 	</main>
 	<footer>
 		{{ with .BasicContent }}
-		<div class="upvotes">
+		<span class="upvotes">
 			<button type="button" data-upvoted="{{.Upvoted}}">
 				{{.Upvotes}} Upvotes
 			</button>
-		</div>
+		</span>
 		{{ end }}
-		<div class="replies">
-			<a href="{{.BasicContent.Permalink}}#{{.Id}}">
+		<span class="replies">
+			<a href="{{$permalink}}#{{.Id}}">
 				{{ .Replies }} Replies
 			</a>
-		</div>
+		</span>
 	</footer>
 </article>
