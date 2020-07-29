@@ -79,8 +79,9 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 		w.WriteHeader(http.StatusPartialContent)
 	}
 
-	// Encode and send response
-	if err = json.NewEncoder(w).Encode(feed); err != nil {
+	// Set content type as JSON, encode and send response.
+	w.Header().Set("content-type", "application/json")
+	if err = json.NewEncoder(w).Encode(feed.Contents); err != nil {
 		log.Printf("Could not encode feed: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
