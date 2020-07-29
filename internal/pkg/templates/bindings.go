@@ -502,18 +502,14 @@ func setBasicContent(pbRule *pbApi.ContentRule, userId string) *BasicContent {
 	threadLink := fmt.Sprintf("%s/%s", sectionLink, metadata.Id)
 
 	var summary string
+	var longerSummary string
 	if len(content.Content) > 75 {
 		summary = content.Content[:75]
-	} else {
-		summary = content.Content
+		if len(content.Content) > 175 {
+			longerSummary = content.Content[:175]
+		}
 	}
 
-	var longerSummary string
-	if len(content.Content) > 175 {
-		longerSummary = content.Content[:175]
-	} else {
-		longerSummary = content.Content
-	}
 
 	var upvoted bool
 	if userId == "" {
