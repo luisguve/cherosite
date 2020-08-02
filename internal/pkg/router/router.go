@@ -25,7 +25,7 @@ type Router struct {
 }
 
 func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store,
-	hub *livedata.Hub, sections map[string]string) *Router {
+	hub *livedata.Hub, sections map[string]string, patillavatars []string) *Router {
 	if t == nil {
 		log.Fatal("missing templates")
 	}
@@ -41,6 +41,10 @@ func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store
 	if sections == nil || len(sections) == 0 {
 		log.Fatal("no sections")
 	}
+	if len(patillavatars) == 0 {
+		log.Fatal("No default patillavatars")
+	}
+	defaultPics = patillavatars
 	return &Router{
 		handler: mux.NewRouter(),
 		upgrader: websocket.Upgrader{

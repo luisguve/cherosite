@@ -29,10 +29,11 @@ type grpcConfig struct {
 }
 
 type cherositeConfig struct {
-	GrpcConf grpcConfig `toml:"grpc_config"`
-	HttpConf httpConfig `toml:"http_config"`
-	Sections string `toml:"sections"`
-	SessEnv  string `toml:"session_variables"`
+	GrpcConf      grpcConfig `toml:"grpc_config"`
+	HttpConf      httpConfig `toml:"http_config"`
+	Patillavatars []string `toml:"patillavatars"`
+	Sections      string `toml:"sections"`
+	SessEnv       string `toml:"session_variables"`
 }
 
 func siteConfig(file string, vars ...string) (map[string]string, error) {
@@ -105,7 +106,7 @@ func main() {
 	tpl := templates.Setup(cheroConfig.HttpConf.Env, ":" + cheroConfig.HttpConf.Port)
 
 	// Setup router and routes.
-	router := router.New(tpl, ccc, store, hub, sections)
+	router := router.New(tpl, ccc, store, hub, sections, cheroConfig.Patillavatars)
 	router.SetupRoutes()
 
 	// Start app.

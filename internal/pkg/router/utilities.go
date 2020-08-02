@@ -37,6 +37,8 @@ var (
 	errCantReadFileType = errors.New("CANT_READ_FILE_TYPE")
 	errCantWriteFile    = errors.New("CANT_WRITE_FILE")
 	errUnregistered     = errors.New("USER_UNREGISTERED")
+	// Default patillavatar pics
+	defaultPics []string
 )
 
 // wrapper interface to be used instead of the generated interfaces in pbApi, for streams

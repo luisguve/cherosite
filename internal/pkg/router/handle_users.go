@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math/rand"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 
@@ -498,7 +500,9 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), s)
 			return
 		}
-		picUrl = "/tmp/default.jpg"
+		idx := rand.Intn(len(defaultPics))
+		pic := defaultPics[idx]
+		picUrl = path.Join("static", "pics", pic)
 	}
 	if alias == "" {
 		alias = name
