@@ -7,7 +7,7 @@ import (
 )
 
 func (app *App) Run() error {
-	log.Println("Running")
+	log.Println("Running. Open localhost:8000 in the browser.")
 	return app.srv.ListenAndServe()
 }
 
