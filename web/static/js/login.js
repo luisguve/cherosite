@@ -1,6 +1,7 @@
 window.addEventListener("load", function() {
 	var signinForm = document.forms.namedItem("signin");
-	signinForm.addEventListener("submit", function() {
+	var submitBtn = signinForm.querySelector("button");
+	submitBtn.addEventListener("click", function() {
 		let fData = new FormData(signinForm);
 		let req = new XMLHttpRequest();
 		req.open("POST", signinForm.dataset["action"], true);
