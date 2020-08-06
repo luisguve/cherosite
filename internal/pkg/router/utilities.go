@@ -25,7 +25,12 @@ import (
 
 const (
 	maxUploadSize = 64 << 20 // 64 mb
-	uploadPath    = "tmp"
+)
+
+var (
+	gopath     = os.Getenv("GOPATH")
+	uploadPath = "tmp"
+	uploadDir  = filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", uploadPath)
 )
 
 var (
@@ -152,7 +157,7 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 		log.Printf("Can't read filetype: %v\n", err)
 		return "", errCantReadFileType, http.StatusInternalServerError
 	}
-	filepathOS := filepath.Join(uploadPath, fileName+fileEndings[0])
+	filepathOS := filepath.Join(uploadDir, fileName+fileEndings[0])
 	fileURL := fmt.Sprintf("%s/%s", uploadPath, fileName+fileEndings[0])
 
 	// Write file to disk
