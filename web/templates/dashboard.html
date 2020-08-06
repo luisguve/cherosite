@@ -12,31 +12,31 @@
 	<div class="container">
 	{{ template "header" .HeaderData }}
 	<!-- User feed section -->
+	{{ with .Feed }}
+	<h4>Your feed</h4>
 	<section class="feed">
-		{{ with .Feed }}
-			<h4>Your feed</h4>
-			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx true }}
-			{{ end }}
-		{{ else }}
-			<h4>
-				You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
-			</h4>
+		{{ range $idx, $content := . }}
+			{{ $content.RenderOverview $idx true }}
 		{{ end }}
 	</section>
+	{{ else }}
+		<h4>
+			You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
+		</h4>
+	{{ end }}
 	<!-- User activity section -->
+	{{ with .Activity }}
+	<h4>Your recent activity</h4>
 	<section class="user-activity">
-		{{ with .Activity }}
-			<h4>Your recent activity</h4>
-			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx true }}
-			{{ end }}
-		{{ else }}
-			<h4>
-				You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
-			</h4>
+		{{ range $idx, $content := . }}
+			{{ $content.RenderOverview $idx true }}
 		{{ end }}
 	</section>
+	{{ else }}
+		<h4>
+			You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
+		</h4>
+	{{ end }}
 	<!-- User saved content section -->
 	<section class="saved-content">
 		{{ with .SavedContent }}
@@ -46,7 +46,7 @@
 			{{ end }}
 		{{ else }}
 			<h4>
-				You haven't saved any thread. Press the save button when viewing a thread to save it.
+				You haven't saved any post. Press the save button when viewing a post to save it.
 			</h4>
 		{{ end }}
 	</section>
