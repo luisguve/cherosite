@@ -10,12 +10,14 @@
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		<a href="{{.Permalink}}"><h2>{{.Title}}</h2></a>
+		<span><i>Comment on </i><a href="{{.Permalink}}"><h2>{{.Title}}</h2></a></span>
 		<hr>
+		<div class="content">
 			{{ if .Thumbnail }}
 			<img src="/{{.Thumbnail}}" alt="thumbnail">
 			{{ end }}
-			{{.Content}}
+			<p>{{.Content}}</p>
+		</div>
 		{{ end }}
 	</main>
 	<footer>
