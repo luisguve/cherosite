@@ -28,12 +28,16 @@
 		{{ with .BasicContent }}
 		<a href="{{$permalink}}"><h2>{{.Title}}</h2></a>
 		<div class="content">
+			<div class="thumbnail">
 			<img src="/{{.Thumbnail}}" alt="thumbnail">
-			<p>{{- with .LongerSummary -}}
-			{{.}} ...<a href="{{$permalink}}">Read more</a>
+			</div>
+			{{- with .LongerSummary -}}
+				<p class="font-size-18">{{.}} ...<a href="{{$permalink}}">Read more</a></p>
 			{{- else -}}
-			{{- .Content -}}
-			{{- end -}}</p>
+			<p class="summary">
+				{{- .Content -}}
+			</p>
+			{{- end -}}
 		</div>
 		{{ end }}
 	</main>

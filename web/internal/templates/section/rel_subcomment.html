@@ -11,16 +11,26 @@
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		<a href="{{$permalink}}"><h2>{{.Title}}</h2></a> <em>~ subcomment</em>
+		<i>Subcomment on </i><a href="{{$permalink}}"><h2>{{.Title}}</h2></a>
 		<div class="content">
-			{{ with .Thumbnail }}
-			<img src="{{.}}" alt="thumbnail">
-			{{ end }}
-			<p class="summary">{{ with .LongerSummary }}
-			{{.}} ...<a href="{{$permalink}}">Read more</a>
-			{{ else }}
-			{{ .Content }}
-			{{ end }}</p>
+			{{- if .Thumbnail -}}
+				<img src="{{.Thumbnail}}" alt="thumbnail">
+				{{- with .LongerSummary -}}
+					<p class="font-size-18">{{.}} ...<a href="{{$permalink}}">Read more</a></p>
+				{{- else -}}
+				<p class="summary">
+					{{- .Content -}}
+				</p>
+				{{- end -}}
+			{{- else -}}
+				<p class="summary">
+				{{- with .LongerSummary -}}
+				{{.}} ...<a href="{{$permalink}}">Read more</a>
+				{{- else -}}
+					{{- .Content -}}
+				{{- end -}}
+				</p>
+			{{- end -}}
 		</div>
 		{{ end }}
 	</main>
