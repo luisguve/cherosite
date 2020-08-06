@@ -1,5 +1,14 @@
 body {
 	margin: 0;
+	box-sizing: border-box;
+}
+
+nav {
+	margin-top: 20px;
+}
+
+.font-size-18 {
+	font-size: 18px;
 }
 
 .container {
@@ -10,6 +19,37 @@ body {
 .profile-pic img {
 	max-width: 110px;
 	max-height: 100%;
+}
+
+.explore a {
+	padding: 10px;
+	color: black;
+	font-size: 15px;
+	border: 5px solid green;
+	border-radius: 7px;
+}
+
+.explore a:visited {
+	color: black;
+}
+
+.explore a:hover {
+	color: green;
+	background-color: white;
+	border-color: tomato;
+}
+
+.recycle button {
+	padding: 5px 10px;
+	color: red;
+	font-size: 25px;
+	border-radius: 7px;
+	background-color: green;
+}
+
+.recycle button:hover {
+	color: green;
+	background-color: tomato;
 }
 
 a {
@@ -66,44 +106,103 @@ nav, .user-actions {
 	margin-top: 25px;
 }
 
+.user-activity {
+	display: grid;
+	grid-gap: 10px;
+	grid-template-columns: 25% 50% 25%;
+	grid-template-rows: repeat(4, 125px);
+	grid-template-areas: 
+		"NEW-0 TOP-3 REL-4"
+		"NEW-1 TOP-3 REL-4"
+		"REL-2 TOP-3 NEW-5"
+		"REL-2 TOP-3 NEW-6"
+}
+
+.user-activity .NEW-00 {
+	grid-area: NEW-0;
+}
+
+.user-activity .NEW-01 {
+	grid-area: NEW-1;
+}
+
+.user-activity .REL-02 {
+	grid-area: REL-2;
+}
+
+.user-activity .TOP-03 {
+	grid-area: TOP-3;
+	overflow-y: scroll;
+}
+
+.user-activity .REL-04 {
+	grid-area: REL-4;
+}
+
+.user-activity .NEW-05 {
+	grid-area: NEW-5;
+}
+
+.user-activity .NEW-06 {
+	grid-area: NEW-6;
+}
+
 button[data-upvoted="true"] {
 	background-color: navy;
 	color: lightgray;
 }
 
 /* Organize content of REL contents vertically. */
-article[class*="REL-01"] .content, article[class*="REL-04"] .content, article[class*="REL-05"] .content, article[class*="REL-09"] .content {
+.feed article[class*="REL-01"] .content, .feed article[class*="REL-04"] .content, .feed article[class*="REL-05"] .content, .feed article[class*="REL-09"] .content {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
 
 /* Add margin to the top of thumbnail in the articles organized vertically. */
-article[class*="REL-01"] .content img, article[class*="REL-04"] .content img, article[class*="REL-05"] .content img, article[class*="REL-09"] .content img {
+.feed article[class*="REL-01"] .content img, .feed article[class*="REL-04"] .content img, .feed article[class*="REL-05"] .content img, .feed article[class*="REL-09"] .content img {
 	margin-top: 10px;
 }
 
 /* Adjust size of paragraphs in the articles organized vertically. */
-article[class*="REL-01"] .content p, article[class*="REL-04"] .content p, article[class*="REL-05"] .content p, article[class*="REL-09"] .content p {
+.feed article[class*="REL-01"] .content p, .feed article[class*="REL-04"] .content p, .feed article[class*="REL-05"] .content p, .feed article[class*="REL-09"] .content p {
 	font-size: 18px;
 }
 
 /* Position thumbnail of REL contents after paragraphs. */
-article[class*="REL-01"] img, article[class*="REL-04"] img, article[class*="REL-05"] img, article[class*="REL-07"] img, article[class*="REL-09"] img, article[class*="REL-11"] img, article[class*="REL-17"] img, article[class*="REL-18"] img, article[class*="REL-23"] img {
+.feed article[class*="REL-01"] .thumbnail, .feed article[class*="REL-04"] .thumbnail, .feed article[class*="REL-05"] .thumbnail, .feed article[class*="REL-07"] .thumbnail, .feed article[class*="REL-09"] .thumbnail, .feed article[class*="REL-11"] .thumbnail, .feed article[class*="REL-17"] .thumbnail, .feed article[class*="REL-18"] .thumbnail, .feed article[class*="REL-23"] .thumbnail {
 	order: 2;
+}
+
+
+/* Adjust size of thumbnails. */
+.feed article[class*="REL-01"] .thumbnail img, .feed article[class*="REL-04"] .thumbnail img, .feed article[class*="REL-05"] .thumbnail img, .feed article[class*="REL-07"] .thumbnail img, .feed article[class*="REL-09"] .thumbnail img, .feed article[class*="REL-11"] .thumbnail img, .feed article[class*="REL-17"] .thumbnail img, .feed article[class*="REL-18"] .thumbnail img, .feed article[class*="REL-23"] .thumbnail img {
 	max-width: 160px;
 	max-height: 100%;
 }
 
+
 /* Adjust size of img in the rest of REL contents. */
-article[class*="REL-08"] img, article[class*="REL-10"] img, article[class*="REL-13"] img, article[class*="REL-14"] img, article[class*="REL-15"] img, article[class*="REL-20"] img, article[class*="REL-21"] img, article[class*="REL-22"] img {
+.feed article[class*="REL-08"] img, .feed article[class*="REL-10"] img, .feed article[class*="REL-13"] img, .feed article[class*="REL-14"] img, .feed article[class*="REL-15"] img, .feed article[class*="REL-20"] img, .feed article[class*="REL-21"] img, .feed article[class*="REL-22"] img {
 	max-width: 240px;
 	max-height: 100%;
 }
 
-/* Do not render header in the following articles. */
-article[class*="REL-01"] header, article[class*="REL-04"] header, article[class*="REL-05"] header, article[class*="REL-07"] header, article[class*="REL-09"] header, article[class*="REL-11"] header, article[class*="REL-17"] header, article[class*="REL-18"] header, article[class*="REL-23"] header {
+/* Do not render header in the following articles from the feed section. */
+.feed article[class*="REL-01"] header, .feed article[class*="REL-04"] header, .feed article[class*="REL-05"] header, .feed article[class*="REL-07"] header, .feed article[class*="REL-09"] header, .feed article[class*="REL-11"] header, .feed article[class*="REL-17"] header, .feed article[class*="REL-18"] header, .feed article[class*="REL-23"] header {
 	display: none;
+}
+
+/* Do not render header in the following articles. from the user-activity section. */
+.user-activity article[class*="REL-02"] header, .user-activity article[class*="REL-04"] header {
+	display: none;
+}
+
+/* Adjust size of thumbnail in the following articles. */
+.user-activity article[class*="REL-"] .content img {
+	float: left;
+	max-width: 80px;
+	margin: 0 5px;
 }
 
 /* Do not add margin to headings in the following articles. */
@@ -137,15 +236,15 @@ article[class*="NEW-"] h3 {
 	margin: 10px 5px;
 }
 
-.NEW-00 {
+.feed .NEW-00 {
 	grid-area: NEW-0;
 }
 
-.REL-01 {
+.feed .REL-01 {
 	grid-area: REL-1;
 }
 
-.NEW-02 {
+.feed .NEW-02 {
 	grid-area: NEW-2;
 }
 
@@ -192,82 +291,82 @@ article[class*="NEW"] {
 	margin-top: 10px;
 }
 
-.REL-04 {
+.feed .REL-04 {
 	grid-area: REL-4;
 }
 
-.REL-05 {
+.feed .REL-05 {
 	grid-area: REL-5;
 }
 
-.NEW-06 {
+.feed .NEW-06 {
 	grid-area: NEW-6;
 }
 
-.REL-07 {
+.feed .REL-07 {
 	grid-area: REL-7;
 }
 
-.REL-08 {
+.feed .REL-08 {
 	grid-area: REL-8;
 }
 
-.REL-09 {
+.feed .REL-09 {
 	grid-area: REL-9;
 }
 
-.REL-10 {
+.feed .REL-10 {
 	grid-area: REL-10;
 }
 
-.REL-11 {
+.feed .REL-11 {
 	grid-area: REL-11;
 }
 
-.NEW-12 {
+.feed .NEW-12 {
 	grid-area: NEW-12;
 }
 
-.REL-13 {
+.feed .REL-13 {
 	grid-area: REL-13;
 }
 
-.REL-14 {
+.feed .REL-14 {
 	grid-area: REL-14;
 }
 
-.REL-15 {
+.feed .REL-15 {
 	grid-area: REL-15;
 }
 
-.NEW-16 {
+.feed .NEW-16 {
 	grid-area: NEW-16;
 }
 
-.REL-17 {
+.feed .REL-17 {
 	grid-area: REL-17;
 }
 
-.REL-18 {
+.feed .REL-18 {
 	grid-area: REL-18;
 }
 
-.NEW-19 {
+.feed .NEW-19 {
 	grid-area: NEW-19;
 }
 
-.REL-20 {
+.feed .REL-20 {
 	grid-area: REL-20;
 }
 
-.REL-21 {
+.feed .REL-21 {
 	grid-area: REL-21;
 }
 
-.REL-22 {
+.feed .REL-22 {
 	grid-area: REL-22;
 }
 
-.REL-23 {
+.feed .REL-23 {
 	grid-area: REL-23;
 }
