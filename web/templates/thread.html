@@ -6,18 +6,21 @@
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/reply.js"></script>
+	<script defer src="/static/js/upvotes-thread-page.js"></script>
 </head>
 <body>
 	<div class="container">
-	{{ template "header" .HeaderData }}
-	<section class="thread-view">
-		{{ .Content.RenderContent }}
-	</section>
-	<section class="thread-comments" id="comments">
-		{{ range $idx, $comment := .Comments }}
-			{{ $comment.RenderOverview $idx false }}
-		{{ end }}
-	</section>
+		{{ template "header" .HeaderData }}
+		<div class="post">
+			<section class="thread-view">
+				{{ .Content.RenderContent }}
+			</section>
+			<section class="thread-comments" id="comments">
+				{{ range $idx, $comment := .Comments }}
+					{{ $comment.RenderOverview $idx false }}
+				{{ end }}
+			</section>
+		</div>
 	</div>
 </body>
 </html>
