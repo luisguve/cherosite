@@ -73,7 +73,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	if content.Metadata.Replies > 0 {
 		// Request to load comments
 		contentPattern := &pbApi.ContentPattern{
-			Pattern:        templates.FeedPattern,
+			Pattern:        templates.CommentPattern,
 			ContentContext: &pbApi.ContentPattern_ThreadCtx{threadCtx},
 			// ignore DiscardIds; do not discard any comment
 		}
@@ -139,7 +139,7 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	discardIds := getDiscardIds(session)
 
 	contentPattern := &pbApi.ContentPattern{
-		Pattern:        templates.FeedPattern,
+		Pattern:        templates.CommentPattern,
 		ContentContext: &pbApi.ContentPattern_ThreadCtx{threadCtx},
 		DiscardIds:     discardIds.FormatThreadComments(thread),
 	}
