@@ -13,26 +13,26 @@
 	<main>
 		{{ with .BasicContent }}
 		{{with .Thumbnail}}<img src="/{{.}}" alt="thumbnail">{{end}}
-		<div class="content">{{.Content}}</div>
+		<div class="content"><p>{{.Content}}</p></div>
 		{{ end }}
+		<form class="replyCom" data-action="{{$replyLink}}" name="replyCom" method="POST" enctype="multipart/form-data">
+			<label>Upload a file (optional)
+				<input type="file" name="ft_file">
+			</label>
+			<textarea placeholder="Reply this comment" name="content"></textarea>
+			<button type="button">Send</button>
+		</form>
 	</main>
 	<footer>
 		{{ with .BasicContent }}
-		<div class="upvotes">
+		<span class="upvotes">
 		<button type="button" data-upvoted="{{.Upvoted}}">
 			{{.Upvotes}} Upvotes
 		</button>
-		</div>
+		</span>
 		{{ end }}
-		<div class="replies">
-			<button type="button">{{ .Replies }} Replies | Reply</button>
-		</div>
+		<span class="replies">
+			<button type="button">{{ .Replies }} Replies </button>
+		</span>
 	</footer>
-	<form class="replyCom" data-action="{{$replyLink}}" name="replyCom" method="POST" enctype="multipart/form-data">
-		<label>Upload a file (optional)
-			<input type="file" name="ft_file">
-		</label>
-		<textarea placeholder="Reply this comment" name="content"></textarea>
-		<button type="button">Send</button>
-	</form>
 </article>
