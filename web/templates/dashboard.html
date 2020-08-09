@@ -13,43 +13,43 @@
 	{{ template "header" .HeaderData }}
 	<!-- User feed section -->
 	{{ with .Feed }}
-	<h4>Your feed</h4>
-	<section class="feed">
-		{{ range $idx, $content := . }}
-			{{ $content.RenderOverview $idx true }}
-		{{ end }}
-	</section>
-	{{ else }}
-		<h4>
-			You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
-		</h4>
-	{{ end }}
-	<!-- User activity section -->
-	{{ with .Activity }}
-	<h4>Your recent activity</h4>
-	<section class="user-activity">
-		{{ range $idx, $content := . }}
-			{{ $content.RenderOverview $idx true }}
-		{{ end }}
-	</section>
-	{{ else }}
-		<h4>
-			You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
-		</h4>
-	{{ end }}
-	<!-- User saved content section -->
-	<section class="saved-content">
-		{{ with .SavedContent }}
-			<h4>You saved these threads</h4>
+		<h1>Your feed</h1>
+		<section class="feed">
 			{{ range $idx, $content := . }}
 				{{ $content.RenderOverview $idx true }}
 			{{ end }}
-		{{ else }}
-			<h4>
-				You haven't saved any post. Press the save button when viewing a post to save it.
-			</h4>
-		{{ end }}
-	</section>
+		</section>
+	{{ else }}
+		<div><h1>
+			You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
+		</h1></div>
+	{{ end }}
+	<!-- User activity section -->
+	{{ with .Activity }}
+		<h1>Your recent activity</h1>
+		<section class="user-activity">
+			{{ range $idx, $content := . }}
+				{{ $content.RenderOverview $idx true }}
+			{{ end }}
+		</section>
+	{{ else }}
+		<h1>
+			You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
+		</h1>
+	{{ end }}
+	<!-- User saved content section -->
+	{{ with .SavedContent }}
+		<h1>You saved these posts</h1>
+		<section class="saved-content">
+			{{ range $idx, $content := . }}
+				{{ $content.RenderOverview $idx true }}
+			{{ end }}
+		</section>
+	{{ else }}
+		<h1>
+			You haven't saved any post. Press the save button when viewing a post to save it.
+		</h1>
+	{{ end }}
 	<!-- User info section -->
 	<div class="follow">
 		<p>You have {{.Followers}} followers and are following {{.Following}} users</p>
