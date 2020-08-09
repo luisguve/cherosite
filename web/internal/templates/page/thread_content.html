@@ -8,45 +8,44 @@
 <article class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}" data-save-link="{{$saveLink}}" data-undo-save-link="{{$undoSaveLink}}">
 	<header>
 	{{ with .BasicContent }}
-	<div class="thread-info">
+	<span class="thread-info">
 		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}} - <a href="{{.SectionLink}}">{{.SectionName}}</a>
-	</div>
+	</span>
 	{{ end }}
-	<div class="save">
+	<span class="save">
 		{{ if .ShowSaveOption }}
 		<button type="button" data-saved="{{.Saved}}" class="save-button">
 			{{- if .Saved -}}
-			You saved this thread
+			You saved this post
 			{{- else -}}
-			Save this thread
+			Save this post
 			{{- end -}}
 		</button>
 		{{ end }}
-	</div>
+	</span>
 	</header>
 	<main>
 		{{ with .BasicContent }}
 		<h2>{{.Title}}</h2>
-		<hr>
 		<img src="/{{.Thumbnail}}" alt="thumbnail">
-		{{.Content}}
+		<p>{{.Content}}</p>
 		{{ end }}
 	</main>
 	<footer>
 		{{ with .BasicContent }}
-		<div class="upvotes">
+		<span class="upvotes">
 		<button type="button" data-upvoted="{{.Upvoted}}">
 			{{.Upvotes}} Upvotes
 		</button>
-		</div>
+		</span>
 		{{ end }}
-		<div class="replies">{{ .Replies }} Replies</div>
+		<span class="replies">{{ .Replies }} Replies</span>
 	</footer>
 	<form data-action="{{$replyLink}}" name="reply" method="POST" enctype="multipart/formdata">
+		<textarea placeholder="Reply this post" name="content"></textarea>
 		<label>Upload a file (optional)
 			<input type="file" name="ft_file">
 		</label>
-		<textarea placeholder="Reply this thread" name="content"></textarea>
 		<button type="button">Send</button>
 	</form>
 </article>
