@@ -11,7 +11,6 @@
 	<main>
 		{{ with .BasicContent }}
 		<span><i>Comment on </i><a href="{{.Permalink}}"><h2>{{.Title}}</h2></a></span>
-		<hr>
 		<div class="content">
 			{{ if .Thumbnail }}
 			<img src="/{{.Thumbnail}}" alt="thumbnail">
@@ -22,16 +21,16 @@
 	</main>
 	<footer>
 		{{ with .BasicContent }}
-		<div class="upvotes">
+		<span class="upvotes">
 			<button type="button" data-upvoted="{{.Upvoted}}">
 				{{.Upvotes}} Upvotes
 			</button>
-		</div>
+		</span>
 		{{ end }}
-		<div class="replies">
+		<span class="replies">
 			<a href="{{.BasicContent.Permalink}}#{{.Id}}">
 				{{ .Replies }} Replies
 			</a>
-		</div>
+		</span>
 	</footer>
 </article>
