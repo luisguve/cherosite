@@ -101,7 +101,7 @@ func makePermalink(host, plink string) *url.URL {
 	return base
 }
 
-func Setup(env, port string) *template.Template {
+func Setup(env, port, internalTplDir, publicTplDir string) *template.Template {
 	if env == "local" {
 		stringBaseURL := "http://localhost" + port + "/"
 		var err error
@@ -110,14 +110,7 @@ func Setup(env, port string) *template.Template {
 			log.Printf("Could not parse baseURL (%s): %v\n", stringBaseURL, err)
 		}
 	}
-	gopath, ok := os.LookupEnv("GOPATH")
-	if !ok || gopath == "" {
-		log.Fatal("GOPATH must be set.")
-	}
-	projectDir := filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite")
-	tplDir := filepath.Join(projectDir, "web", "internal", "templates")
-	tpl = mustParseTemplates(tplDir).Funcs(template.FuncMap{"absURL": absURL})
-	publicTplDir := filepath.Join(projectDir, "web", "templates")
+	tpl = mustParseTemplates(internalTplDir).Funcs(template.FuncMap{"absURL": absURL})
 	publicTpl := mustParseTemplates(publicTplDir).Funcs(template.FuncMap{"absURL": absURL})
 	return publicTpl
 }
