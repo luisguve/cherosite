@@ -33,24 +33,24 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 		http.Error(w, "INVALID_OFFSET", http.StatusBadRequest)
 		return
 	}
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
-	commentCtx := formatContextComment(section, thread, commentId)
+	commentCtx := formatContextComment(sectionId, thread, commentId)
 
 	request := &pbApi.GetSubcommentsRequest{
 		Offset:     uint32(offset),
 		CommentCtx: commentCtx,
 	}
 
-	stream, err := r.crudClient.GetSubcomments(context.Background(), request)
+	stream, err := section.Client.GetSubcomments(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -103,12 +103,12 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	threadId := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
@@ -128,7 +128,7 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
 		return
 	}
-	thread := formatContextThread(section, threadId)
+	thread := formatContextThread(sectionId, threadId)
 	postCommentRequest := &pbApi.CommentRequest{
 		Content: content,
 		FtFile:  filePath,
@@ -138,7 +138,7 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 		},
 		ContentContext: &pbApi.CommentRequest_ThreadCtx{thread},
 	}
-	r.handleComment(w, req, postCommentRequest)
+	r.handleComment(w, req, postCommentRequest, section.Client)
 }
 
 // Delete Comment "/{section}/{thread}/comment/delete/?c_id={c_id}" handler.
@@ -151,23 +151,23 @@ func (r *Router) handlePostComment(userId string, w http.ResponseWriter,
 func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	comment := formatContextComment(section, thread, commentId)
+	comment := formatContextComment(sectionId, thread, commentId)
 	deleteContentRequest := &pbApi.DeleteContentRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.DeleteContentRequest_CommentCtx{comment},
 	}
-	r.handleDelete(w, req, deleteContentRequest)
+	r.handleDelete(w, req, deleteContentRequest, section.Client)
 }
 
 // Post Subcomment "/{section}/{thread}/comment/?c_id={c_id}" handler. It handles the
@@ -187,13 +187,13 @@ func (r *Router) handleDeleteComment(userId string, w http.ResponseWriter,
 func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
@@ -213,7 +213,7 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_CONTENT", http.StatusBadRequest)
 		return
 	}
-	comment := formatContextComment(section, thread, commentId)
+	comment := formatContextComment(sectionId, thread, commentId)
 	postCommentRequest := &pbApi.CommentRequest{
 		Content: content,
 		FtFile:  filePath,
@@ -223,7 +223,7 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 		UserId:         userId,
 		ContentContext: &pbApi.CommentRequest_CommentCtx{comment},
 	}
-	r.handleComment(w, req, postCommentRequest)
+	r.handleComment(w, req, postCommentRequest, section.Client)
 }
 
 // Delete Subcomment
@@ -237,24 +237,24 @@ func (r *Router) handlePostSubcomment(userId string, w http.ResponseWriter,
 func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	comment := vars["c_id"]
 	subcommentId := vars["sc_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	subcomment := formatContextSubcomment(section, thread, comment, subcommentId)
+	subcomment := formatContextSubcomment(sectionId, thread, comment, subcommentId)
 	deleteRequest := &pbApi.DeleteContentRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.DeleteContentRequest_SubcommentCtx{subcomment},
 	}
-	r.handleDelete(w, req, deleteRequest)
+	r.handleDelete(w, req, deleteRequest, section.Client)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}" handler.
@@ -266,23 +266,23 @@ func (r *Router) handleDeleteSubcomment(userId string, w http.ResponseWriter,
 func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	comment := formatContextComment(section, thread, commentId)
+	comment := formatContextComment(sectionId, thread, commentId)
 	upvoteRequest := &pbApi.UpvoteRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.UpvoteRequest_CommentCtx{comment},
 	}
-	r.handleUpvote(w, req, upvoteRequest)
+	r.handleUpvote(w, req, upvoteRequest, section.Client)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/?c_id={c_id}&sc_id={sc_id}" handler.
@@ -294,24 +294,24 @@ func (r *Router) handleUpvoteComment(userId string, w http.ResponseWriter,
 func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
 	subcommentId := vars["sc_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)
+	subcomment := formatContextSubcomment(sectionId, thread, commentId, subcommentId)
 	upvoteRequest := &pbApi.UpvoteRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.UpvoteRequest_SubcommentCtx{subcomment},
 	}
-	r.handleUpvote(w, req, upvoteRequest)
+	r.handleUpvote(w, req, upvoteRequest, section.Client)
 }
 
 // Post upvote undoing "/{section}/{thread}/unupvote/?c_id={c_id}" handler.
@@ -324,23 +324,23 @@ func (r *Router) handleUpvoteSubcomment(userId string, w http.ResponseWriter,
 func (r *Router) handleUndoUpvoteComment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	comment := formatContextComment(section, thread, commentId)
+	comment := formatContextComment(sectionId, thread, commentId)
 	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.UndoUpvoteRequest_CommentCtx{comment},
 	}
-	r.handleUndoUpvote(w, req, undoUpvoteRequest)
+	r.handleUndoUpvote(w, req, undoUpvoteRequest, section.Client)
 }
 
 // Post upvote undoing "/{section}/{thread}/unupvote/?c_id={c_id}&sc_id={sc_id}"
@@ -353,22 +353,22 @@ func (r *Router) handleUndoUpvoteComment(userId string, w http.ResponseWriter,
 func (r *Router) handleUndoUpvoteSubcomment(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
 	commentId := vars["c_id"]
 	subcommentId := vars["sc_id"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	subcomment := formatContextSubcomment(section, thread, commentId, subcommentId)
+	subcomment := formatContextSubcomment(sectionId, thread, commentId, subcommentId)
 	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.UndoUpvoteRequest_SubcommentCtx{subcomment},
 	}
-	r.handleUndoUpvote(w, req, undoUpvoteRequest)
+	r.handleUndoUpvote(w, req, undoUpvoteRequest, section.Client)
 }
