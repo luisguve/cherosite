@@ -1,16 +1,14 @@
 package main
 
 import (
-	"errors"
+	"flag"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	app "github.com/luisguve/cherosite/internal/app/cherosite"
 	"github.com/luisguve/cherosite/internal/pkg/livedata"
 	"github.com/luisguve/cherosite/internal/pkg/router"
@@ -28,88 +26,197 @@ type grpcConfig struct {
 	BindAddress string `toml:"bind_address"`
 }
 
-type cherositeConfig struct {
-	GrpcConf      grpcConfig `toml:"grpc_config"`
-	HttpConf      httpConfig `toml:"http_config"`
-	Patillavatars []string `toml:"patillavatars"`
-	Sections      string `toml:"sections"`
-	SessEnv       string `toml:"session_variables"`
+type sectionConfig struct {
+	BindAddress string `toml:"bind_address"`
+	Id          string `toml:"id"`
+	Name        string `toml:"name"`
 }
 
-func siteConfig(file string, vars ...string) (map[string]string, error) {
-	config, err := godotenv.Read(file)
-	if err != nil {
-		return nil, err
-	}
-	var result = make(map[string]string)
-	if len(vars) > 0 {
-		for _, key := range vars {
-			val, ok := config[key]
-			if !ok {
-				errMsg := fmt.Sprintf("Missing %s in %s.", key, file)
-				return nil, errors.New(errMsg)
-			}
-			result[key] = val
-		}
-	} else {
-		result = config
-	}
-	return result, nil
+type sessConfig struct {
+	Dir string `toml:"sess_dir"`
+	Key string `toml:"sess_secret_key"`
+}
+
+type cherositeConfig struct {
+	UploadDir      string                `toml:"upload_dir"`
+	StaticDir      string                `toml:"static_dir"`
+	InternalTplDir string                `toml:"internal_tpl_dir"`
+	PublicTplDir   string                `toml:"public_tpl_dir"`
+	ServicesConf   map[string]grpcConfig `toml:"services"`
+	Sections       []sectionConfig       `toml:"sections"`
+	HttpConf       httpConfig            `toml:"http_config"`
+	Patillavatars  []string              `toml:"patillavatars"`
+	SessEnv        sessConfig            `toml:"session_variables"`
 }
 
 func main() {
-	gopath, ok := os.LookupEnv("GOPATH")
-	if !ok || gopath == "" {
-		log.Fatal("GOPATH must be set.")
+	var configFile string
+	flag.StringVar(&configFile, "config", "", "Absolute path of .toml config file.")
+
+	flag.Parse()
+
+	if configFile == "" {
+		log.Fatal("Absolute path of .toml config file must be set.")
 	}
 
-	configDir := filepath.Join(gopath, "src", "github.com", "luisguve",
-		"cherosite", "cherosite.toml")
-
-	cheroConfig := new(cherositeConfig)
-	if _, err := toml.DecodeFile(configDir, cheroConfig); err != nil {
+	config := cherositeConfig{}
+	if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		log.Fatal(err)
 	}
 
-	// Establish connection with gRPC server
-	conn, err := grpc.Dial(cheroConfig.GrpcConf.BindAddress, grpc.WithInsecure())
+	if err := config.preventDefault(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Create session store.
+	sessDir := config.SessEnv.Dir
+	sessKey := []byte(config.SessEnv.Key)
+	store := sessions.NewFilesystemStore(sessDir, sessKey)
+	// Set no limit on length of sessions.
+	store.MaxLength(0)
+
+	// Establish connection with users gRPC service.
+	addr := config.ServicesConf["users"].BindAddress
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
 
-	// Create gRPC crud client
-	ccc := pbApi.NewCrudCheropatillaClient(conn)
-
-	// Get session key.
-	sess, err := siteConfig(cheroConfig.SessEnv, "SESSION_KEY", "SESS_DIR")
-	if err != nil {
-		log.Fatal("siteConfig called with SessEnv: ", err)
-	}
-
-	// Create session store.
-	store := sessions.NewFilesystemStore(sess["SESS_DIR"], []byte(sess["SESSION_KEY"]))
-	// Set no limit on length of sessions.
-	store.MaxLength(0)
+	usersClient := pbUsers.NewCrudUsersClient(conn)
 
 	// Create and start hub
-	hub := livedata.NewHub()
-	go hub.Run(ccc)
+	hub := livedata.NewHub(usersClient)
+	go hub.Run()
 
-	// Get section names mapped to their ids.
-	sections, err := siteConfig(cheroConfig.Sections)
+	// Establish connection with general gRPC service.
+	addr = config.ServicesConf["general"].BindAddress
+	conn, err = grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
-		log.Fatal("siteConfig called with Sections: ", err)
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	generalClient := pbApi.NewCrudGeneralClient(conn)
+
+	// Establish connection with section gRPC services.
+	var sections []router.Section
+
+	for _, s := range config.Sections {
+		conn, err = grpc.Dial(s.BindAddress, grpc.WithInsecure())
+		if err != nil {
+			log.Fatal("Could not setup dial:", err)
+		}
+		defer conn.Close()
+
+		sectionClient := pbApi.NewCrudCheropatillaClient(conn)
+		section := router.Section{
+			Client: sectionClient,
+			Id:     s.Id,
+			Name:   s.Name,
+		}
+		sections = append(sections, section)
 	}
 
 	// Setup a new templates engine.
-	tpl := templates.Setup(cheroConfig.HttpConf.Env, ":" + cheroConfig.HttpConf.Port)
+	tpl := templates.Setup(config.HttpConf.Env, ":" + config.HttpConf.Port, config.InternalTplDir, config.PublicTplDir)
 
 	// Setup router and routes.
-	router := router.New(tpl, ccc, store, hub, sections, cheroConfig.Patillavatars)
-	router.SetupRoutes()
+	router := router.New(tpl, usersClient, generalClient, sections, store, hub, config.Patillavatars)
+	router.SetupRoutes(config.UploadDir, config.StaticDir)
 
 	// Start app.
-	a := app.New(router, cheroConfig.HttpConf.BindAddress, ":" + cheroConfig.HttpConf.Port)
+	addr = config.HttpConf.BindAddress + ":" + config.HttpConf.Port
+	a := app.New(router, addr)
 	log.Fatal(a.Run())
+}
+
+func (c cherositeConfig) preventDefault() error {
+	if c.UploadDir == "" {
+		return fmt.Errorf("Missing upload dir.")
+	}
+	if c.StaticDir == "" {
+		return fmt.Errorf("Missing static dir.")
+	}
+	if c.InternalTplDir == "" {
+		return fmt.Errorf("Missing internal tpl dir.")
+	}
+	if c.PublicTplDir == "" {
+		return fmt.Errorf("Missing public tpl dir.")
+	}
+	if c.ServicesConf == nil {
+		return fmt.Errorf("Missing services config.")
+	}
+	usersSrvConf, ok := c.ServicesConf["users"]
+	if !ok {
+		return fmt.Errorf("Missing users service config.")
+	}
+	if err := usersSrvConf.preventDefault("users"); err != nil {
+		return err
+	}
+	generalSrvConf, ok := c.ServicesConf["general"]
+	if !ok {
+		return fmt.Errorf("Missing general service config.")
+	}
+	if err := generalSrvConf.preventDefault("general"); err != nil {
+		return err
+	}
+	if len(c.Sections) == 0 {
+		return fmt.Errorf("Missing sections config.")
+	}
+	for _, s := range c.Sections {
+		if err := s.preventDefault(); err != nil {
+			return err
+		}
+	}
+	if err := c.HttpConf.preventDefault(); err != nil {
+		return err
+	}
+	if len(c.Patillavatars) == 0 {
+		return fmt.Errorf("Missing default patillavatars.")
+	}
+	return nil
+}
+
+func (s sectionConfig) preventDefault() error {
+	if s.BindAddress == "" {
+		return fmt.Errorf("Missing bind address in one or more sections.")
+	}
+	if s.Id == "" {
+		return fmt.Errorf("Missing id in one or more sections.")
+	}
+	if s.Name == "" {
+		return fmt.Errorf("Missing name in one or more sections.")
+	}
+	return nil
+}
+
+func (h httpConfig) preventDefault() error {
+	if h.BindAddress == "" {
+		return fmt.Errorf("Missing http bind address.")
+	}
+	if h.Env == "" {
+		return fmt.Errorf("Missing env config.")
+	}
+	if h.Port == "" {
+		return fmt.Errorf("Missing http port.")
+	}
+	return nil
+}
+
+func (g grpcConfig) preventDefault(srvName string) error {
+	if g.BindAddress == "" {
+		return fmt.Errorf("Missing %s service bind address.", srvName)
+	}
+	return nil
+}
+
+func (s sessConfig) preventDefault() error {
+	if s.Dir == "" {
+		return fmt.Errorf("Missing session dir.")
+	}
+	if s.Key == "" {
+		return fmt.Errorf("Missing session secret key.")
+	}
+	return nil
 }
