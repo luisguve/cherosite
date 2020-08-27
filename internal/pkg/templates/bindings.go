@@ -8,12 +8,13 @@ import (
 	"time"
 
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
 const timeFormat = "Jan _2 2006 15:04 MST"
 
-func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHeaderData) *MyProfileView {
+func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbUsers.UserHeaderData) *MyProfileView {
 	// set user header data
 	hd := setHeaderData(uhd, nil)
 	// set user profile data
@@ -24,7 +25,7 @@ func DataToMyProfileView(userData *pbDataFormat.BasicUserData, uhd *pbApi.UserHe
 	}
 }
 
-func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderData,
+func DataToProfileView(userData *pbUsers.ViewUserResponse, uhd *pbUsers.UserHeaderData,
 	activity []*pbApi.ContentRule, currentUserId string) *ProfileView {
 	recycleSet := []RecycleType{
 		RecycleType{
@@ -82,7 +83,7 @@ func DataToProfileView(userData *pbApi.ViewUserResponse, uhd *pbApi.UserHeaderDa
 	}
 }
 
-func DataToDashboardView(dData *pbApi.DashboardData, feed, activity,
+func DataToDashboardView(dData *pbUsers.DashboardData, feed, activity,
 	saved []*pbApi.ContentRule) *DashboardView {
 	recycleSet := []RecycleType{
 		RecycleType{
@@ -140,7 +141,7 @@ func DataToDashboardView(dData *pbApi.DashboardData, feed, activity,
 	}
 }
 
-func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
+func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
 	currentUserId string) *ExploreView {
 	recycleSet := []RecycleType{
 		RecycleType{
@@ -173,7 +174,7 @@ func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 }
 
 func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
-	uhd *pbApi.UserHeaderData, currentUserId, sectionId string) *ThreadView {
+	uhd *pbUsers.UserHeaderData, currentUserId, sectionId string) *ThreadView {
 	metadata := content.Metadata
 	recycleSet := []RecycleType{
 		RecycleType{
@@ -214,7 +215,7 @@ func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
 	}
 }
 
-func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
+func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
 	currentUserId, sectionName, sectionId string) *SectionView {
 	recycleSet := []RecycleType{
 		RecycleType{
@@ -235,7 +236,7 @@ func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbApi.UserHeaderData,
 	}
 }
 
-func setHeaderData(uhd *pbApi.UserHeaderData, recycleSet []RecycleType) HeaderData {
+func setHeaderData(uhd *pbUsers.UserHeaderData, recycleSet []RecycleType) HeaderData {
 	hd := HeaderData{RecycleTypes: recycleSet}
 	if uhd == nil {
 		return hd
@@ -265,7 +266,7 @@ func setHeaderData(uhd *pbApi.UserHeaderData, recycleSet []RecycleType) HeaderDa
 	return hd
 }
 
-func setProfileData(userData *pbApi.ViewUserResponse) ProfileData {
+func setProfileData(userData *pbUsers.ViewUserResponse) ProfileData {
 	var pd ProfileData
 	if userData != nil {
 		pd = ProfileData{
