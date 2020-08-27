@@ -1,80 +1,107 @@
 package router
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	"github.com/luisguve/cherosite/internal/pkg/livedata"
 )
 
-type Router struct {
-	handler    *mux.Router
-	upgrader   websocket.Upgrader
-	crudClient pbApi.CrudCheropatillaClient
-	templates  *template.Template
-	store      sessions.Store
-	hub        *livedata.Hub
-	sections   map[string]string
+type Section struct {
+	Client pbApi.CrudCheropatillaClient
+	Id     string
+	Name   string
 }
 
-func New(t *template.Template, cc pbApi.CrudCheropatillaClient, s sessions.Store,
-	hub *livedata.Hub, sections map[string]string, patillavatars []string) *Router {
-	if t == nil {
-		log.Fatal("missing templates")
+func (s Section) preventDefault() error {
+	if s.Client == nil {
+		return fmt.Errorf("Got a nil section client.")
 	}
-	if cc == nil {
-		log.Fatal("missing crud client")
+	if s.Name == "" {
+		return fmt.Errorf("Got an empty section name.")
+	}
+	if s.Id == "" {
+		return fmt.Errorf("Got an empty section id.")
+	}
+	return nil
+}
+
+type Router struct {
+	handler       *mux.Router
+	upgrader      websocket.Upgrader
+	templates     *template.Template
+	store         sessions.Store
+	hub           *livedata.Hub
+	sections      map[string]Section
+	usersClient   pbUsers.CrudUsersClient
+	generalClient pbApi.CrudGeneralClient
+}
+
+func New(t *template.Template, users pbUsers.CrudUsersClient, general pbApi.CrudGeneralClient,
+	sections []Section, s sessions.Store, hub *livedata.Hub, patillavatars []string) *Router {
+	if t == nil {
+		log.Fatal("Missing templates.")
+	}
+	if users == nil {
+		log.Fatal("Missing users client.")
+	}
+	if general == nil {
+		log.Fatal("Missing general client.")
+	}
+	if len(sections) == 0 {
+		log.Fatal("There must be at least one section.")
 	}
 	if s == nil {
-		log.Fatal("missing sessions store")
+		log.Fatal("Missing sessions store.")
 	}
 	if hub == nil {
-		log.Fatal("missing hub")
-	}
-	if sections == nil || len(sections) == 0 {
-		log.Fatal("no sections")
+		log.Fatal("Missing hub.")
 	}
 	if len(patillavatars) == 0 {
-		log.Fatal("No default patillavatars")
+		log.Fatal("No default patillavatars.")
 	}
 	defaultPics = patillavatars
-	return &Router{
-		handler: mux.NewRouter(),
-		upgrader: websocket.Upgrader{
+
+	router := &Router{
+		sections:      make(map[string]Section),
+		templates:     t,
+		store:         s,
+		hub:           hub,
+		usersClient:   users,
+		generalClient: general,
+		handler:       mux.NewRouter(),
+		upgrader:      websocket.Upgrader{
 			ReadBufferSize:  livedata.ReadBufferSize,
 			WriteBufferSize: livedata.WriteBufferSize,
 		},
-		crudClient: cc,
-		templates:  t,
-		store:      s,
-		hub:        hub,
-		sections:   sections,
 	}
+
+	for _, s := range sections {
+		if err := s.preventDefault(); err != nil {
+			log.Fatal(err)
+		}
+		router.sections[s.Id] = s
+	}
+	return router
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.handler.ServeHTTP(w, req)
 }
 
-func (r *Router) SetupRoutes() {
+func (r *Router) SetupRoutes(uploadDir, staticDir string) {
 	root := r.handler.PathPrefix("/").Subrouter().StrictSlash(true)
 	// favicon (not found)
 	root.Handle("/favicon.ico", http.NotFoundHandler())
 	// serve assets
-	gopath, ok := os.LookupEnv("GOPATH")
-	if !ok || gopath == "" {
-		log.Fatal("GOPATH must be set.")
-	}
-	uploadDir := filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", uploadPath)
 	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadDir))))
-	staticDir := filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", "web", "static")
 	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./" + staticDir))))
 	//
 	// WEBSOCKET
