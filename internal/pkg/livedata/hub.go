@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 )
 
@@ -24,19 +24,24 @@ type Hub struct {
 	// ReadAllFromUser is a channel that marks all the notifications of the given
 	// user as read.
 	ReadAllFromUser chan string
+
+	// Client to perform user-related crud operations, mostly involving notification
+	// management.
+	usersClient pbUsers.CrudUsersClient
 }
 
-func NewHub() *Hub {
+func NewHub(client pbUsers.CrudUsersClient) *Hub {
 	return &Hub{
 		onlineUsers:     make(map[string]*User),
 		Register:        make(chan *User),
 		Unregister:      make(chan string),
 		ReadAllFromUser: make(chan string),
+		usersClient:     client,
 	}
 }
 
 // Run continuously listens for user registering/unregistering messages
-func (h *Hub) Run(crudServiceClient pbApi.CrudCheropatillaClient) {
+func (h *Hub) Run() {
 	for {
 		select {
 		case user := <-h.Register:
@@ -49,7 +54,7 @@ func (h *Hub) Run(crudServiceClient pbApi.CrudCheropatillaClient) {
 			}
 		case userId := <-h.ReadAllFromUser:
 			if user, ok := h.onlineUsers[userId]; ok {
-				go markAllAsRead(userId, user.SendOk, crudServiceClient)
+				go h.markAllAsRead(userId, user.SendOk)
 			}
 		}
 	}
@@ -67,8 +72,8 @@ func (h *Hub) Broadcast(userId string, notif *pbDataFormat.Notif) {
 	}
 }
 
-func markAllAsRead(userId string, sendOk chan bool, cc pbApi.CrudCheropatillaClient) {
-	_, err := cc.MarkAllAsRead(context.Background(), &pbApi.ReadNotifsRequest{UserId: userId})
+func (h *Hub) markAllAsRead(userId string, sendOk chan bool) {
+	_, err := h.usersClient.MarkAllAsRead(context.Background(), &pbUsers.ReadNotifsRequest{UserId: userId})
 	if err != nil {
 		log.Println("Could not send request to mark all notifs as read: %v\n", err)
 		sendOk <- false
