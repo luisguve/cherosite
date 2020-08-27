@@ -1,16 +1,35 @@
-# Specify the absolute path for the .env file containing the sections.
-sections = "C:/cheroshared_files/sections.env"
-
-# Specify the absolute path for the .env file containing sensitive data about the sessions.
-session_variables = "C:/cherosite_files/cookie_hash.env"
-
 # Specify filenames of default patillavatar pics located at /web/static/pics.
 patillavatars = [ "default.jpg", "default2.jpg" ]
+# Specify the absolute path to the folder where files will be uploaded.
+upload_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite"
+# Specify the absolute path to the folder where static files will be stored in.
+static_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/static"
+# Specify the absolute path to the folder where the templates for internal use are stored in.
+internal_tpl_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/internal/templates"
+# Specify the absolute path to the folder where the templates for page rendering use are stored in.
+public_tpl_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/templates"
+
+# Set the id, name and bind address of every section.
+[[sections]]
+  id = "mylife"
+  name = "My Life"
+  bind_address = "localhost:50053"
+
+# Specify the absolute path for the .env file containing sensitive data about the sessions.
+[session_variables]
+  # Specify the absolute path for the folder where the sessions will be stored in.
+  sess_dir = "C:/cherosite_files/sess"
+  # This must be kept in secret; you should'nt share it with anyone.
+  sess_secret_key = "îç|ÃÉ¹7à’˜€”Ìåíâ8²Îy3N—ÌZ¬iô/r"
 
 [http_config]
-env = "local"
-bind_address = "127.0.0.1"
-port = "8000"
+  env = "local"
+  bind_address = "127.0.0.1"
+  port = "8000"
 
-[grpc_config]
-bind_address = "localhost:50051"
+# Set the bind address for the users and general services.
+[services]
+  [services.users]
+  bind_address = "localhost:50051"
+  [services.general]
+  bind_address = "localhost:50052"
