@@ -6,16 +6,16 @@ import (
 	"time"
 )
 
-func (app *App) Run() error {
-	log.Println("Running. Open localhost:8000 in the browser.")
-	return app.srv.ListenAndServe()
+func (a *App) Run() error {
+	log.Printf("Running. Open %s in the browser.\n", a.srv.Addr)
+	return a.srv.ListenAndServe()
 }
 
-func New(h http.Handler, addr, port string) *App {
+func New(h http.Handler, bindAddr string) *App {
 	return &App{
 		srv: &http.Server{
 			Handler:      h,
-			Addr:         addr + port,
+			Addr:         bindAddr,
 			WriteTimeout: 15 * time.Second,
 			ReadTimeout:  15 * time.Second,
 			IdleTimeout:  time.Second * 60,
