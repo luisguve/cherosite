@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	pbContext "github.com/luisguve/cheroproto-go/context"
 	pbDataFormat "github.com/luisguve/cheroproto-go/dataformat"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
@@ -176,9 +177,9 @@ func getAndSaveFile(req *http.Request, formName string) (string, error, int) {
 // getUserHeaderData returns username, alias, both read and unread notifs of the given
 // user. It sets the corresponding error header given any error while getting user
 // header data.
-func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbApi.UserHeaderData {
-	userData, err := r.crudClient.GetUserHeaderData(context.Background(),
-		&pbApi.GetBasicUserDataRequest{UserId: userId})
+func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbUsers.UserHeaderData {
+	userData, err := r.usersClient.GetUserHeaderData(context.Background(),
+		&pbUsers.GetBasicUserDataRequest{UserId: userId})
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -204,10 +205,10 @@ func (r *Router) getUserHeaderData(w http.ResponseWriter, userId string) *pbApi.
 // getBasicUserData returns a user's basic data: alias, username, pic_url and
 // description, along with a status code and any error encountered.
 func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, int, error) {
-	request := &pbApi.GetBasicUserDataRequest{
+	request := &pbUsers.GetBasicUserDataRequest{
 		UserId: userId,
 	}
-	userData, err := r.crudClient.GetBasicUserData(context.Background(), request)
+	userData, err := r.usersClient.GetBasicUserData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -234,8 +235,8 @@ func (r *Router) getBasicUserData(userId string) (*pbDataFormat.BasicUserData, i
 // - section, thread or comment are unavailable -> SECTION_UNAVAILABLE
 // - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
-	upvoteRequest *pbApi.UpvoteRequest) {
-	stream, err := r.crudClient.Upvote(context.Background(), upvoteRequest)
+	upvoteRequest *pbApi.UpvoteRequest, section pbApi.CrudCheropatillaClient) {
+	stream, err := section.Upvote(context.Background(), upvoteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -271,8 +272,8 @@ func (r *Router) handleUpvote(w http.ResponseWriter, req *http.Request,
 // - invalid section name, thread id or comment -> 404 NOT_FOUND
 // - network failures ---------------------------> INTERNAL_FAILURE
 func (r *Router) handleComment(w http.ResponseWriter, req *http.Request,
-	commentRequest *pbApi.CommentRequest) {
-	stream, err := r.crudClient.Comment(context.Background(), commentRequest)
+	commentRequest *pbApi.CommentRequest, section pbApi.CrudCheropatillaClient) {
+	stream, err := section.Comment(context.Background(), commentRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -325,8 +326,8 @@ func (r *Router) broadcastNotifs(stream streamNotifs) {
 // - user id and author id are not equal -> UNAUTHORIZED
 // - network failures --------------------> INTERNAL_FAILURE
 func (r *Router) handleDelete(w http.ResponseWriter, req *http.Request,
-	deleteRequest *pbApi.DeleteContentRequest) {
-	_, err := r.crudClient.DeleteContent(context.Background(), deleteRequest)
+	deleteRequest *pbApi.DeleteContentRequest, section pbApi.CrudCheropatillaClient) {
+	_, err := section.DeleteContent(context.Background(), deleteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -363,8 +364,8 @@ func (r *Router) handleDelete(w http.ResponseWriter, req *http.Request,
 // - user did not upvote the content before -> NOT_UPVOTED
 // - network failures -----------------------> INTERNAL_FAILURE
 func (r *Router) handleUndoUpvote(w http.ResponseWriter, req *http.Request,
-	undoUpvoteRequest *pbApi.UndoUpvoteRequest) {
-	_, err := r.crudClient.UndoUpvote(context.Background(), undoUpvoteRequest)
+	undoUpvoteRequest *pbApi.UndoUpvoteRequest, section pbApi.CrudCheropatillaClient) {
+	_, err := section.UndoUpvote(context.Background(), undoUpvoteRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
@@ -23,17 +24,17 @@ import (
 // - network failures -----> INTERNAL_FAILURE
 // - template rendering ---> TEMPLATE_ERROR
 func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Request) {
-	request := &pbApi.GetDashboardDataRequest{
+	request := &pbUsers.GetDashboardDataRequest{
 		UserId: userId,
 	}
-	dData, err := r.crudClient.GetDashboardData(context.Background(), request)
+	dData, err := r.usersClient.GetDashboardData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				log.Printf("User %s unregistered. Deleting session... ", userId)
 				if err = r.deleteSession(req, w); err != nil {
-					log.Printf("Could not save session because... %v\n", err)
+					log.Printf("Could not save session because: %v\n", err)
 				} else {
 					log.Println("Done.")
 				}
@@ -61,15 +62,11 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 			defer wg.Done()
 			activityPattern := &pbApi.ActivityPattern{
 				Pattern: templates.FeedPattern,
-				Context: &pbApi.ActivityPattern_Users{
-					Users: &pbApi.UserList{
-						Ids: dData.FollowingIds,
-					},
-				},
+				Users:   dData.FollowingIds,
 				// ignore DiscardIds; do not discard any activity
 			}
 
-			stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+			stream, err := r.generalClient.RecycleActivity(context.Background(), activityPattern)
 			if err != nil {
 				log.Printf("Could not send request: %v\n", err)
 				w.WriteHeader(http.StatusPartialContent)
@@ -94,12 +91,10 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 		defer wg.Done()
 		activityPattern := &pbApi.ActivityPattern{
 			Pattern: templates.CompactPattern,
-			Context: &pbApi.ActivityPattern_UserId{
-				UserId: dData.UserId,
-			},
+			Users:   []string{dData.UserId},
 			// ignore DiscardIds; do not discard any activity
 		}
-		stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+		stream, err := r.generalClient.RecycleActivity(context.Background(), activityPattern)
 		if err != nil {
 			log.Printf("Could not send request: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
@@ -123,7 +118,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 				UserId:  dData.UserId,
 				// ignore DiscardIds; do not discard any thread
 			}
-			stream, err := r.crudClient.RecycleSaved(context.Background(), savedPattern)
+			stream, err := r.generalClient.RecycleSaved(context.Background(), savedPattern)
 			if err != nil {
 				log.Printf("Could not send request: %v\n", err)
 				w.WriteHeader(http.StatusPartialContent)
@@ -191,10 +186,10 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 // - network or encoding failures ------> INTERNAL_FAILURE
 func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	req *http.Request) {
-	request := &pbApi.GetBasicUserDataRequest{
+	request := &pbUsers.GetBasicUserDataRequest{
 		UserId: userId,
 	}
-	following, err := r.crudClient.GetUserFollowingIds(context.Background(), request)
+	following, err := r.usersClient.GetUserFollowingIds(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -226,16 +221,12 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	var feed templates.ContentsFeed
 
 	activityPattern := &pbApi.ActivityPattern{
-		Pattern: templates.FeedPattern,
-		Context: &pbApi.ActivityPattern_Users{
-			Users: &pbApi.UserList{
-				Ids: following.Ids,
-			},
-		},
+		Pattern:    templates.FeedPattern,
+		Users:      following.Ids,
 		DiscardIds: discard.FormatFeedActivity(following.Ids),
 	}
 
-	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	stream, err := r.generalClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
@@ -288,14 +279,12 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 	var userActivity templates.ContentsFeed
 
 	activityPattern := &pbApi.ActivityPattern{
-		Pattern: templates.CompactPattern,
-		Context: &pbApi.ActivityPattern_UserId{
-			UserId: userId,
-		},
+		Pattern:    templates.CompactPattern,
+		Users:      []string{userId},
 		DiscardIds: discard.FormatUserActivity("dashboard-" + userId),
 	}
 
-	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	stream, err := r.generalClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -366,7 +355,7 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 		DiscardIds: discard.FormatSavedThreads(),
 	}
 
-	stream, err := r.crudClient.RecycleSaved(context.Background(), savedPattern)
+	stream, err := r.generalClient.RecycleSaved(context.Background(), savedPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -421,7 +410,7 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 		// ignore DiscardIds; do not discard any thread
 	}
 	var feed templates.ContentsFeed
-	stream, err := r.crudClient.RecycleGeneral(context.Background(), generalPattern)
+	stream, err := r.generalClient.RecycleGeneral(context.Background(), generalPattern)
 	if err != nil {
 		log.Printf("Could not send request: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
@@ -434,7 +423,7 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 	}
 	// get current user data for header section
 	userId := r.currentUser(req)
-	var userHeader *pbApi.UserHeaderData
+	var userHeader *pbUsers.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
@@ -473,7 +462,7 @@ func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) 
 	}
 
 	var feed templates.ContentsFeed
-	stream, err := r.crudClient.RecycleGeneral(context.Background(), generalPattern)
+	stream, err := r.generalClient.RecycleGeneral(context.Background(), generalPattern)
 	if err != nil {
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)

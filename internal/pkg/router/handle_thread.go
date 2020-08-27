@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
@@ -25,23 +26,23 @@ import (
 // - netwotk failures ------------------> INTERNAL_FAILURE
 func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	request := &pbApi.GetThreadRequest{
 		Thread: threadCtx,
 	}
 	// Load thread
-	content, err := r.crudClient.GetThread(context.Background(), request)
+	content, err := section.Client.GetThread(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -49,12 +50,12 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 				// Section name or thread id are probably wrong.
 				// Log for debugging.
 				log.Printf("Could not find thread (id: %s) on section %s\n",
-					thread, section)
+					thread, sectionId)
 				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
 				// Section unavailable
-				log.Printf("Section %s unavailable\n", section)
+				log.Printf("Section %s unavailable\n", sectionId)
 				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
 				return
 			default:
@@ -77,7 +78,7 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 			ContentContext: &pbApi.ContentPattern_ThreadCtx{threadCtx},
 			// ignore DiscardIds; do not discard any comment
 		}
-		stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
+		stream, err := section.Client.RecycleContent(context.Background(), contentPattern)
 		if err != nil {
 			log.Printf("Could not send request: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
@@ -100,13 +101,13 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 
 	// get current user data for header section
 	userId := r.currentUser(req)
-	var userHeader *pbApi.UserHeaderData
+	var userHeader *pbUsers.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
 
-	threadView := templates.DataToThreadView(content, feed.Contents, userHeader, userId, section)
+	threadView := templates.DataToThreadView(content, feed.Contents, userHeader, userId, sectionId)
 
 	if err := r.templates.ExecuteTemplate(w, "thread.html", threadView); err != nil {
 		log.Printf("Could not execute template thread.html: %v\n", err)
@@ -122,17 +123,17 @@ func (r *Router) handleViewThread(w http.ResponseWriter, req *http.Request) {
 // - network or encoding failures ------> INTERNAL_FAILURE
 func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -145,13 +146,13 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	}
 	var feed templates.ContentsFeed
 
-	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
+	stream, err := section.Client.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// log for debugging
-				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
+				log.Printf("Invalid section id %s or thread id %s\n", sectionId, thread)
 				http.NotFound(w, req)
 				return
 			case codes.OutOfRange:
@@ -199,29 +200,29 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 // - network failures ------------------> INTERNAL_FAILURE
 func (r *Router) handleSave(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	request := &pbApi.SaveThreadRequest{
 		UserId: userId,
 		Thread: threadCtx,
 	}
-	_, err := r.crudClient.SaveThread(context.Background(), request)
+	_, err := section.Client.SaveThread(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// log for debugging
-				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
+				log.Printf("Invalid section id %s or thread id %s\n", sectionId, thread)
 				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
@@ -249,29 +250,29 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter, req *http.Requ
 // - network failures ------------------> INTERNAL_FAILURE
 func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	undoSaveRequest := &pbApi.UndoSaveThreadRequest{
 		UserId: userId,
 		Thread: threadCtx,
 	}
-	_, err := r.crudClient.UndoSaveThread(context.Background(), undoSaveRequest)
+	_, err := section.Client.UndoSaveThread(context.Background(), undoSaveRequest)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// log for debugging
-				log.Printf("Invalid section id %s or thread id %s\n", section, thread)
+				log.Printf("Invalid section id %s or thread id %s\n", sectionId, thread)
 				http.NotFound(w, req)
 				return
 			default:
@@ -299,23 +300,23 @@ func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, req *http.
 func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	deleteRequest := &pbApi.DeleteContentRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.DeleteContentRequest_ThreadCtx{threadCtx},
 	}
-	r.handleDelete(w, req, deleteRequest)
+	r.handleDelete(w, req, deleteRequest, section.Client)
 }
 
 // Post Upvote "/{section}/{thread}/upvote/" handler. It leverages the operation of
@@ -327,24 +328,24 @@ func (r *Router) handleDeleteThread(userId string, w http.ResponseWriter,
 func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	upvoteRequest := &pbApi.UpvoteRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.UpvoteRequest_ThreadCtx{threadCtx},
 	}
 
-	r.handleUpvote(w, req, upvoteRequest)
+	r.handleUpvote(w, req, upvoteRequest, section.Client)
 }
 
 // Post upvote undoing "/{section}/{thread}/undoupvote/" handler. It leverages
@@ -356,22 +357,22 @@ func (r *Router) handleUpvoteThread(userId string, w http.ResponseWriter,
 func (r *Router) handleUndoUpvoteThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 	thread := vars["thread"]
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s not found\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	threadCtx := formatContextThread(section, thread)
+	threadCtx := formatContextThread(sectionId, thread)
 
 	undoUpvoteRequest := &pbApi.UndoUpvoteRequest{
 		UserId:         userId,
 		ContentContext: &pbApi.UndoUpvoteRequest_ThreadCtx{threadCtx},
 	}
 
-	r.handleUndoUpvote(w, req, undoUpvoteRequest)
+	r.handleUndoUpvote(w, req, undoUpvoteRequest, section.Client)
 }

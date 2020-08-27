@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
@@ -27,10 +28,10 @@ import (
 // - network failures -----> INTERNAL_FAILURE
 func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 	req *http.Request) {
-	request := &pbApi.ReadNotifsRequest{
+	request := &pbUsers.ReadNotifsRequest{
 		UserId: userId,
 	}
-	_, err := r.crudClient.MarkAllAsRead(context.Background(), request)
+	_, err := r.usersClient.MarkAllAsRead(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -58,10 +59,10 @@ func (r *Router) handleReadNotifs(userId string, w http.ResponseWriter,
 // - network failures -----> INTERNAL_FAILURE
 func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter,
 	req *http.Request) {
-	request := &pbApi.ClearNotifsRequest{
+	request := &pbUsers.ClearNotifsRequest{
 		UserId: userId,
 	}
-	_, err := r.crudClient.ClearNotifs(context.Background(), request)
+	_, err := r.usersClient.ClearNotifs(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -92,11 +93,11 @@ func (r *Router) handleClearNotifs(userId string, w http.ResponseWriter,
 func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	username := vars["username"]
-	request := &pbApi.FollowUserRequest{
+	request := &pbUsers.FollowUserRequest{
 		UserId:       userId,
 		UserToFollow: username,
 	}
-	_, err := r.crudClient.FollowUser(context.Background(), request)
+	_, err := r.usersClient.FollowUser(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -133,11 +134,11 @@ func (r *Router) handleFollow(userId string, w http.ResponseWriter, req *http.Re
 func (r *Router) handleUnfollow(userId string, w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	username := vars["username"]
-	request := &pbApi.UnfollowUserRequest{
+	request := &pbUsers.UnfollowUserRequest{
 		UserId:         userId,
 		UserToUnfollow: username,
 	}
-	_, err := r.crudClient.UnfollowUser(context.Background(), request)
+	_, err := r.usersClient.UnfollowUser(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -189,12 +190,12 @@ func (r *Router) handleViewUsers(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "INVALID_CONTEXT", http.StatusBadRequest)
 		return
 	}
-	request := &pbApi.ViewUsersRequest{
+	request := &pbUsers.ViewUsersRequest{
 		UserId:  userId,
 		Context: ctx,
 		Offset:  uint32(offset),
 	}
-	users, err := r.crudClient.ViewUsers(context.Background(), request)
+	users, err := r.usersClient.ViewUsers(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -263,14 +264,14 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 			return
 		}
 	}
-	request := &pbApi.UpdateBasicUserDataRequest{
+	request := &pbUsers.UpdateBasicUserDataRequest{
 		UserId:      userId,
 		Alias:       alias,
 		Username:    username,
 		Description: description,
 		PicUrl:      newPicUrl,
 	}
-	_, err = r.crudClient.UpdateBasicUserData(context.Background(), request)
+	_, err = r.usersClient.UpdateBasicUserData(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -303,10 +304,10 @@ func (r *Router) handleUpdateMyProfile(userId string, w http.ResponseWriter,
 func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	username := vars["username"]
-	request := &pbApi.ViewUserByUsernameRequest{
+	request := &pbUsers.ViewUserByUsernameRequest{
 		Username: username,
 	}
-	userData, err := r.crudClient.ViewUserByUsername(context.Background(), request)
+	userData, err := r.usersClient.ViewUserByUsername(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -327,14 +328,12 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 	// get user activity
 	activityPattern := &pbApi.ActivityPattern{
 		Pattern: templates.CompactPattern,
-		Context: &pbApi.ActivityPattern_UserId{
-			UserId: userData.UserId,
-		},
+		Users: []string{userData.UserId},
 		// ignore DiscardIds; do not discard any activity
 	}
 	var feed templates.ContentsFeed
 
-	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	stream, err := r.generalClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
 		log.Printf("Could not send request: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
@@ -346,9 +345,9 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 		}
 	}
 
-	// get current user data for header section
+	// Get current user data for header section.
 	userId := r.currentUser(req)
-	var userHeader *pbApi.UserHeaderData
+	var userHeader *pbUsers.UserHeaderData
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
@@ -389,14 +388,12 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	activityPattern := &pbApi.ActivityPattern{
 		DiscardIds: discardIds.FormatUserActivity(userId),
 		Pattern:    templates.CompactPattern,
-		Context: &pbApi.ActivityPattern_UserId{
-			UserId: userId,
-		},
+		Users:      []string{userId},
 	}
 	var feed templates.ContentsFeed
 
 	// get user activity
-	stream, err := r.crudClient.RecycleActivity(context.Background(), activityPattern)
+	stream, err := r.generalClient.RecycleActivity(context.Background(), activityPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -445,11 +442,11 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 func (r *Router) handleLogin(w http.ResponseWriter, req *http.Request) {
 	username := req.FormValue("username")
 	password := req.FormValue("password")
-	request := &pbApi.LoginRequest{
+	request := &pbUsers.LoginRequest{
 		Username: username,
 		Password: password,
 	}
-	res, err := r.crudClient.Login(context.Background(), request)
+	res, err := r.usersClient.Login(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
@@ -507,7 +504,7 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 	if alias == "" {
 		alias = name
 	}
-	request := &pbApi.RegisterUserRequest{
+	request := &pbUsers.RegisterUserRequest{
 		Email:    email,
 		Name:     name,
 		PicUrl:   picUrl,
@@ -516,7 +513,7 @@ func (r *Router) handleSignin(w http.ResponseWriter, req *http.Request) {
 		About:    about,
 		Password: password,
 	}
-	res, err := r.crudClient.RegisterUser(context.Background(), request)
+	res, err := r.usersClient.RegisterUser(context.Background(), request)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {

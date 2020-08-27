@@ -10,6 +10,7 @@ import (
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	pbUsers "github.com/luisguve/cheroproto-go/userapi"
 	"github.com/luisguve/cherosite/internal/pkg/pagination"
 	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
@@ -26,16 +27,17 @@ import (
 // - network failures --------------------> INTERNAL_FAILURE
 func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 
-	// Check whether the section exists.
-	sectionName, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	sectionCtx := formatContextSection(section)
+	sectionCtx := formatContextSection(sectionId)
 
 	contentPattern := &pbApi.ContentPattern{
 		Pattern:        templates.FeedPattern,
@@ -43,18 +45,18 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 		// ignore DiscardIds, do not discard any thread
 	}
 
-	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
+	stream, err := section.Client.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// The section name is probably wrong.
 				// log for debugging.
-				log.Printf("Section %s not found\n", section)
+				log.Printf("Section %s not found\n", sectionId)
 				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
-				log.Printf("Section %s temporarily unavailable\n", section)
+				log.Printf("Section %s temporarily unavailable\n", sectionId)
 				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
 				return
 			default:
@@ -74,19 +76,19 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusPartialContent)
 	}
 
-	var userHeader *pbApi.UserHeaderData
+	var userHeader *pbUsers.UserHeaderData
 	userId := r.currentUser(req)
 	if userId != "" {
 		// A user is logged in. Get its data.
 		userHeader = r.getUserHeaderData(w, userId)
 	}
-	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId, sectionName, section)
+	sectionView := templates.DataToSectionView(feed.Contents, userHeader, userId, section.Name, sectionId)
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
 			pThreads := feed.GetSectionPaginationThreads()
 
-			d.SectionThreads[section] = pThreads
+			d.SectionThreads[sectionId] = pThreads
 		})
 	}
 
@@ -103,17 +105,17 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 // - network or encoding failure ---------> INTERNAL_FAILURE
 func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
 
-	sectionCtx := formatContextSection(section)
+	sectionCtx := formatContextSection(sectionId)
 
 	// Get always returns a session, even if empty
 	session, _ := r.store.Get(req, "session")
@@ -123,21 +125,21 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 	contentPattern := &pbApi.ContentPattern{
 		Pattern:        templates.FeedPattern,
 		ContentContext: &pbApi.ContentPattern_SectionCtx{sectionCtx},
-		DiscardIds:     discard.FormatSectionThreads(section),
+		DiscardIds:     discard.FormatSectionThreads(sectionId),
 	}
 
-	stream, err := r.crudClient.RecycleContent(context.Background(), contentPattern)
+	stream, err := section.Client.RecycleContent(context.Background(), contentPattern)
 	if err != nil {
 		if resErr, ok := status.FromError(err); ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// The section name is probably wrong.
 				// log for debugging.
-				log.Printf("Section %s not found\n", section)
+				log.Printf("Section %s not found\n", sectionId)
 				http.NotFound(w, req)
 				return
 			case codes.Unavailable:
-				log.Printf("Section %s temporarily unavailable\n", section)
+				log.Printf("Section %s temporarily unavailable\n", sectionId)
 				http.Error(w, "SECTION_UNAVAILABLE", http.StatusNoContent)
 				return
 			default:
@@ -161,7 +163,7 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
 			pThreads := feed.GetSectionPaginationThreads()
 
-			d.SectionThreads[section] = append(d.SectionThreads[section], pThreads...)
+			d.SectionThreads[sectionId] = append(d.SectionThreads[sectionId], pThreads...)
 		})
 	}
 	// Encode and send response
@@ -188,12 +190,12 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	vars := mux.Vars(req)
-	section := vars["section"]
+	sectionId := vars["section"]
 
-	// Check whether the section exists.
-	_, ok := r.sections[section]
+	// Get section client.
+	section, ok := r.sections[sectionId]
 	if !ok {
-		log.Printf("Section %s not found\n", section)
+		log.Printf("Section %s is not in Router's sections map.\n", sectionId)
 		http.NotFound(w, req)
 		return
 	}
@@ -215,9 +217,9 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 		http.Error(w, "NO_TITLE", http.StatusBadRequest)
 		return
 	}
-	sectionCtx := formatContextSection(section)
+	sectionCtx := formatContextSection(sectionId)
 	createRequest := &pbApi.CreateThreadRequest{
-		UserId: userId,
+		UserId:  userId,
 		Content: &pbApi.Content{
 			Title:   title,
 			Content: content,
@@ -228,14 +230,14 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 		},
 		SectionCtx: sectionCtx,
 	}
-	res, err := r.crudClient.CreateThread(context.Background(), createRequest)
+	res, err := section.Client.CreateThread(context.Background(), createRequest)
 	if err != nil {
 		resErr, ok := status.FromError(err)
 		if ok {
 			switch resErr.Code() {
 			case codes.NotFound:
 				// the section name is probably wrong; log message.
-				log.Printf("Section %s not found\n", section)
+				log.Printf("Section %s not found\n", sectionId)
 				http.NotFound(w, req)
 				return
 			// A user can create a limited number of threads daily.
