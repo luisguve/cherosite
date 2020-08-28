@@ -14,3 +14,14 @@ postForm.addEventListener("submit", function() {
 	};
 	req.send(fData);
 });
+
+/*
+var req = new XMLHttpRequest();
+req.open("GET", "/recycleactivity", true);
+req.onreadystatechange = function() {
+	if (this.readyState == 4) {
+		console.log(this.responseText);
+	}
+};
+req
+*/
