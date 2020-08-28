@@ -1,7 +1,7 @@
 # Specify filenames of default patillavatar pics located at /web/static/pics.
 patillavatars = [ "default.jpg", "default2.jpg" ]
 # Specify the absolute path to the folder where files will be uploaded.
-upload_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite"
+upload_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/tmp"
 # Specify the absolute path to the folder where static files will be stored in.
 static_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/static"
 # Specify the absolute path to the folder where the templates for internal use are stored in.
