@@ -83,6 +83,7 @@ func DataToProfileView(userData *pbUsers.ViewUserResponse, uhd *pbUsers.UserHead
 	}
 }
 
+// Convert data into *DashboardView to be rendered as HTML.
 func DataToDashboardView(dData *pbUsers.DashboardData, feed, activity,
 	saved []*pbApi.ContentRule) *DashboardView {
 	recycleSet := []RecycleType{
@@ -139,6 +140,35 @@ func DataToDashboardView(dData *pbUsers.DashboardData, feed, activity,
 		SavedContent: savedContentSet,
 		Feed:         feedSet,
 	}
+}
+
+// Convert feed into []byte.
+func FeedToBytes(feed []*pbApi.ContentRule, userId string, showSection bool) []byte {
+	var (
+		contents = make([][]byte, len(feed))
+		result   []byte
+		wg       sync.WaitGroup
+	)
+
+	for idx, pbRule := range feed {
+		if pbRule.Data == nil {
+			log.Println("DataToFeedBytes: pbRule has no content.")
+			continue
+		}
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			content := contentToOverviewRenderer(pbRule, userId)
+			contentHTML := content.RenderOverview(idx, showSection)
+			contentBytes := []byte(string(contentHTML))
+			contents[idx] = contentBytes
+		}(idx)
+	}
+	wg.Wait()
+	for _, content := range contents {
+		result = append(result, content...)
+	}
+	return result
 }
 
 func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
