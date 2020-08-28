@@ -1,0 +1,155 @@
+body {
+	margin: 0;
+	box-sizing: border-box;
+}
+
+nav {
+	padding: 20px;
+	background-color: aliceblue;
+}
+
+.font-size-18 {
+	font-size: 18px;
+}
+
+.container {
+	padding: 20px 150px;
+	max-width: 100%;
+}
+
+.profile-pic img {
+	max-width: 110px;
+	max-height: 100%;
+}
+
+.explore a {
+	padding: 10px;
+	color: black;
+	font-size: 15px;
+	border: 5px solid green;
+	border-radius: 7px;
+}
+
+.explore a:visited {
+	color: black;
+}
+
+.explore a:hover {
+	color: green;
+	background-color: white;
+	border-color: tomato;
+}
+
+.recycle button {
+	padding: 5px 10px;
+	color: red;
+	font-size: 25px;
+	border-radius: 7px;
+	background-color: green;
+}
+
+.recycle button:hover {
+	color: green;
+	background-color: tomato;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:visited {
+	color: blue;
+}
+
+a:hover {
+	background-color: tomato;
+	color: green;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	display: inline-block;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.content p {
+	margin: 0 5px;
+}
+
+nav, .user-actions {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.user-actions h4 {
+	margin: 0;
+}
+
+button[data-upvoted="true"] {
+	background-color: navy;
+	color: lightgray;
+}
+
+.feed, .user-activity, .saved-content {
+	display: flex;
+	flex-direction: column;
+}
+
+article {
+	display: flex;
+	flex-direction: column;
+	border: 6px solid pink;
+	border-radius: 20px;
+	margin-top: 10px;
+	padding: 10px;
+}
+
+article header, article footer {
+	background-color: aliceblue;
+}
+
+article[class*="TOP"] main {
+	display: flex;
+	flex-direction: column;
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+article[class*="TOP"] img {
+	float: left;
+	padding-right: 15px;
+	max-width: 420px;
+	max-height: 100%;
+}
+
+article[class*="REL"] img {
+	max-width: 200px;
+	max-height: 100%;
+}
+
+article[class*="REL"] .content {
+	display: flex;
+	flex-direction: row;
+}
+
+.thread-view article img {
+	max-width: 600px;
+	max-height: 100%;
+}
+
+.thread-view article main {
+	display: flex;
+	flex-direction: column;
+}
+
+.thread-view article main h2, .thread-view article main .thumbnail,
+.thread-view article main p {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+
+.thread-view article main .thumbnail {
+	background-color: aliceblue;
+}
