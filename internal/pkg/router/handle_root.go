@@ -77,10 +77,6 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 					w.WriteHeader(http.StatusPartialContent)
 				}
 			}
-			// FOR DEBUGGING
-			if len(feed.Contents) == 0 {
-				log.Printf("Could not get any threads created by %v\n", dData.FollowingIds)
-			}
 		}()
 	}
 
