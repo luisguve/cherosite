@@ -27,7 +27,7 @@
 	<main>
 		{{ with .BasicContent }}
 		<h2>{{.Title}}</h2>
-		<img src="/{{.Thumbnail}}" alt="thumbnail">
+		<div class="thumbnail"><img src="/{{.Thumbnail}}" alt="thumbnail"></div>
 		<p>{{.Content}}</p>
 		{{ end }}
 	</main>
