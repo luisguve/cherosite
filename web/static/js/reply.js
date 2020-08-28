@@ -15,27 +15,30 @@ replyButton.onclick = function() {
 	};
 	req.send(fData);
 };
-var replyComs = document.getElementsByClassName('replyCom');
-for (var i = replyComs.length - 1; i >= 0; i--) {
-	replyForm = replyComs[i];
-	replyButton = replyForm.querySelector("button");
-	replyButton.onclick = function(i) {
-		return function() {
-			// Set replyform again.
-			replyForm = replyComs[i];
-			var replyLink = replyForm.dataset["action"];
-			console.log(replyLink);
-			var fData = new FormData(replyForm);
-			var req = new XMLHttpRequest();
-			req.open("POST", replyLink);
-			req.onreadystatechange = function() {
-				if (this.readyState == 4) {
-					console.log(this.responseText);
-				}
+
+function setupReplyComs() {
+	var replyComs = document.getElementsByClassName('replyCom');
+	for (var i = replyComs.length - 1; i >= 0; i--) {
+		replyForm = replyComs[i];
+		replyButton = replyForm.querySelector("button");
+		replyButton.onclick = function(i) {
+			return function() {
+				// Set replyform again.
+				replyForm = replyComs[i];
+				var replyLink = replyForm.dataset["action"];
+				console.log(replyLink);
+				var fData = new FormData(replyForm);
+				var req = new XMLHttpRequest();
+				req.open("POST", replyLink);
+				req.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						console.log(this.responseText);
+					}
+				};
+				req.send(fData);
 			};
-			req.send(fData);
-		};
-	}(i);
+		}(i);
+	}
 }
 
 /*
