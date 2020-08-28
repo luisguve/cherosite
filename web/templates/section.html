@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/new-styles.css">
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/post.js"></script>
@@ -9,8 +9,8 @@
 	<title>Cheropatilla - {{.SectionName}}</title>
 </head>
 <body>
-	<div class="container">
 	{{ template "header" .HeaderData }}
+	<div class="container">
 	<h1>You are in the section {{.SectionName}}</h1>
 	<section class="create-post">
 		<form data-action="/{{.SectionId}}/new" method="POST" enctype="multipart/form-data" name="post">

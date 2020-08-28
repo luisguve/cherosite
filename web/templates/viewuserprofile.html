@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/new-styles.css">
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/follow.js"></script>
 	<script defer src="/static/js/logout.js"></script>
@@ -12,6 +12,7 @@
 <body>
 	{{ template "header" .HeaderData }}
 
+	<div class="container">
 	{{ $showFollowOption := .FollowOption }}
 	{{ $isFollower := .IsFollower }}
 	{{ $userAlias := .ProfileData.BasicUserData.Alias }}
@@ -55,5 +56,6 @@
 		<h4>{{ $userAlias }} has no recent activity.</h4>
 	{{ end }}
 	</section>
+	</div>
 </body>
 </html>

@@ -2,15 +2,15 @@
 <html>
 <head>
 	<title>Patilla post - {{ .Title }}</title>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/new-styles.css">
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/reply.js"></script>
 	<script defer src="/static/js/upvotes-thread-page.js"></script>
 </head>
 <body>
+	{{ template "header" .HeaderData }}
 	<div class="container">
-		{{ template "header" .HeaderData }}
 		<div class="post">
 			<section class="thread-view">
 				{{ .Content.RenderContent }}

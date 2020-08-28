@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/new-styles.css">
 	<script defer src="/static/js/logout.js"></script>
 	{{ with .BasicUserData }}
 	<title>My Patilla Profile - {{.Alias}} (@{{.Username}})</title>
@@ -9,6 +9,7 @@
 </head>
 <body>
 	{{ template "header" .HeaderData }}
+	<div class="container">
 	{{ with .BasicUserData }}
 	<!-- User data section -->
 	<section class="profile-info">
@@ -24,5 +25,7 @@
 		</div>
 	</section>
 	{{ end }}
+	<h2>All the above information should be editable. The form should be sent to /myprofile/update through PUT. The fields are alias, username, description and pic_url</h2>
+	</div>
 </body>
 </html>

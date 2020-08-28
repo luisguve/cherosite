@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/new-styles.css">
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/upvotes.js"></script>
 	<title>Cheropatilla - Explore</title>
 </head>
 <body>
-	<div class="container">
 	{{ template "header" .HeaderData }}
+	<div class="container">
 	<h1>Explore</h1>
 	<section class="feed">
 		{{ range $idx, $content := .Feed }}
