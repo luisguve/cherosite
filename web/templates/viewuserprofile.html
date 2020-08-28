@@ -5,6 +5,11 @@
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/follow.js"></script>
 	<script defer src="/static/js/logout.js"></script>
+	<script defer src="/static/js/upvotes.js"></script>
+	<script defer>
+		setupUpvotes();
+		setupSave();
+	</script>
 	{{ with .ProfileData.BasicUserData }}
 	<title>Patilla Profile - {{.Alias}} (@{{.Username}})</title>
 	{{ end }}

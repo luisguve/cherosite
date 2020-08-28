@@ -7,6 +7,11 @@
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/reply.js"></script>
 	<script defer src="/static/js/upvotes-thread-page.js"></script>
+	<script defer>
+		setupUpvotesThreadPage();
+		setupSave();
+		setupReplyComs();
+	</script>
 </head>
 <body>
 	{{ template "header" .HeaderData }}
