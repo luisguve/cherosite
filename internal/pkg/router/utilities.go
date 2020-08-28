@@ -29,9 +29,8 @@ const (
 )
 
 var (
-	gopath     = os.Getenv("GOPATH")
 	uploadPath = "tmp"
-	uploadDir  = filepath.Join(gopath, "src", "github.com", "luisguve", "cherosite", uploadPath)
+	uploadDir string
 )
 
 var (
