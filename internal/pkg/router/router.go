@@ -96,13 +96,14 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.handler.ServeHTTP(w, req)
 }
 
-func (r *Router) SetupRoutes(uploadDir, staticDir string) {
+func (r *Router) SetupRoutes(upload, static string) {
+	uploadDir = upload
 	root := r.handler.PathPrefix("/").Subrouter().StrictSlash(true)
 	// favicon (not found)
 	root.Handle("/favicon.ico", http.NotFoundHandler())
 	// serve assets
 	root.PathPrefix("/"+uploadPath+"/").Handler(http.StripPrefix("/"+uploadPath+"/", http.FileServer(http.Dir("./"+uploadDir))))
-	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./" + staticDir))))
+	root.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./" + static))))
 	//
 	// WEBSOCKET
 	//
