@@ -6,9 +6,38 @@
 	<script defer src="/static/js/follow.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/upvotes.js"></script>
+	<script defer src="/static/js/recycle.js"></script>
 	<script defer>
-		setupUpvotes();
-		setupSave();
+		window.onload = function() {
+			setupUpvotes();
+			setupSave();
+
+			var prevBtn = document.querySelector(".feed .section-header .prev");
+			var nextBtn = document.querySelector(".feed .section-header .next");
+			var contentArea = document.querySelector(".feed .content-area");
+			var noContentArea = document.querySelector(".feed .no-content-area h1");
+
+			var feed = new Section(prevBtn, nextBtn, contentArea, noContentArea);
+
+			var recycleBtn = document.querySelector(".recycle button");
+			recycleBtn.onclick = function() {
+				var options = document.querySelector(".recycle select");
+				var link = options.value;
+				var req = new XMLHttpRequest();
+				req.open("GET", link, true);
+				req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+				req.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						if (this.status == 200) {
+							feed.addPage(this.responseText);
+						} else {
+							console.log(this.responseText);
+						}
+					}
+				}
+				req.send();
+			};
+		};
 	</script>
 	{{ with .ProfileData.BasicUserData }}
 	<title>Patilla Profile - {{.Alias}} (@{{.Username}})</title>
@@ -52,14 +81,23 @@
 	{{ end }}
 	<!-- User activity section -->
 	<section class="feed">
-	{{ with .Activity }}
-		<h4>{{ $userAlias }} activity</h4>
-		{{ range $idx, $content := . }}
-			{{ $content.RenderOverview $idx true }}
+		<header class="section-header">
+			<button class="prev">PREV</button>
+			<h1>{{ $userAlias }} activity</h1>
+			<button class="next">NEXT</button>
+		</header>
+		{{ with .Activity }}
+			<div class="content-area">
+				{{ range $idx, $content := . }}
+					{{ $content.RenderOverview $idx true }}
+				{{ end }}
+			</div>
+		{{ else }}
+			<div class="no-content-area"><h1>
+				{{ $userAlias }} has no recent activity.
+			</h1></div>
+			<div class="content-area"></div>
 		{{ end }}
-	{{ else }}
-		<h4>{{ $userAlias }} has no recent activity.</h4>
-	{{ end }}
 	</section>
 	</div>
 </body>

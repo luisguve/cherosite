@@ -28,10 +28,12 @@ type UserHeader struct {
 }
 
 type RecycleType struct {
-	// Content type identifier
+	// Recycle section label
 	Label string
 	// Link to send request to recycle content
 	Link string
+	// Display short id to be easily selected in javascript
+	Id string
 }
 
 // HeaderData holds information to render the header section of a page.

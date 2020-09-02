@@ -31,6 +31,7 @@ func DataToProfileView(userData *pbUsers.ViewUserResponse, uhd *pbUsers.UserHead
 		RecycleType{
 			Label: fmt.Sprintf("Recycle %s's activity", userData.Alias),
 			Link:  fmt.Sprintf("/profile/recycle?userid=%s", userData.UserId),
+			Id:    "feed",
 		},
 	}
 	var (
@@ -90,14 +91,17 @@ func DataToDashboardView(dData *pbUsers.DashboardData, feed, activity,
 		RecycleType{
 			Label: "Recycle your feed",
 			Link:  "/recyclefeed",
+			Id:    "feed",
 		},
 		RecycleType{
 			Label: "Recycle your activity",
 			Link:  "/recycleactivity",
+			Id:    "activity",
 		},
 		RecycleType{
 			Label: "Recycle your saved threads",
 			Link:  "/recyclesaved",
+			Id:    "saved",
 		},
 	}
 	var (
@@ -177,6 +181,7 @@ func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
 		RecycleType{
 			Label: "Recycle explorer",
 			Link:  "/explore/recycle",
+			Id:    "feed",
 		},
 	}
 	var (
@@ -210,6 +215,7 @@ func DataToThreadView(content *pbApi.ContentData, feed []*pbApi.ContentRule,
 		RecycleType{
 			Label: "Recycle comments",
 			Link:  fmt.Sprintf("/%s/%s/recycle", sectionId, metadata.Id),
+			Id:    "feed",
 		},
 	}
 	var (
@@ -251,6 +257,7 @@ func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
 		RecycleType{
 			Label: "Recycle threads",
 			Link:  fmt.Sprintf("/%s/recycle", sectionId),
+			Id:    "feed",
 		},
 	}
 	// set user header data

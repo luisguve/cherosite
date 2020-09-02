@@ -9,7 +9,7 @@
 		</button>
 		<select>
 			{{ range .RecycleTypes }}
-			<option value="{{.Link}}">{{.Label}}</option>
+			<option value="{{.Link}}" data-id="{{.Id}}">{{.Label}}</option>
 			{{ end }}
 		</select>
 	</div>

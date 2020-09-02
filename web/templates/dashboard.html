@@ -5,9 +5,71 @@
 	<script defer src="/static/js/save.js"></script>
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/upvotes.js"></script>
+	<script defer src="/static/js/recycle.js"></script>
 	<script defer>
-		setupUpvotes();
-		setupSave();
+		window.onload = function() {
+			setupUpvotes();
+			setupSave();
+
+			var sections = new Object();
+
+			var prevBtn = document.querySelector(".feed .section-header .prev");
+			var nextBtn = document.querySelector(".feed .section-header .next");
+			var contentArea = document.querySelector(".feed .content-area");
+			var noContentArea = document.querySelector(".feed .no-content-area h1");
+
+			sections.feed = new Section(prevBtn, nextBtn, contentArea, noContentArea);
+
+			prevBtn = document.querySelector(".user-activity .section-header .prev");
+			nextBtn = document.querySelector(".user-activity .section-header .next");
+			contentArea = document.querySelector(".user-activity .content-area");
+			noContentArea = document.querySelector(".user-activity .no-content-area");
+
+			sections.activity = new Section(prevBtn, nextBtn, contentArea, noContentArea);
+
+			prevBtn = document.querySelector(".saved-content .section-header .prev");
+			nextBtn = document.querySelector(".saved-content .section-header .next");
+			contentArea = document.querySelector(".saved-content .content-area");
+			noContentArea = document.querySelector(".saved-content .no-content-area");
+
+			sections.saved = new Section(prevBtn, nextBtn, contentArea, noContentArea);
+
+			var recycleBtn = document.querySelector(".recycle button");
+			recycleBtn.onclick = function() {
+				var recycleTypes = document.querySelector(".recycle select");
+				var idx = recycleTypes.selectedIndex;
+				var opt = recycleTypes.options[idx];
+				var link = opt.value;
+				var id = opt.dataset["id"];
+				var section;
+				switch(id) {
+					case "feed":
+						section = sections.feed;
+						break;
+					case "activity":
+						section = sections.activity;
+						break;
+					case "saved":
+						section = sections.saved;
+						break;
+					default:
+						console.log("invalid id: " + id);
+						return;
+				}
+				var req = new XMLHttpRequest();
+				req.open("GET", link, true);
+				req.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						if (this.status == 200) {
+							section.addPage(this.responseText);
+						} else {
+							console.log(this.responseText);
+						}
+					}
+				};
+				req.send();
+			};
+		};
 	</script>
 	<title>Patilla Dashboard</title>
 </head>
@@ -15,44 +77,65 @@
 	{{ template "header" .HeaderData }}
 	<div class="container">
 	<!-- User feed section -->
-	{{ with .Feed }}
-		<h1>Your feed</h1>
-		<section class="feed">
-			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx true }}
-			{{ end }}
-		</section>
-	{{ else }}
-		<div><h1>
-			You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
-		</h1></div>
-	{{ end }}
+	<section class="feed">
+		<header class="section-header">
+			<button class="prev">PREV</button>
+			<h1>Your feed</h1>
+			<button class="next">NEXT</button>
+		</header>
+		{{ with .Feed }}
+			<div class="content-area">
+				{{ range $idx, $content := . }}
+					{{ $content.RenderOverview $idx true }}
+				{{ end }}
+			</div>
+		{{ else }}
+			<div class="no-content-area"><h1>
+				You don't have new feed. You should <a href="/explore">explore</a> and follow other users to see their posts here.
+			</h1></div>
+			<div class="content-area"></div>
+		{{ end }}
+	</section>
 	<!-- User activity section -->
-	{{ with .Activity }}
-		<h1>Your recent activity</h1>
-		<section class="user-activity">
-			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx true }}
-			{{ end }}
-		</section>
-	{{ else }}
-		<h1>
-			You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
-		</h1>
-	{{ end }}
+	<section class="user-activity">
+		<header class="section-header">
+			<button class="prev">PREV</button>
+			<h1>Your recent activity</h1>
+			<button class="next">NEXT</button>
+		</header>
+		{{ with .Activity }}
+			<div class="content-area">
+				{{ range $idx, $content := . }}
+					{{ $content.RenderOverview $idx true }}
+				{{ end }}
+			</div>
+		{{ else }}
+			<div class="no-content-area"><h1>
+				You have no recent activity. You should interact with other users' posts or create your own to see your activity here.
+			</h1></div>
+			<div class="content-area"></div>
+		{{ end }}
+	</section>
 	<!-- User saved content section -->
-	{{ with .SavedContent }}
-		<h1>You saved these posts</h1>
-		<section class="saved-content">
-			{{ range $idx, $content := . }}
-				{{ $content.RenderOverview $idx true }}
-			{{ end }}
-		</section>
-	{{ else }}
-		<h1>
-			You haven't saved any post. Press the save button when viewing a post to save it.
-		</h1>
-	{{ end }}
+	<section class="saved-content">
+		<header class="section-header">
+			<button class="prev">PREV</button>
+			<h1>You saved these posts</h1>
+			<button class="next">NEXT</button>
+		</header>
+		{{ with .SavedContent }}
+			<section class="content-area">
+				{{ range $idx, $content := . }}
+					{{ $content.RenderOverview $idx true }}
+				{{ end }}
+			</section>
+		{{ else }}
+			<div class="no-content-area"><h1>
+				You haven't saved any post. Press the save button when viewing a post to save it.
+			</h1></div>
+			<div class="content-area"></div>
+		{{ end }}
+	</section>
 	<!-- User info section -->
 	<div class="follow">
 		<p>You have {{.Followers}} followers and are following {{.Following}} users</p>

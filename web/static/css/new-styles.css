@@ -153,3 +153,9 @@ article[class*="REL"] .content {
 .thread-view article main .thumbnail {
 	background-color: aliceblue;
 }
+
+.section-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
