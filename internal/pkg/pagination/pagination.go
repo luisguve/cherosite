@@ -101,8 +101,8 @@ func (d *DiscardIds) FormatFeedActivity(userIds []string) map[string]*pbDataForm
 // formatActivity formats the threads created, comments and subcomments in the
 // given Activity object into a *pbDataFormat.Activity
 func formatActivity(activity Activity) *pbDataFormat.Activity {
-	var pbActivity *pbDataFormat.Activity
 	var wg sync.WaitGroup
+	pbActivity := &pbDataFormat.Activity{}
 	// Set threads
 	wg.Add(1)
 	go func() {
