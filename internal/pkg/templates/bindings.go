@@ -152,17 +152,17 @@ func FeedToBytes(feed []*pbApi.ContentRule, userId string, showSection bool) []b
 
 	for idx, pbRule := range feed {
 		if pbRule.Data == nil {
-			log.Println("DataToFeedBytes: pbRule has no content.")
+			log.Println("FeedToBytes: pbRule has no content.")
 			continue
 		}
 		wg.Add(1)
-		go func(idx int) {
+		go func(idx int, pbRule *pbApi.ContentRule) {
 			defer wg.Done()
 			content := contentToOverviewRenderer(pbRule, userId)
 			contentHTML := content.RenderOverview(idx, showSection)
 			contentBytes := []byte(string(contentHTML))
 			contents[idx] = contentBytes
-		}(idx)
+		}(idx, pbRule)
 	}
 	wg.Wait()
 	for _, content := range contents {
