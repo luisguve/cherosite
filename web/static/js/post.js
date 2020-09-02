@@ -17,11 +17,18 @@ postForm.addEventListener("submit", function() {
 
 /*
 var req = new XMLHttpRequest();
+var res;
 req.open("GET", "/recycleactivity", true);
 req.onreadystatechange = function() {
 	if (this.readyState == 4) {
-		console.log(this.responseText);
+		if (this.status == 200) {
+			res = this.responseText;
+		} else {
+			console.log(this.responseText);
+		}
 	}
 };
-req
+req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+req.send();
+console.log(res);
 */
