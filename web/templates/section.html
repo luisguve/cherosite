@@ -6,16 +6,44 @@
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/post.js"></script>
 	<script defer src="/static/js/upvotes.js"></script>
+	<script defer src="/static/js/recycle.js"></script>
 	<script defer>
-		setupUpvotes();
-		setupSave();
+		window.onload = function() {
+			setupUpvotes();
+			setupSave();
+
+			var prevBtn = document.querySelector(".feed .section-header .prev");
+			var nextBtn = document.querySelector(".feed .section-header .next");
+			var contentArea = document.querySelector(".feed .content-area");
+			var noContentArea = document.querySelector(".feed .no-content-area h1");
+
+			var feed = new Section(prevBtn, nextBtn, contentArea, noContentArea);
+
+			var recycleBtn = document.querySelector(".recycle button");
+			recycleBtn.onclick = function() {
+				var options = document.querySelector(".recycle select");
+				var link = options.value;
+				var req = new XMLHttpRequest();
+				req.open("GET", link, true);
+				req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+				req.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						if (this.status == 200) {
+							feed.addPage(this.responseText);
+						} else {
+							console.log(this.responseText);
+						}
+					}
+				}
+				req.send();
+			};
+		};
 	</script>
 	<title>Cheropatilla - {{.SectionName}}</title>
 </head>
 <body>
 	{{ template "header" .HeaderData }}
 	<div class="container">
-	<h1>You are in the section {{.SectionName}}</h1>
 	<section class="create-post">
 		<form data-action="/{{.SectionId}}/new" method="POST" enctype="multipart/form-data" name="post">
 			<label for="title">Title</label>
@@ -28,11 +56,22 @@
 		</form>
 	</section>
 	<section class="feed">
-		{{ $printSection := false }}
-		{{ range $idx, $content := .Feed }}
-			{{ $content.RenderOverview $idx false }}
+		<header class="section-header">
+			<button class="prev">PREV</button>
+			<h1>You are in the section {{.SectionName}}</h1>
+			<button class="next">NEXT</button>
+		</header>
+		{{ with .Feed }}
+			<div class="content-area">
+				{{ range $idx, $content := . }}
+					{{ $content.RenderOverview $idx false }}
+				{{ end }}
+			</div>
 		{{ else }}
-			<h3>There are no posts to show. Come back later and see if someone created content.</h3>
+			<div class="no-content-area"><h1>
+				There are no posts to show. Come back later and see if someone created content.
+			</h1></div>
+			<div class="content-area"></div>
 		{{ end }}
 	</section>
 	</div>

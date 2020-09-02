@@ -7,10 +7,39 @@
 	<script defer src="/static/js/logout.js"></script>
 	<script defer src="/static/js/reply.js"></script>
 	<script defer src="/static/js/upvotes-thread-page.js"></script>
+	<script defer src="/static/js/recycle.js"></script>
 	<script defer>
-		setupUpvotesThreadPage();
-		setupSave();
-		setupReplyComs();
+		window.onload = function() {
+			setupUpvotesThreadPage();
+			setupSave();
+			setupReplyComs();
+
+			var prevBtn = document.querySelector(".thread-comments .section-header .prev");
+			var nextBtn = document.querySelector(".thread-comments .section-header .next");
+			var contentArea = document.querySelector(".thread-comments .content-area");
+			var noContentArea = document.querySelector(".thread-comments .no-content-area h1");
+
+			var feed = new Section(prevBtn, nextBtn, contentArea, noContentArea);
+
+			var recycleBtn = document.querySelector(".recycle button");
+			recycleBtn.onclick = function() {
+				var options = document.querySelector(".recycle select");
+				var link = options.value;
+				var req = new XMLHttpRequest();
+				req.open("GET", link, true);
+				req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+				req.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						if (this.status == 200) {
+							feed.addPage(this.responseText);
+						} else {
+							console.log(this.responseText);
+						}
+					}
+				}
+				req.send();
+			};
+		}
 	</script>
 </head>
 <body>
@@ -21,8 +50,22 @@
 				{{ .Content.RenderContent }}
 			</section>
 			<section class="thread-comments" id="comments">
-				{{ range $idx, $comment := .Comments }}
-					{{ $comment.RenderOverview $idx false }}
+				<header class="section-header">
+					<button class="prev">PREV</button>
+					<h1>Comments</h1>
+					<button class="next">NEXT</button>
+				</header>
+				{{ with .Comments }}
+					<div class="content-area">
+						{{ range $idx, $comment := . }}
+							{{ $comment.RenderOverview $idx false }}
+						{{ end }}
+					</div>
+				{{ else }}
+					<div class="no-content-area"><h1>
+						Be the first one to reply this post.
+					</h1></div>
+					<div class="content-area"></div>
 				{{ end }}
 			</section>
 		</div>
