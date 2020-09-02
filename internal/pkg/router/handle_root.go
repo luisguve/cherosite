@@ -234,10 +234,6 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 			w.WriteHeader(http.StatusPartialContent)
 		}
 	}
-	// FOR DEBUGGING
-	if len(feed.Contents) == 0 {
-		log.Printf("Could not get any threads created by %v\n", following.Ids)
-	}
 	// Update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -306,10 +302,6 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 			log.Printf("An error occurred while getting feed: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
 		}
-	}
-	// FOR DEBUGGING
-	if len(userActivity.Contents) == 0 {
-		log.Printf("Could not get any activity of %v\n", userId)
 	}
 	// Update session only if there is content.
 	if len(userActivity.Contents) > 0 {
@@ -381,10 +373,6 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 			log.Printf("An error occurred while getting feed: %v\n", err)
 			w.WriteHeader(http.StatusPartialContent)
 		}
-	}
-	// FOR DEBUGGING
-	if len(savedThreads.Contents) == 0 {
-		log.Printf("Could not get any activity of %v\n", userId)
 	}
 	// Update session only if there is content.
 	if len(savedThreads.Contents) > 0 {
