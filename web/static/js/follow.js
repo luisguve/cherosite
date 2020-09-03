@@ -1,9 +1,35 @@
-/*window.addEventListener("load", function() {
-	followDivs = document.getElementsByClassName("follow");
-	for (var i = followDivs.length - 1; i >= 0; i--) {
-		followDivs[i]
-	}
-});*/
+function setupFollow() {
+	var follow = document.querySelector(".follow");
+	var followLink = follow.dataset["follow-link"];
+	var unfollowLink = follow.dataset["unfollow-link"];
+	var followBtn = follow.querySelector("button");
+	followBtn.onclick = function() {
+		let following = bool(follow.dataset["following"]);
+		let link;
+		let finalText;
+		if (following) {
+			link = followLink;
+			finalText = "Follow";
+		} else {
+			link = unfollowLink;
+			finalText = "Unfollow";
+		}
+		let req = new XMLHttpRequest();
+		req.open("POST", link, true);
+		req.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				if (this.status == 200) {
+					followBtn.innerHTML = finalText;
+					follow.dataset["following"] = !following;
+				} else {
+					console.log(this.responseText);
+				}
+			}
+		};
+		req.send();
+	};
+}
+
 // Script to execute from the console.
 /*
 var req = new XMLHttpRequest();

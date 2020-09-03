@@ -2,9 +2,9 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
@@ -166,9 +166,14 @@ func (r *Router) handleRecycleSection(w http.ResponseWriter, req *http.Request) 
 			d.SectionThreads[sectionId] = append(d.SectionThreads[sectionId], pThreads...)
 		})
 	}
-	// Encode and send response
-	if err = json.NewEncoder(w).Encode(feed); err != nil {
-		log.Printf("Could not encode feed: %v\n", err)
+	// Get current user id.
+	userId := r.currentUser(req)
+	res := templates.FeedToBytes(feed.Contents, userId, false)
+	contentLength := strconv.Itoa(len(res))
+	w.Header().Set("Content-Length", contentLength)
+	w.Header().Set("Content-Type", "text/html")
+	if _, err = w.Write(res); err != nil {
+		log.Println("Recycle section: could not send response:", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
 }

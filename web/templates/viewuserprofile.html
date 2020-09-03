@@ -11,6 +11,7 @@
 		window.onload = function() {
 			setupUpvotes();
 			setupSave();
+			setupFollow();
 
 			var prevBtn = document.querySelector(".feed .section-header .prev");
 			var nextBtn = document.querySelector(".feed .section-header .next");
@@ -61,15 +62,13 @@
 			<h3>{{.Alias}}</h3>
 			<h5>@{{.Username}}</h5>
 		</div>
-		<div class="follow" data-follow-link="{{ printf "/unfollow?username=%s" .Username }}" data-unfollow-link="{{ printf "/follow?username=%s" .Username }}">
+		<div class="follow" data-follow-link="{{ printf "/follow?username=%s" .Username }}" data-unfollow-link="{{ printf "/unfollow?username=%s" .Username }}" data-following="{{$isFollower}}">
 			<p>Following: {{$following}}</p>
 			<p>Followers: {{$followers}}</p>
 			{{ if $showFollowOption }}
-				{{ if $isFollower }}
-				<button type="button">Unfollow</button>
-				{{ else }}
-				<button type="button">Follow</button>
-				{{ end }}
+				<button type="button">
+					{{- if $isFollower -}}Unfollow{{- else -}}Follow{{- end -}}
+				</button>
 			{{ end }}
 		</div>
 		<div class="description">
