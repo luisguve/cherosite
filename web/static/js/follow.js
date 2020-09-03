@@ -3,6 +3,9 @@ function setupFollow() {
 	var followLink = follow.dataset["follow-link"];
 	var unfollowLink = follow.dataset["unfollow-link"];
 	var followBtn = follow.querySelector("button");
+	if (followBtn == null) {
+		return;
+	}
 	followBtn.onclick = function() {
 		let following = bool(follow.dataset["following"]);
 		let link;
