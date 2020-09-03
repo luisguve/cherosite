@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -274,6 +275,35 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 	session, _ := r.store.Get(req, "session")
 	// Get id of contents to be discarded
 	discard := getDiscardIds(session)
+
+	discardActivity := discard.FormatUserActivity("dashboard-" + userId)
+	if len(discardActivity) > 0 {
+		log.Println("handleRecycleMyActivity discard:")
+		for userId, activity := range discardActivity {
+			log.Println("User Id:", userId)
+			if len(activity.ThreadsCreated) > 0 {
+				log.Println("ThreadsCreated")
+				for _, thread := range activity.ThreadsCreated {
+					fmt.Printf("Section: %v. Post Id: %v.\n", thread.SectionCtx.Id, thread.Id)
+				}
+			}
+			if len(activity.Comments) > 0 {
+				log.Println("Comments")
+				for _, comment := range activity.Comments {
+					fmt.Printf("Section: %v. Post Id: %v. Comment Id: %v.\n", comment.ThreadCtx.SectionCtx.Id,
+						comment.ThreadCtx.Id, comment.Id)
+				}
+			}
+			if len(activity.Subcomments) > 0 {
+				log.Println("Subcomments")
+				for _, subcomment := range activity.Subcomments {
+					fmt.Printf("Section: %v. Post Id: %v. Comment Id: %v. Subcomment Id: %v.\n",
+						subcomment.CommentCtx.ThreadCtx.SectionCtx.Id,
+						subcomment.CommentCtx.ThreadCtx.Id, subcomment.CommentCtx.Id, subcomment.Id)
+				}
+			}
+		}
+	}
 
 	var userActivity templates.ContentsFeed
 
