@@ -155,6 +155,7 @@ article[class*="REL"] .content {
 }
 
 .section-header {
+	margin-top: 10px;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
