@@ -1,29 +1,39 @@
+// Only user profile pages have a button to follow/unfollow the user.
 function setupFollow() {
-	var follow = document.querySelector(".follow");
-	var followLink = follow.dataset["follow-link"];
-	var unfollowLink = follow.dataset["unfollow-link"];
-	var followBtn = follow.querySelector("button");
-	if (followBtn == null) {
+	let follow = document.querySelector(".follow");
+
+	let followLink = follow.dataset["followLink"];
+	let unfollowLink = follow.dataset["unfollowLink"];
+
+	// The button may have not been rendered in case of a user viewing his own
+	// page. In this case, the button variable will be null and the setup will
+	// do nothing but return.
+	let btn = follow.querySelector("button");
+	if (btn == null) {
 		return;
 	}
-	followBtn.onclick = function() {
+
+	btn.onclick = function() {
 		let following = follow.dataset["following"];
 		let link;
 		let finalText;
+		let finalFollowing;
 		if (following == "true") {
-			link = followLink;
-			finalText = "Follow";
-		} else {
 			link = unfollowLink;
+			finalText = "Follow";
+			finalFollowing = "false";
+		} else {
+			link = followLink;
 			finalText = "Unfollow";
+			finalFollowing = "true";
 		}
 		let req = new XMLHttpRequest();
 		req.open("POST", link, true);
 		req.onreadystatechange = function() {
 			if (this.readyState == 4) {
 				if (this.status == 200) {
-					followBtn.innerHTML = finalText;
-					follow.dataset["following"] = !following;
+					btn.innerHTML = finalText;
+					follow.dataset["following"] = finalFollowing;
 				} else {
 					console.log(this.responseText);
 				}
