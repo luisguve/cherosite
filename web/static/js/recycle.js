@@ -8,22 +8,7 @@ function Section(prev, next, contentArea, noContentArea) {
 	this.lastPage = 0;
 	this.content = contentArea;
 	this.noContent = noContentArea;
-	this.prevFn = function() {
-		if (this.currentPage == this.firstPage) {
-			alert("This is the first page");
-			return;
-		}
-		this.currentPage--;
-		this.content.innerHTML = this.pages[this.currentPage];
-	};
-	this.nextFn = function() {
-		if (this.currentPage == this.lastPage) {
-			alert("This is the last page");
-			return;
-		}
-		this.currentPage++;
-		this.content.innerHTML = this.pages[this.currentPage];
-	};
+
 	this.addPage = function(page) {
 		if (page == "") {
 			alert("There is no new content. Check back later.");
@@ -39,6 +24,21 @@ function Section(prev, next, contentArea, noContentArea) {
 		}
 		this.content.innerHTML = page;
 	}
-	prev.onclick = this.prevFn;
-	next.onclick = this.nextFn;
+	var section = this;
+	prev.onclick = function() {
+		if (section.currentPage == section.firstPage) {
+			alert("This is the first page");
+			return;
+		}
+		section.currentPage--;
+		section.content.innerHTML = section.pages[section.currentPage];
+	};
+	next.onclick = function() {
+		if (section.currentPage == section.lastPage) {
+			alert("This is the last page");
+			return;
+		}
+		section.currentPage++;
+		section.content.innerHTML = section.pages[section.currentPage];
+	};
 }
