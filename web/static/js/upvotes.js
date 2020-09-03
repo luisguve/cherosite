@@ -1,85 +1,45 @@
 function setupUpvotes() {
-	var articles = document.querySelectorAll("article[class*='REL']");
-	for (var i = articles.length - 1; i >= 0; i--) {
-		let upvoteLink = articles[i].dataset["upvoteLink"];
-		let undoUpvoteLink = articles[i].dataset["undoUpvoteLink"];
-		let btn = articles[i].querySelector(".upvotes > button");
+	// Select all the articles that have an attribute data-upvote-link.
+	let posts = document.querySelectorAll("article[data-upvote-link]");
+	for (let i = posts.length - 1; i >= 0; i--) {
+		let upvoteLink = posts[i].dataset["upvoteLink"];
+		let undoUpvoteLink = posts[i].dataset["undoUpvoteLink"];
+
+		let btn = posts[i].querySelector(".upvotes > button");
 		btn.onclick = function() {
 			let upvoted = btn.dataset["upvoted"];
-			let req = new XMLHttpRequest();
+			let link;
+			let finalUpvoted;
+			let update;
+
 			if (upvoted == "true") {
-				// Post request to undo upvote.
-				req.open("POST", undoUpvoteLink);
-				req.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {
-							btn.dataset["upvoted"] = false;
-							let upvotes = parseInt(btn.innerHTML);
-							upvotes--;
-							btn.innerHTML = upvotes + " Upvotes";
-						} else {
-							console.log(this.responseText);
-						}
-					}
+				link = undoUpvoteLink;
+				finalUpvoted = "false";
+				update = function(numUpvotes) {
+					return numUpvotes - 1;
 				};
 			} else {
-				// Post request to upvote.
-				req.open("POST", upvoteLink);
-				req.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {
-							btn.dataset["upvoted"] = true;
-							let upvotes = parseInt(btn.innerHTML);
-							upvotes++;
-							btn.innerHTML = upvotes + " Upvotes";
-						} else {
-							console.log(this.responseText);
-						}
-					}
+				link = upvoteLink;
+				finalUpvoted = "true";
+				update = function(numUpvotes) {
+					return numUpvotes + 1;
 				};
 			}
-			req.send();
-		};
-	}
-	var topArticle = document.querySelector("article[class*='TOP']");
-	if (topArticle !== null) {
-		var upvoteLink = topArticle.dataset["upvoteLink"];
-		var undoUpvoteLink = topArticle.dataset["undoUpvoteLink"];
-		let btn = topArticle.querySelector(".upvotes > button");
-		btn.onclick = function() {
-			let upvoted = btn.dataset["upvoted"];
+
 			let req = new XMLHttpRequest();
-			if (upvoted == "true") {
-				// Post request to undo upvote.
-				req.open("POST", undoUpvoteLink);
-				req.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {
-							btn.dataset["upvoted"] = false;
-							let upvotes = parseInt(btn.innerHTML);
-							upvotes--;
-							btn.innerHTML = upvotes + " Upvotes";
-						} else {
-							console.log(this.responseText);
-						}
+			req.open("POST", link, true);
+			req.onreadystatechange = function() {
+				if (this.readyState == 4) {
+					if (this.status == 200) {
+						btn.dataset["upvoted"] = finalUpvoted;
+						let upvotes = parseInt(btn.innerHTML);
+						upvotes = update(upvotes);
+						btn.innerHTML = upvotes + " Upvotes";
+					} else {
+						console.log(this.responseText);
 					}
-				};
-			} else {
-				// Post request to upvote.
-				req.open("POST", upvoteLink);
-				req.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {
-							btn.dataset["upvoted"] = true;
-							let upvotes = parseInt(btn.innerHTML);
-							upvotes++;
-							btn.innerHTML = upvotes + " Upvotes";
-						} else {
-							console.log(this.responseText);
-						}
-					}
-				};
-			}
+				}
+			};
 			req.send();
 		};
 	}
