@@ -1,41 +1,38 @@
 function setupSave() {
-	saveButtons = document.getElementsByClassName("save-button");
-	for (let i = saveButtons.length - 1; i >= 0; i--) {
-		let post = saveButtons[i].parentNode.parentNode.parentNode;
-		saveButtons[i].addEventListener("click", function() {
-			let save = this;
+	// Select all the articles that have an attribute data-save-link.
+	let posts = document.querySelectorAll("article[data-save-link]");
+	for (let i = posts.length - 1; i >= 0; i--) {
+		let saveLink = posts[i].dataset["dataSaveLink"];
+		let undoSaveLink = posts[i].dataset["dataUndoSaveLink"];
+
+		let btn = posts[i].querySelector(".save-button");
+		btn.onclick = function() {
 			let saved = save.dataset["saved"];
-			let req = new XMLHttpRequest();
+			let link;
+			let finalText;
+			let finalSaved;
 			if (saved == "true") {
-				// Send reques to undo save.
-				req.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {
-							save.innerHTML = "Save this post";
-							save.dataset["saved"] = false;
-						} else {
-							console.log(this.responseText);
-						}
-					}
-				};
-				req.open("POST", post.dataset["undoSaveLink"], true);
-				req.send();
+				link = undoSaveLink;
+				finalText = "Save this post";
+				finalSaved = "false";
 			} else {
-				// Send reques to save.
-				req.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {
-							save.innerHTML = "You saved this post";
-							save.dataset["saved"] = true;
-							console.log("post successfully saved")
-						} else {
-							console.log(this.responseText);
-						}
-					}
-				};
-				req.open("POST", post.dataset["saveLink"], true);
-				req.send();
+				link = saveLink;
+				finalText = "You saved this post";
+				finalSaved = "true";
 			}
-		});
+			let req = new XMLHttpRequest();
+			req.onreadystatechange = function() {
+				if (this.readyState == 4) {
+					if (this.status == 200) {
+						btn.innerHTML = finalText;
+						btn.dataset["saved"] = finalSaved;
+					} else {
+						console.log(this.responseText);
+					}
+				}
+			};
+			req.open("POST", link, true);
+			req.send();
+		};
 	}
 }
