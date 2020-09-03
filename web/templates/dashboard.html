@@ -58,6 +58,7 @@
 				}
 				var req = new XMLHttpRequest();
 				req.open("GET", link, true);
+				req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 				req.onreadystatechange = function() {
 					if (this.readyState == 4) {
 						if (this.status == 200) {
