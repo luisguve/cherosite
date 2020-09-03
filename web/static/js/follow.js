@@ -7,10 +7,10 @@ function setupFollow() {
 		return;
 	}
 	followBtn.onclick = function() {
-		let following = bool(follow.dataset["following"]);
+		let following = follow.dataset["following"];
 		let link;
 		let finalText;
-		if (following) {
+		if (following == "true") {
 			link = followLink;
 			finalText = "Follow";
 		} else {
