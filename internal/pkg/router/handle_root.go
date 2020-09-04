@@ -228,13 +228,14 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
-	} else {
-		feed, err = getFeed(stream)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
 	}
+
+	feed, err = getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
 	// Update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -304,13 +305,14 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
-	} else {
-		userActivity, err = getFeed(stream)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
 	}
+
+	userActivity, err = getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
 	// Update session only if there is content.
 	if len(userActivity.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -375,13 +377,14 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
-	} else {
-		savedThreads, err = getFeed(stream)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
 	}
+
+	savedThreads, err = getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
 	// Update session only if there is content.
 	if len(savedThreads.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
