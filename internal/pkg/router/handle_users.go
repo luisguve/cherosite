@@ -374,7 +374,7 @@ func (r *Router) handleViewUserProfile(w http.ResponseWriter, req *http.Request)
 }
 
 // Recycle user activity "/profile/recycle?userid={userid}" handler. It returns a
-// new feed of recent activity for the user in JSON format. It may return an error
+// new feed of recent activity for the user in HTML format. It may return an error
 // in case of the following:
 // - user not found ---------------> 404 NOT_FOUND
 // - network or encoding failures -> INTERNAL_FAILURE

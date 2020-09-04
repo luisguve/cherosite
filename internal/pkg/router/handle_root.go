@@ -16,9 +16,8 @@ import (
 )
 
 // Dashboard "/" handler. It displays the dashboard of the logged in user that
-// consists of the user notifications, the threads saved, threads created, the
-// number of followers and following. Below that, a list of the active threads
-// created by users that this user is following.
+// consists of the activity of users following, saved threads, user activity,
+// notifications and the number of followers and following.
 // It may return an error in case of the following:
 // - user is unregistered -> USER_UNREGISTERED
 // - network failures -----> INTERNAL_FAILURE
@@ -175,7 +174,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 }
 
 // Recycle Feed "/recyclefeed" handler. It returns a new activity feed of several users
-// in JSON format. The user must be logged in and follow other users, whose recent
+// in HTML format. The user must be logged in and follow other users, whose recent
 // activity will compose up the returned feed. It may return an error in case of
 // the following:
 // - user is unregistered --------------> USER_UNREGISTERED
@@ -261,7 +260,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 }
 
 // Recycle activity "/recycleactivity" handler. It returns a new feed of user
-// activity in JSON format. The user must be logged in, and its recent activity
+// activity in HTML format. The user must be logged in, and its recent activity
 // will compose up the returned feed. It may return an error in case of the
 // following:
 // - user is unregistered ---------> USER_UNREGISTERED
@@ -339,7 +338,7 @@ func (r *Router) handleRecycleMyActivity(userId string, w http.ResponseWriter,
 }
 
 // Recycle saved "/recyclesaved" handler. It returns a new feed of user saved
-// content in JSON format. The user must be logged in, and its saved content
+// content in HTML format. The user must be logged in, and its saved content
 // will compose up the returned feed. It may return an error in case of the
 // following:
 // - user is unregistered ---------> USER_UNREGISTERED
@@ -404,8 +403,8 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 	}
 }
 
-// Explore page "/explore" handler. It returns html containing a feed composed of
-// random threads from different sections. It may return an error in case of
+// Explore page "/explore" handler. It displays a page containing a feed composed
+// of random threads from different sections. It may return an error in case of
 // the following:
 // - template rendering failure -> TEMPLATE_ERROR
 func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
@@ -452,7 +451,7 @@ func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 }
 
 // Explore Recycle "/explore/recycle" handler. It returns a new feed of explore
-// in JSON format, excluding threads previously sent. It may return an error in case
+// in HTML format, excluding threads already seen. It may return an error in case
 // of the following:
 // - encoding failure or network error -> INTERNAL_FAILURE
 func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) {

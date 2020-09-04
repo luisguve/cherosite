@@ -17,11 +17,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Section "/{section}" handler. It requests a set of threads using the identifier
-// of the given section name, and displays a layout showing buttons for viewing profile
-// and for creating a thread under the current section.
-// That's the only difference between the logged in user and the non-logged in user
-// views. It may return an error in case of the following:
+// Section "/{section}" handler. It requests a pattern of active threads from the
+// given section and displays a layout showing buttons for viewing profile and
+// for creating a thread under the current section. That's the only difference
+// between the logged in user and the non-logged in user views. It may return
+// an error in case of the following:
 // - wrong section name ------------------> 404 NOT FOUND
 // - valid section name, but unavailable -> SECTION_UNAVAILABLE
 // - network failures --------------------> INTERNAL_FAILURE
@@ -99,7 +99,7 @@ func (r *Router) handleViewSection(w http.ResponseWriter, req *http.Request) {
 }
 
 // Recycle section "/{section}/recycle" handler. It returns a new feed for the
-// section in JSON format. It may return an error in case of the following:
+// section in HTML format. It may return an error in case of the following:
 // - wrong section name ------------------> 404 NOT FOUND
 // - valid section name, but unavailable -> SECTION_UNAVAILABLE
 // - network or encoding failure ---------> INTERNAL_FAILURE
