@@ -12,8 +12,8 @@
 	</header>
 	<main>
 		{{ with .BasicContent }}
-		{{with .Thumbnail}}<img src="/{{.}}" alt="thumbnail">{{end}}
-		<div class="content"><p>{{.Content}}</p></div>
+		
+		<div class="content">{{with .Thumbnail}}<img src="/{{.}}" alt="thumbnail">{{end}}<p>{{.Content}}</p></div>
 		{{ end }}
 		<form class="replyCom" data-action="{{$replyLink}}" name="replyCom" method="POST" enctype="multipart/form-data">
 			<label>Upload a file (optional)
