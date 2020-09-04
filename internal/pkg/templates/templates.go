@@ -196,7 +196,7 @@ func (cf ContentsFeed) GetPaginationThreads() map[string][]string {
 
 	for _, content := range cf.Contents {
 		metadata := content.Data.Metadata
-		section := metadata.Section
+		section := metadata.SectionId
 		id := metadata.Id
 		ids[section] = append(ids[section], id)
 	}
