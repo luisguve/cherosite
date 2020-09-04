@@ -164,19 +164,17 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
-		} else {
-			log.Printf("Could not send request: %v\n", err)
-			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-			return
 		}
-	} else {
-		var err error
-		feed, err = getFeed(stream)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	}
+	feed, err = getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
 	// update session only if there is content.
 	if len(feed.Contents) > 0 {
 		r.updateDiscardIdsSession(req, w, func(d *pagination.DiscardIds) {
@@ -187,7 +185,9 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	}
 	// Get current user id.
 	userId := r.currentUser(req)
+
 	res := templates.FeedToBytes(feed.Contents, userId, false)
+
 	contentLength := strconv.Itoa(len(res))
 	w.Header().Set("Content-Length", contentLength)
 	w.Header().Set("Content-Type", "text/html")
@@ -238,11 +238,10 @@ func (r *Router) handleSave(userId string, w http.ResponseWriter, req *http.Requ
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
-		} else {
-			log.Printf("Could not send request: %v\n", err)
-			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-			return
 		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
@@ -285,11 +284,10 @@ func (r *Router) handleUndoSave(userId string, w http.ResponseWriter, req *http.
 				http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 				return
 			}
-		} else {
-			log.Printf("Could not send request: %v\n", err)
-			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
-			return
 		}
+		log.Printf("Could not send request: %v\n", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))

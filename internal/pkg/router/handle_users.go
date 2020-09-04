@@ -429,7 +429,9 @@ func (r *Router) handleRecycleUserActivity(w http.ResponseWriter, req *http.Requ
 	}
 	// Get current user id.
 	userId = r.currentUser(req)
+
 	res := templates.FeedToBytes(feed.Contents, userId, true)
+
 	contentLength := strconv.Itoa(len(res))
 	w.Header().Set("Content-Length", contentLength)
 	w.Header().Set("Content-Type", "text/html")
