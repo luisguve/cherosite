@@ -160,3 +160,19 @@ article[class*="REL"] .content {
 	flex-direction: row;
 	justify-content: space-between;
 }
+
+.thread-comments main img {
+	max-width: 250px;
+	float: left;
+	margin-right: 10px;
+	margin-top: 5px;
+	padding: 0;
+}
+
+.thread-comments main p {
+	margin-top: 5px;
+}
+
+.thread-comments main .content {
+	display: block;
+}
