@@ -6,6 +6,12 @@ function setupSave() {
 		let undoSaveLink = posts[i].dataset["dataUndoSaveLink"];
 
 		let btn = posts[i].querySelector(".save-button");
+		// Some articles have an attribute data-save-link, but don't have
+		// a save button. That's the case when the user is viewing one of
+		// his threads.
+		if (btn == null) {
+			continue;
+		}
 		btn.onclick = function() {
 			let saved = save.dataset["saved"];
 			let link;
