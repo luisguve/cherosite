@@ -18,10 +18,11 @@ import (
 
 // Subcomments "/{section}/{thread}/comment/?c_id={c_id}&offset={offset}" handler.
 // It returns 10 subcomments on a given comment (c_id) on a given thread, on a given
-// section.
+// section in HTML format.
 // The offset query parameter indicates how many subcomments to skip, since these data
 // is stored and returned in sequential order. It may return an error in case of the
 // following:
+// - invalid section id ---------------------------------------> 404 NOT FOUND
 // - negative or non-number offset query parameter ------------> INVALID_OFFSET
 // - offset is out of range; there are not that much comments -> OFFSET_OOR
 // - network or encoding failures -----------------------------> INTERNAL_FAILURE
@@ -79,10 +80,16 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 		w.WriteHeader(http.StatusPartialContent)
 	}
 
-	// Set content type as JSON, encode and send response.
-	w.Header().Set("content-type", "application/json")
-	if err = json.NewEncoder(w).Encode(feed.Contents); err != nil {
-		log.Printf("Could not encode feed: %v\n", err)
+	// Get current user id.
+	userId := r.currentUser(req)
+
+	res := templates.SubcommentsToBytes(feed.Contents, userId)
+	contentLength := strconv.Itoa(len(res))
+	w.Header().Set("Content-Length", contentLength)
+	w.Header().Set("Content-Type", "text/html")
+
+	if _, err = w.Write(res); err != nil {
+		log.Println("Get subcomments: could not send response:", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 	}
 }
