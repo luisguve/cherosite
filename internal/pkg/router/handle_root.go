@@ -214,8 +214,6 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	// Get id of contents to be discarded
 	discard := getDiscardIds(session)
 
-	var feed templates.ContentsFeed
-
 	activityPattern := &pbApi.ActivityPattern{
 		Pattern:    templates.FeedPattern,
 		Users:      following.Ids,
@@ -229,7 +227,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 		return
 	}
 
-	feed, err = getFeed(stream)
+	feed, err := getFeed(stream)
 	if err != nil {
 		log.Printf("An error occurred while getting feed: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
@@ -403,26 +401,32 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 	}
 }
 
-// Explore page "/explore" handler. It displays a page containing a feed composed
+// Explore page "/explore" handler. It displays a page containing a feed made up
 // of random threads from different sections. It may return an error in case of
 // the following:
-// - template rendering failure -> TEMPLATE_ERROR
+// - template rendering failure --------> TEMPLATE_ERROR
+// - encoding failure or network error -> INTERNAL_FAILURE
 func (r *Router) handleExplore(w http.ResponseWriter, req *http.Request) {
 	generalPattern := &pbApi.GeneralPattern{
 		Pattern: templates.FeedPattern,
 		// ignore DiscardIds; do not discard any thread
 	}
-	var feed templates.ContentsFeed
+
 	stream, err := r.generalClient.RecycleGeneral(context.Background(), generalPattern)
 	if err != nil {
-		log.Printf("Could not send request: %v\n", err)
-		w.WriteHeader(http.StatusPartialContent)
-	} else {
-		feed, err = getFeed(stream)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
+		if resErr, ok := status.FromError(err); ok {
+			log.Printf("Unknown error code %v: %v\n", resErr.Code(), resErr.Message())
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			return
 		}
+		log.Println("Could not send request:", err)
+		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+		return
+	}
+	feed, err := getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
 	}
 	// get current user data for header section
 	userId := r.currentUser(req)
@@ -464,18 +468,21 @@ func (r *Router) handleExploreRecycle(w http.ResponseWriter, req *http.Request) 
 		DiscardIds: discard.FormatGeneralThreads(),
 	}
 
-	var feed templates.ContentsFeed
 	stream, err := r.generalClient.RecycleGeneral(context.Background(), generalPattern)
 	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			log.Printf("Unknown error code %v: %v\n", resErr.Code(), resErr.Message())
+			http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
+			return
+		}
 		log.Printf("Could not send request: %v\n", err)
 		http.Error(w, "INTERNAL_FAILURE", http.StatusInternalServerError)
 		return
-	} else {
-		feed, err = getFeed(stream)
-		if err != nil {
-			log.Printf("An error occurred while getting feed: %v\n", err)
-			w.WriteHeader(http.StatusPartialContent)
-		}
+	}
+	feed, err := getFeed(stream)
+	if err != nil {
+		log.Printf("An error occurred while getting feed: %v\n", err)
+		w.WriteHeader(http.StatusPartialContent)
 	}
 	// update session only if there is new feed.
 	if len(feed.Contents) > 0 {
