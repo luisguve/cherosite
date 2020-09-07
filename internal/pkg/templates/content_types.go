@@ -197,6 +197,16 @@ func (sc *SubcommentView) RenderOverview(idx int, showSection bool) template.HTM
 	return template.HTML(result.String())
 }
 
+func (sc SubcommentView) RenderContent() template.HTML {
+	result := new(strings.Builder)
+	tplName := "subcomment_content.html"
+	if err := tpl.ExecuteTemplate(result, tplName, sc); err != nil {
+		errMsg := fmt.Sprintf("Could not execute template %s: %v\n", tplName, err)
+		return template.HTML(errMsg)
+	}
+	return template.HTML(result.String())
+}
+
 // type to be used when a given ContentRule has no data.
 type NoContent struct {
 	ClassName string
