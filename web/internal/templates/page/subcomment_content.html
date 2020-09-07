@@ -1,0 +1,27 @@
+{{ $upvoteLink := .BasicContent.UpvoteLink }}
+{{ $undoUpvoteLink := .BasicContent.UndoUpvoteLink }}
+{{ $id := printf "c_id=%s-sc_id=%s" .CommentId .Id }}
+
+<article id="{{$id}}" class="subcomment" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}">
+	<header>
+	{{ with .BasicContent }}
+		By <a href="/profile?username={{.Username}}">{{.Author}}</a> on {{.PublishDate}}
+	{{ end }}
+	</header>
+	<main>
+		{{ with .BasicContent }}
+
+		<div class="content">{{with .Thumbnail}}<img src="/{{.}}" alt="thumbnail">{{end}}<p>{{.Content}}</p></div>
+
+		{{ end }}
+	</main>
+	<footer>
+		{{ with .BasicContent }}
+		<span class="upvotes">
+		<button type="button" data-upvoted="{{.Upvoted}}">
+			{{.Upvotes}} Upvotes
+		</button>
+		</span>
+		{{ end }}
+	</footer>
+</article>
