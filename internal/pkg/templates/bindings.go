@@ -146,6 +146,35 @@ func DataToDashboardView(dData *pbUsers.DashboardData, feed, activity,
 	}
 }
 
+// Convert subcomments feed into []byte.
+func SubcommentsToBytes(feed []*pbApi.ContentRule, userId string) []byte {
+	var (
+		contents = make([][]byte, len(feed))
+		result   []byte
+		wg       sync.WaitGroup
+	)
+
+	for idx, pbRule := range feed {
+		if pbRule.Data == nil {
+			log.Println("SubcommentsToBytes: pbRule has no content.")
+			continue
+		}
+		wg.Add(1)
+		go func(idx int, pbRule *pbApi.ContentRule) {
+			defer wg.Done()
+			content := subcommentToContentRenderer(pbRule, userId)
+			contentHTML := content.RenderContent()
+			contentBytes := []byte(string(contentHTML))
+			contents[idx] = contentBytes
+		}(idx, pbRule)
+	}
+	wg.Wait()
+	for _, content := range contents {
+		result = append(result, content...)
+	}
+	return result
+}
+
 // Convert feed into []byte.
 func FeedToBytes(feed []*pbApi.ContentRule, userId string, showSection bool) []byte {
 	var (
@@ -501,6 +530,37 @@ func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) Overvie
 		}
 	}
 	return ovwRenderer
+}
+
+func subcommentToContentRenderer(pbRule *pbApi.ContentRule, userId string) ContentRenderer {
+	if pbRule.Data == nil {
+		log.Println("pbRule has no content")
+		return &NoContent{}
+	}
+
+	bc := setBasicContent(pbRule, userId)
+	metadata := pbRule.Data.Metadata
+
+	threadId := metadata.Id
+	sectionId := metadata.SectionId
+	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
+
+	// subcomment context
+	ctx, ok := pbRule.ContentContext.(*pbApi.ContentRule_SubcommentCtx)
+	if !ok {
+		log.Printf("Failed type assertion to *pbApi.ContentRule_SubcommentCtx: %t\n", pbRule.ContentContext)
+		return &NoContent{}
+	}
+	subcCtx := ctx.SubcommentCtx
+
+	bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s&sc_id=%s", threadLink, subcCtx.CommentCtx.Id, subcCtx.Id)
+	bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s&sc_id=%s", threadLink, subcCtx.CommentCtx.Id, subcCtx.Id)
+
+	return &SubcommentView{
+		BasicContent: bc,
+		CommentId:    subcCtx.CommentCtx.Id,
+		Id:           subcCtx.Id,
+	}
 }
 
 // contentsToOverviewRendererSet converts a slice of *pbApi.ContentRule into a slice of
