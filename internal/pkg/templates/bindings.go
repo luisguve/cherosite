@@ -204,6 +204,35 @@ func FeedToBytes(feed []*pbApi.ContentRule, userId string, showSection bool) []b
 	return result
 }
 
+// Convert feed into []byte, use types with page-level templates.
+func FeedToContentBytes(feed []*pbApi.ContentRule, userId string, showSection bool) []byte {
+	var (
+		contents = make([][]byte, len(feed))
+		result   []byte
+		wg       sync.WaitGroup
+	)
+
+	for idx, pbRule := range feed {
+		if pbRule.Data == nil {
+			log.Println("FeedToBytes: pbRule has no content.")
+			continue
+		}
+		wg.Add(1)
+		go func(idx int, pbRule *pbApi.ContentRule) {
+			defer wg.Done()
+			content := contentToPageOverviewRenderer(pbRule, userId)
+			contentHTML := content.RenderOverview(idx, showSection)
+			contentBytes := []byte(string(contentHTML))
+			contents[idx] = contentBytes
+		}(idx, pbRule)
+	}
+	wg.Wait()
+	for _, content := range contents {
+		result = append(result, content...)
+	}
+	return result
+}
+
 func DataToExploreView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
 	currentUserId string) *ExploreView {
 	recycleSet := []RecycleType{
@@ -427,14 +456,16 @@ func formatCommentContent(pbRule *pbApi.ContentRule, userId string) (OverviewRen
 	comCtx := ctx.CommentCtx
 
 	replyLink := fmt.Sprintf("%s/comment/?c_id=%s", threadLink, comCtx.Id)
+	subcommentsLink := fmt.Sprintf("%s/comment/?c_id=%s&offset=", threadLink, comCtx.Id)
 	bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", threadLink, comCtx.Id)
 	bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s", threadLink, comCtx.Id)
 
 	comContent := &CommentContent{
-		BasicContent: bc,
-		Id:           comCtx.Id,
-		Replies:      metadata.Replies,
-		ReplyLink:    replyLink,
+		BasicContent:       bc,
+		Id:                 comCtx.Id,
+		Replies:            metadata.Replies,
+		ReplyLink:          replyLink,
+		GetSubcommentsLink: subcommentsLink,
 	}
 	return comContent, nil
 }
@@ -459,6 +490,82 @@ func commentsToOverviewRendererSet(pbRuleSet []*pbApi.ContentRule, userId string
 	}
 	wg.Wait()
 	return ovwRendererSet
+}
+
+func contentToPageOverviewRenderer(pbRule *pbApi.ContentRule, userId string) OverviewRenderer {
+	if pbRule.Data == nil {
+		log.Println("pbRule has no content")
+		return &NoContent{}
+	}
+
+	var ovwRenderer OverviewRenderer
+
+	bc := setBasicContent(pbRule, userId)
+	metadata := pbRule.Data.Metadata
+
+	threadId := metadata.Id
+	sectionId := strings.Replace(strings.ToLower(metadata.Section), " ", "", -1)
+	threadLink := fmt.Sprintf("/%s/%s", sectionId, threadId)
+
+	switch ctx := pbRule.ContentContext.(type) {
+	// it's a THREAD
+	case *pbApi.ContentRule_ThreadCtx:
+		saveLink := fmt.Sprintf("%s/save", threadLink)
+		undoSaveLink := fmt.Sprintf("%s/undosave", threadLink)
+		replyLink := fmt.Sprintf("%s/comment", threadLink)
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote/", threadLink)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/", threadLink)
+		var saved bool
+		var showSaveOption bool
+		if userId == "" {
+			saved = false
+		} else {
+			saved = strings.Contains(strings.Join(metadata.UsersWhoSaved, "|"), userId)
+			showSaveOption = userId != pbRule.Data.Author.Id
+		}
+
+		ovwRenderer = &Thread{
+			BasicContent:   bc,
+			Replies:        metadata.Replies,
+			SaveLink:       saveLink,
+			UndoSaveLink:   undoSaveLink,
+			ShowSaveOption: showSaveOption,
+			Saved:          saved,
+			ReplyLink:      replyLink,
+		}
+	// it's a COMMENT
+	case *pbApi.ContentRule_CommentCtx:
+		// comment context
+		comCtx := ctx.CommentCtx
+
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s", threadLink, comCtx.Id)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s", threadLink, comCtx.Id)
+		replyLink := fmt.Sprintf("%s/comment/?c_id=%s", threadLink, comCtx.Id)
+		subcommentsLink := fmt.Sprintf("%s/comment/?c_id=%s&offset=", threadLink, comCtx.Id)
+	
+		ovwRenderer = &CommentContent{
+			BasicContent:       bc,
+			Id:                 comCtx.Id,
+			Replies:            metadata.Replies,
+			ReplyLink:          replyLink,
+			GetSubcommentsLink: subcommentsLink,
+		}
+	// it's a SUBCOMMENT
+	case *pbApi.ContentRule_SubcommentCtx:
+		// subcomment context
+		subcCtx := ctx.SubcommentCtx
+
+		bc.UpvoteLink = fmt.Sprintf("%s/upvote/?c_id=%s&sc_id=%s", threadLink,
+			subcCtx.CommentCtx.Id, subcCtx.Id)
+		bc.UndoUpvoteLink = fmt.Sprintf("%s/undoupvote/?c_id=%s&sc_id=%s", threadLink,
+			subcCtx.CommentCtx.Id, subcCtx.Id)
+		ovwRenderer = &SubcommentView{
+			BasicContent: bc,
+			CommentId:    subcCtx.CommentCtx.Id,
+			Id:           subcCtx.Id,
+		}
+	}
+	return ovwRenderer
 }
 
 func contentToOverviewRenderer(pbRule *pbApi.ContentRule, userId string) OverviewRenderer {
