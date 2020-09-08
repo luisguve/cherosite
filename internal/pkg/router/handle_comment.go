@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	pbTime "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/gorilla/mux"
 	pbApi "github.com/luisguve/cheroproto-go/cheroapi"
+	"github.com/luisguve/cherosite/internal/pkg/templates"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,6 +26,7 @@ import (
 // - negative or non-number offset query parameter ------------> INVALID_OFFSET
 // - offset is out of range; there are not that much comments -> OFFSET_OOR
 // - network or encoding failures -----------------------------> INTERNAL_FAILURE
+// Note: OFFSET_OOR is returned along with a 200 status code.
 func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	offset, err := strconv.Atoi(vars["offset"])
@@ -60,8 +61,7 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 				http.NotFound(w, req)
 				return
 			case codes.OutOfRange:
-				log.Printf("Offset is out of range: %v\n", resErr.Message())
-				http.Error(w, "OFFSET_OOR", http.StatusBadRequest)
+				w.Write([]byte("OFFSET_OOR"))
 				return
 			default:
 				log.Printf("Unknown error code %v: %v\n", resErr.Code(),
@@ -76,6 +76,13 @@ func (r *Router) handleGetSubcomments(w http.ResponseWriter, req *http.Request) 
 	}
 	feed, err := getFeed(stream)
 	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.OutOfRange:
+				w.Write([]byte("OFFSET_OOR"))
+				return
+			}
+		}
 		log.Printf("An error occurred while getting feed: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
 	}
