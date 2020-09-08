@@ -106,6 +106,7 @@ type CommentContent struct {
 	Id        string
 	Replies   uint32
 	ReplyLink string // URL to post reply
+	GetSubcommentsLink string // URL to post request to get replies.
 }
 
 func (c *CommentContent) RenderOverview(idx int, showSection bool) template.HTML {
