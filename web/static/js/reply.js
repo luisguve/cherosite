@@ -41,6 +41,42 @@ function setupReplyComs() {
 	}
 }
 
+function setupViewSubcomments() {
+	var comments = document.querySelectorAll(".thread-comments article");
+	for (var i = comments.length - 1; i >= 0; i--) {
+		let repliesBtn = comments[i].querySelector(".replies button");
+		let subcommentsArea = comments[i].querySelector("div.subcomments");
+		repliesBtn.onclick = function() {
+			let link = repliesBtn.dataset["getSubcommentsLink"];
+			let offset = repliesBtn.dataset["offset"];
+			link = link + offset;
+
+			let req = new XMLHttpRequest();
+			req.open("GET", link, true);
+			req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+			req.onreadystatechange = function() {
+				if (this.readyState == 4) {
+					if (this.status == 200) {
+						// Check whether there were not subcomments.
+						if (this.responseText == "OFFSET_OOR") {
+							alert("There are no subcomments. Check back later");
+							return;
+						}
+						// Append subcomments to the last subcomment.
+						subcommentsArea.innerHTML += this.responseText;
+						// Calculate total num of replies to update offset.
+						offset = subcommentsArea.children.length;
+						repliesBtn.dataset["offset"] = offset;
+					} else {
+						console.log(this.responseText);
+					}
+				}
+			};
+			req.send();
+		};
+	}
+}
+
 /*
 // Script to delete comment.
 var req = new XMLHttpRequest();
