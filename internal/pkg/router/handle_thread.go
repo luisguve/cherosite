@@ -186,7 +186,7 @@ func (r *Router) handleRecycleComments(w http.ResponseWriter, req *http.Request)
 	// Get current user id.
 	userId := r.currentUser(req)
 
-	res := templates.FeedToBytes(feed.Contents, userId, false)
+	res := templates.FeedToContentBytes(feed.Contents, userId, false)
 
 	contentLength := strconv.Itoa(len(res))
 	w.Header().Set("Content-Length", contentLength)
