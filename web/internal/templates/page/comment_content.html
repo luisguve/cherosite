@@ -2,6 +2,7 @@
 {{ $upvoteLink := .BasicContent.UpvoteLink }}
 {{ $undoUpvoteLink := .BasicContent.UndoUpvoteLink }}
 {{ $replyLink := .ReplyLink }}
+{{ $subcommentsLink := .GetSubcommentsLink }}
 {{ $id := printf "c_id=%s" .Id }}
 
 <article id="{{$id}}" class="{{$class}}" data-upvote-link="{{$upvoteLink}}" data-undo-upvote-link="{{$undoUpvoteLink}}">
@@ -32,7 +33,8 @@
 		</span>
 		{{ end }}
 		<span class="replies">
-			<button type="button">{{ .Replies }} Replies </button>
+			<button type="button" data-get-subcomments-link="{{$subcommentsLink}}" data-offset="0">{{ .Replies }} Replies </button>
 		</span>
 	</footer>
+	<div class="subcomments"></div>
 </article>
