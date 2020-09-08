@@ -61,17 +61,25 @@ type streamFeed interface {
 // getFeed continuously receive content rules from the given stream and returns a
 // templates.ContentsFeed and any error encountered.
 func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
-	var feed templates.ContentsFeed
-	var err error
+	var (
+		feed        templates.ContentsFeed
+		err         error
+		contentRule *pbApi.ContentRule
+	)
 	// Continuously receive responses
 	for {
-		contentRule, err := stream.Recv()
+		contentRule, err = stream.Recv()
 		if err == io.EOF {
 			// Reset err value
 			err = nil
 			break
 		}
 		if err != nil {
+			if resErr, ok := status.FromError(err); ok {
+				if resErr.Code() == codes.OutOfRange {
+					break
+				}
+			}
 			log.Printf("Error receiving response from stream: %v\n", err)
 			break
 		}
