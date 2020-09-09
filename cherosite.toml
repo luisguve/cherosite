@@ -15,7 +15,7 @@ public_tpl_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosi
   name = "My Life"
   bind_address = "localhost:50053"
 
-# Specify the absolute path for the .env file containing sensitive data about the sessions.
+# Sessions are handled with cookies through gorilla/sessions in a file system store.
 [session_variables]
   # Specify the absolute path for the folder where the sessions will be stored in.
   sess_dir = "C:/cherosite_files/sess"
