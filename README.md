@@ -73,6 +73,58 @@ You can also reply other comments, but these are loaded sequentially in chronolo
 
 ### Application API
 
+Note: all the endpoints for pagination will return, on success, either contents in html format or an empty string.
+
+##### Pagination of dashboard content
+
+To get more contents from the recent activity of the users following, the endpoint **"/recyclefeed"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+To get more contents from the recent activity of the user logged in, the endpoint **"/recycleactivty"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+To get more saved posts of the user logged in, the endpoint **"/recyclesaved"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+##### Pagination of posts in Explore
+
+To get more contents from every section, the endpoint **"/explore/recycle"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+##### Pagination of posts in a section
+
+To get more contents from a given section, the endpoint **"/{section_id}/recycle"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+##### Pagination of comments in a post
+
+To get more comments from a given post, the endpoint **"/{section_id}/{post_id}/recycle"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+##### Pagination of activity in a profile page
+
+To get more posts, comments and subcomments from a given user, the endpoint **"/profile/recycle?userid={user_id}"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+Note that it requires the user id rather than the username.
+
+##### Follow/unfollow
+
+To follow a user, the endpoint **"/follow?username={username}"** receives POST requests. Similarly, the endpoint **"/unfollow?username={username}"** receives POST requests to unfollow a user.
+
+A user cannot follow/unfollow itself.
+
+##### Update user data
+
+For this purpose, the endpoint **"/myprofile/update"** receives POST requests with the following form data:
+
+- alias: text
+- username: text
+- description: text
+- pic_url: file - jpg, png or gif
+
+##### Reply a post
+
+The endpoint **"/{section_id}/{post_id}/comment"** will receive POST requests with the following form data:
+
+- content: string
+- ft_file: file - jpg, png or gif
+
+Similarly, to reply a comment, the endpont **"/{section_id}/{post_id}/comment?c_id={comment id}"** will receive POST requests with the same form data.
+
 ##### Notifications
 
 - Notifications are sent to users as events happens through a **websocket** on **"/livenotifs"**.
@@ -80,10 +132,10 @@ You can also reply other comments, but these are loaded sequentially in chronolo
  - **"/readnotifs"** to mark all the unread notifications as read.
  - **"/clearnotifs"** to delete both read and unread notifications.
 
-##### Dashboard content pagination
+The following events will be notified:
 
-To get more contents from the recent activity of the users following: **"/recyclefeed"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
-
-To get more contents from the recent activity of the user logged in: **"/recycleactivty"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
-
-To get more saved posts of the user logged in: **"/recyclesaved"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+- A user (not you) upvotes your post. Only you will be notified.
+- A user (not you) upvotes your comment. The post author and you will be notified.
+- A user (not you) upvotes your subcomment. The post author and you will be notified.
+- A user (not you) leaves a reply on your post. Only you will be notified.
+- A user (not you) leaves a reply on your comment. The post author, the comment author and all the users who replied the same comment will be notified.

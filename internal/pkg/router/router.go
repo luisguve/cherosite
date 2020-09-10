@@ -191,7 +191,7 @@ func (r *Router) SetupRoutes(upload, static string) {
 	// upvote a thread
 	upvotes.HandleFunc("/", r.onlyUsers(r.handleUpvoteThread)).Methods("POST")
 
-	// handlers for upvote undoings
+	// handlers for undoing upvotes
 	undoUpvotes := thread.PathPrefix("/undoupvote").Subrouter()
 	// undo upvote on a subcomment
 	undoUpvotes.HandleFunc("/", r.onlyUsers(r.handleUndoUpvoteSubcomment)).Methods("POST").Queries("c_id", "{c_id:[a-zA-Z0-9]+}", "sc_id", "{sc_id:[a-zA-Z0-9]+}")
