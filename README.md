@@ -73,4 +73,17 @@ You can also reply other comments, but these are loaded sequentially in chronolo
 
 ### Application API
 
+##### Notifications
 
+- Notifications are sent to users as events happens through a **websocket** on **"/livenotifs"**.
+- Notifications are cleaned up through GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"** to:
+ - **"/readnotifs"** to mark all the unread notifications as read.
+ - **"/clearnotifs"** to delete both read and unread notifications.
+
+##### Dashboard content pagination
+
+To get more contents from the recent activity of the users following: **"/recyclefeed"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+To get more contents from the recent activity of the user logged in: **"/recycleactivty"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
+
+To get more saved posts of the user logged in: **"/recyclesaved"** receives GET requests with **Header "X-Requested-With" set to "XMLHttpRequest"**.
