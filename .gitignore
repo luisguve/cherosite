@@ -2,4 +2,3 @@
 *.pb.go
 *.exe
 *.env
-/tmp
