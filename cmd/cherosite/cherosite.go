@@ -18,7 +18,6 @@ import (
 
 type httpConfig struct {
 	BindAddress string `toml:"bind_address"`
-	Env         string
 	Port        string
 }
 
@@ -119,7 +118,7 @@ func main() {
 	}
 
 	// Setup a new templates engine.
-	tpl := templates.Setup(config.HttpConf.Env, ":" + config.HttpConf.Port, config.InternalTplDir, config.PublicTplDir)
+	tpl := templates.Setup(":" + config.HttpConf.Port, config.InternalTplDir, config.PublicTplDir)
 
 	// Setup router and routes.
 	router := router.New(tpl, usersClient, generalClient, sections, store, hub, config.Patillavatars)
@@ -194,9 +193,6 @@ func (s sectionConfig) preventDefault() error {
 func (h httpConfig) preventDefault() error {
 	if h.BindAddress == "" {
 		return fmt.Errorf("Missing http bind address.")
-	}
-	if h.Env == "" {
-		return fmt.Errorf("Missing env config.")
 	}
 	if h.Port == "" {
 		return fmt.Errorf("Missing http port.")

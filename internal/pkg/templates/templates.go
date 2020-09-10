@@ -101,14 +101,12 @@ func makePermalink(host, plink string) *url.URL {
 	return base
 }
 
-func Setup(env, port, internalTplDir, publicTplDir string) *template.Template {
-	if env == "local" {
-		stringBaseURL := "http://localhost" + port + "/"
-		var err error
-		baseURL, err = url.Parse(stringBaseURL)
-		if err != nil {
-			log.Printf("Could not parse baseURL (%s): %v\n", stringBaseURL, err)
-		}
+func Setup(port, internalTplDir, publicTplDir string) *template.Template {
+	stringBaseURL := "http://localhost" + port + "/"
+	var err error
+	baseURL, err = url.Parse(stringBaseURL)
+	if err != nil {
+		log.Printf("Could not parse baseURL (%s): %v\n", stringBaseURL, err)
 	}
 	tpl = mustParseTemplates(internalTplDir).Funcs(template.FuncMap{"absURL": absURL})
 	publicTpl := mustParseTemplates(publicTplDir).Funcs(template.FuncMap{"absURL": absURL})
