@@ -2,3 +2,5 @@
 *.pb.go
 *.exe
 *.env
+/tmp/*.jpg
+/tmp/*.jpeg
