@@ -31,12 +31,19 @@ To run the web application, run `cherosite`, `userapi`, `general` and `contents`
 A couple of buttons are displayed in this area:
 
 1. A link to the root, where the website logo is supposed to be.
+
 ![logo](img/navbar_logo.png)
+
 1. A ***Recycle*** button. This button is the **main feature** of the whole website. The idea is that when you press it, it loads more contents in a **random fashion**, depending upon the select input aside it, and builds ***local pages*** from these contents. The navigation across these local pages will be done through **PREV** and **NEXT** buttons.
+
 ![recycle](img/navbar_recycle.png)
+
 1. A link to */explore*.
+
 ![expore](img/navbar_explore.png)
+
 1. Your notifications, a link to your profile page and a button to logout.
+
 ![user data](img/navbar_user.png)
 
 ##### Explore page: "/explore"
