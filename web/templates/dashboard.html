@@ -62,6 +62,10 @@
 				req.onreadystatechange = function() {
 					if (this.readyState == 4) {
 						if (this.status == 200) {
+							if (this.responseText == "NO_USERS_FOLLOWING") {
+								alert("You are not following anybody.");
+								return
+							}
 							section.addPage(this.responseText);
 						} else {
 							console.log(this.responseText);
