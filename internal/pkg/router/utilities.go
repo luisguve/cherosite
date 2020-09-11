@@ -67,6 +67,7 @@ func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
 		contentRule *pbApi.ContentRule
 	)
 	// Continuously receive responses
+INF_LOOP:
 	for {
 		contentRule, err = stream.Recv()
 		if err == io.EOF {
@@ -76,8 +77,9 @@ func getFeed(stream streamFeed) (templates.ContentsFeed, error) {
 		}
 		if err != nil {
 			if resErr, ok := status.FromError(err); ok {
-				if resErr.Code() == codes.OutOfRange {
-					break
+				switch resErr.Code() {
+				case codes.OutOfRange, codes.InvalidArgument:
+					break INF_LOOP
 				}
 			}
 			log.Printf("Error receiving response from stream: %v\n", err)
