@@ -4,9 +4,11 @@ patillavatars = [ "default.jpg", "default2.jpg" ]
 upload_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/tmp"
 # Specify the absolute path to the folder where static files are be stored in.
 static_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/static"
-# Specify the absolute path to the folder where the templates for internal use are stored in.
+# Specify the absolute path to the folder where the templates for internal use
+# are stored in.
 internal_tpl_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/internal/templates"
-# Specify the absolute path to the folder where the templates for page rendering are stored in.
+# Specify the absolute path to the folder where the templates for page rendering
+# are stored in.
 public_tpl_dir = "C:/Users/USER/Documents/gopath/src/github.com/luisguve/cherosite/web/templates"
 
 # Set the id, name and bind address of every section. See cheroapi repo.

@@ -67,7 +67,7 @@ This page displays posts from a given section and a form to create a post on tha
 
 This page displays the content of a given post and the comments associated to that post, at the bottom. Note that the comments are also loaded in a **random fashion**.
 
-You can also reply other comments, but these are loaded sequentially in chronological order.
+You can also reply other comments, but these subcomments will be loaded sequentially in chronological order.
 
 ![post](img/post.png)
 
@@ -75,7 +75,7 @@ You can also reply other comments, but these are loaded sequentially in chronolo
 
 ### Application API
 
-Note: all the endpoints for pagination will return, on success, either contents in html format or an empty string.
+Note: all the endpoints for pagination will return contents in html format.
 
 ##### Pagination of dashboard content
 
@@ -141,3 +141,23 @@ The following events will be notified:
 - A user (not you) upvotes your subcomment. The post author and you will be notified.
 - A user (not you) leaves a reply on your post. Only you will be notified.
 - A user (not you) leaves a reply on your comment. The post author, the comment author and all the users who replied the same comment will be notified.
+
+### Project status and motivation
+
+As you can see, the frontend needs a lot of work, but web design is definitely not my primary skill. Pull requests and suggestions are welcome. If you like the idea of random pagination and you're looking to collaborate with the frontend, here's what you need to know:
+
+- HTML pages are rendered from [Go templates](https://godoc.org/text/template) in the folder web/templates.
+
+- JavaScript files are located in the folder web/static/js and referenced as `/static/js/[filename].js` in templates.
+
+- CSS files are located in the folder web/static/css and referenced as `/static/css/[filename].css` in templates.
+
+- You need to set the absolute path of the folder web/static to the variable `static_dir` in the .toml config file.
+
+- You need to set the absolute path of the folder web/internal/templates to the variable `internal_tpl_dir` in the .toml config file.
+
+- You need to set the absolute path of the folder web/templates to the variable `public_tpl_dir` in the .toml config file.
+
+I made this project primarily to improve my skills on web development, but I also wanted to build a funny, unique and non-trivial web application for posting and discovering content.
+
+In my opinion, the idea of random pagination has **limitless possibilities** and can fit easily anywhere. I don't think it should completely replace the usual techniques of pagination as mentioned above; all of them have pros and cons and this one is no exception. However, if I had to say what's the best use case for random pagination, I would say that a scenario where order of content doesn't matter **and** the same order complicates the discover of contents by users.
