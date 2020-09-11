@@ -8,6 +8,13 @@ nav {
 	background-color: aliceblue;
 }
 
+section {
+	border: 3px solid #79b8ef;
+	border-radius: 12px;
+	margin: 15px 0;
+	padding: 10px;
+}
+
 .font-size-18 {
 	font-size: 18px;
 }
