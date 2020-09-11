@@ -18,50 +18,50 @@ To run the web application, run `cherosite`, `userapi`, `general` and `contents`
 
 *Note:* patillavatar (profile pic) is optional; if you don't send a picture, it picks a random one from the default pics specified in the field patillavatars in the toml file.
 
-![login/signin](login.png)
+![login/signin](img/login.png)
 
 **When you're logged in**, the dashboard page is rendered. Here you can see the recent activity of the users you're following, your own recent activity and the posts you've saved. All of these contents are loaded in a **random fashion**.
 
-![dashboard](empty_dashboard.png)
+![dashboard](img/empty_dashboard.png)
 
 ##### Navigation bar
 
-![navigation bar](navbar.png)
+![navigation bar](img/navbar.png)
 
 A couple of buttons are displayed in this area:
 
 1. A link to the root, where the website logo is supposed to be.
-![logo](navbar_logo.png)
+![logo](img/navbar_logo.png)
 1. A ***Recycle*** button. This button is the **main feature** of the whole website. The idea is that when you press it, it loads more contents in a **random fashion**, depending upon the select input aside it, and builds ***local pages*** from these contents. The navigation across these local pages will be done through **PREV** and **NEXT** buttons.
-![recycle](navbar_recycle.png)
+![recycle](img/navbar_recycle.png)
 1. A link to */explore*.
-![expore](navbar_explore.png)
+![expore](img/navbar_explore.png)
 1. Your notifications, a link to your profile page and a button to logout.
-![user data](navbar_user.png)
+![user data](img/navbar_user.png)
 
 ##### Explore page: "/explore"
 
 This page displays posts from every section registered in the `sections` array in the .toml file in a random fashion.
 
-![explore](explore.png)
+![explore](img/explore.png)
 
 ##### My profile page: "/myprofile"
 
 In this page, you can view and update your basic information.
 
-![myprofile](myprofile.png)
+![myprofile](img/myprofile.png)
 
 ##### Other users' profile page: "/profile?username={username}"
 
 In this page, you can view the basic information of othe user, along with the recent activity for that user.
 
-![user profile](user_profile.png)
+![user profile](img/user_profile.png)
 
 ##### Section page: "/{section_id}"
 
 This page displays posts from a given section and a form to create a post on that section. The section id must match the id of one of the sections specified in the `sections` array in the .toml file.
 
-![section](section.png)
+![section](img/section.png)
 
 ##### Post page: "/{section_id}/{post_id}"
 
@@ -69,7 +69,9 @@ This page displays the content of a given post and the comments associated to th
 
 You can also reply other comments, but these are loaded sequentially in chronological order.
 
-![post](post.png)
+![post](img/post.png)
+
+![comments](img/post_comments.png)
 
 ### Application API
 
