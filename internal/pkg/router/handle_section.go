@@ -247,7 +247,6 @@ func (r *Router) handleNewThread(userId string, w http.ResponseWriter,
 				return
 			// A user can create a limited number of threads daily.
 			case codes.FailedPrecondition:
-				log.Println("This user has already posted a thread today")
 				http.Error(w, "USER_UNABLE_TO_POST", http.StatusPreconditionFailed)
 				return
 			case codes.Unauthenticated:

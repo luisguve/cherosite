@@ -129,11 +129,11 @@
 			<button class="next">NEXT</button>
 		</header>
 		{{ with .SavedContent }}
-			<section class="content-area">
+			<div class="content-area">
 				{{ range $idx, $content := . }}
 					{{ $content.RenderOverview $idx true }}
 				{{ end }}
-			</section>
+			</div>
 		{{ else }}
 			<div class="no-content-area"><h1>
 				You haven't saved any post. Press the save button when viewing a post to save it.

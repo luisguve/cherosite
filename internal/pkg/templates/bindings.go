@@ -99,7 +99,7 @@ func DataToDashboardView(dData *pbUsers.DashboardData, feed, activity,
 			Id:    "activity",
 		},
 		RecycleType{
-			Label: "Recycle your saved threads",
+			Label: "Recycle your saved posts",
 			Link:  "/recyclesaved",
 			Id:    "saved",
 		},
@@ -313,7 +313,7 @@ func DataToSectionView(feed []*pbApi.ContentRule, uhd *pbUsers.UserHeaderData,
 	currentUserId, sectionName, sectionId string) *SectionView {
 	recycleSet := []RecycleType{
 		RecycleType{
-			Label: "Recycle threads",
+			Label: "Recycle posts",
 			Link:  fmt.Sprintf("/%s/recycle", sectionId),
 			Id:    "feed",
 		},
