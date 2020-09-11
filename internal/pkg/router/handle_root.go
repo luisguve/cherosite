@@ -180,6 +180,7 @@ func (r *Router) handleRoot(userId string, w http.ResponseWriter, req *http.Requ
 // - user is unregistered --------------> USER_UNREGISTERED
 // - user is not following other users -> NO_USERS_FOLLOWING
 // - network or encoding failures ------> INTERNAL_FAILURE
+// Note: NO_USERS_FOLLOWING is returned along with a 200 status code.
 func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	req *http.Request) {
 	request := &pbUsers.GetBasicUserDataRequest{
@@ -206,7 +207,7 @@ func (r *Router) handleRecycleFeed(userId string, w http.ResponseWriter,
 	}
 	// Recycle feed only if this user is following other users.
 	if len(following.Ids) == 0 {
-		http.Error(w, "NO_USERS_FOLLOWING", http.StatusBadRequest)
+		w.Write([]byte("NO_USERS_FOLLOWING"))
 		return
 	}
 	// Get always returns a session, even if empty
@@ -378,6 +379,13 @@ func (r *Router) handleRecycleMySaved(userId string, w http.ResponseWriter,
 
 	savedThreads, err = getFeed(stream)
 	if err != nil {
+		if resErr, ok := status.FromError(err); ok {
+			switch resErr.Code() {
+			case codes.InvalidArgument:
+				w.Write([]byte(""))
+				return
+			}
+		}
 		log.Printf("An error occurred while getting feed: %v\n", err)
 		w.WriteHeader(http.StatusPartialContent)
 	}
