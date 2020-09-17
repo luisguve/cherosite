@@ -18,7 +18,7 @@ This repo contains the implementation of the http server for the Cheropatilla we
 1. [Pagination of posts in Explore](#pagination-of-posts-in-explore)
 1. [Pagination of posts in a section](#pagination-of-posts-in-a-section)
 1. [Pagination of comments in a post](#pagination-of-comments-in-a-post)
-1. [Pagination of activity in a profile page](1. #pagination-of-activity-in-a-profile-page)
+1. [Pagination of activity in a profile page](#pagination-of-activity-in-a-profile-page)
 1. [Follow/unfollow](#follow-unfollow)
 1. [Update user data](#update-user-data)
 1. [Reply a post](#reply-a-post)
