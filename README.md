@@ -11,7 +11,7 @@ This repo contains the implementation of the http server for the Cheropatilla we
 1. [Navigation bar](#navigation-bar)
 1. [Explore page: "/explore"](#explore-page-explore)
 1. [My profile page: "/myprofile"](#my-profile-page-myprofile)
-1. [Other users' profile page: "/profile?username={username}"](1. #other-users-profile-page-profileusernameusername)
+1. [Other users' profile page: "/profile?username={username}"](#other-users-profile-page-profileusernameusername)
 1. [Section page: "/{section_id}"](#section-page-section_id)
 1. [Post page: "/{section_id}/{post_id}"](#post-page-section_idpost_id)
 1. [Application API](#application-api)
@@ -257,4 +257,4 @@ As you can see, the frontend needs a lot of work, but web design is definitely n
 
 I made this project primarily to improve my skills on web development, but I also wanted to build a funny, unique and non-trivial web application for posting and discovering content.
 
-In my opinion, the idea of random pagination has **limitless possibilities** and can fit easily anywhere. I don't think it should completely replace the usual techniques of pagination as mentioned above; all of them have pros and cons and this one is no exception. However, if I had to say what's the best use case for random pagination, I would say that a scenario where order of content doesn't matter **and** the same order complicates the discover of contents by users.
+In my opinion, the idea of random pagination has **limitless possibilities** and can fit easily anywhere. I don't think it should completely replace the usual techniques of pagination aforementioned; all of them have pros and cons and this one is no exception. However, if I had to say what's the best use case for random pagination, I would say that one where order of content doesn't matter **and** the same order complicates the discover of contents by users.
